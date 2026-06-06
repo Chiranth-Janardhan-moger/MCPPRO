@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # OmniAgent Intelligence System
 
 An advanced, full-stack agentic workspace and RAG-based intelligence platform. The project is split into a **Next.js Frontend** (the primary client-facing workspace and web application) and a **Python FastAPI Backend** (serving as an MCP server and advanced document/RAG processor).
@@ -163,3 +164,6 @@ docker-compose logs -f
 *   **Format & Lint Frontend**: `npm run lint`
 *   **Build Frontend**: `npm run build`
 *   **Test Backend API**: `python test_api.py` (ensure backend is running or mock is enabled)
+=======
+# MCPPRO
+>>>>>>> 32746c112242b0462372f96d9b23643cb54c7dd1
