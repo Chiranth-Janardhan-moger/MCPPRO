@@ -13,7 +13,7 @@ import os
 class QdrantVectorStoreService(BaseVectorStore):
     def __init__(
         self, 
-        collection_name: str = "hackrx-documents",
+        collection_name: str = "mcppro-documents",
         embedding_model: str = "text-embedding-3-small",
         url: Optional[str] = None,
         api_key: Optional[str] = None,
@@ -67,7 +67,7 @@ class QdrantVectorStoreService(BaseVectorStore):
         """Initialize Qdrant client based on configuration"""
         if self.url:
             # Cloud or server deployment
-            print(f"🔗 Connecting to Qdrant server at {self.url}")
+            print(f"ðŸ”— Connecting to Qdrant server at {self.url}")
             return QdrantClient(
                 url=self.url,
                 api_key=self.api_key,
@@ -75,11 +75,11 @@ class QdrantVectorStoreService(BaseVectorStore):
             )
         elif self.path:
             # Local on-disk storage
-            print(f"💾 Using Qdrant local storage at {self.path}")
+            print(f"ðŸ’¾ Using Qdrant local storage at {self.path}")
             return QdrantClient(path=self.path)
         else:
             # In-memory storage
-            print("🧠 Using Qdrant in-memory storage")
+            print("ðŸ§  Using Qdrant in-memory storage")
             return QdrantClient(":memory:")
     
     def _get_embedding_dimension(self) -> int:
@@ -99,7 +99,7 @@ class QdrantVectorStoreService(BaseVectorStore):
             collection_names = [col.name for col in collections.collections]
             
             if self.collection_name not in collection_names:
-                print(f"📚 Creating Qdrant collection: {self.collection_name}")
+                print(f"ðŸ“š Creating Qdrant collection: {self.collection_name}")
                 
                 # Get dimension from embedding model
                 dimension = self._get_embedding_dimension()
@@ -111,12 +111,12 @@ class QdrantVectorStoreService(BaseVectorStore):
                         distance=Distance.COSINE
                     )
                 )
-                print(f"✅ Created collection '{self.collection_name}' with dimension {dimension}")
+                print(f"âœ… Created collection '{self.collection_name}' with dimension {dimension}")
             else:
-                print(f"✅ Collection '{self.collection_name}' already exists")
+                print(f"âœ… Collection '{self.collection_name}' already exists")
                 
         except Exception as e:
-            print(f"⚠️ Error setting up collection: {e}")
+            print(f"âš ï¸ Error setting up collection: {e}")
             raise
     
     def add_documents(
@@ -129,7 +129,7 @@ class QdrantVectorStoreService(BaseVectorStore):
         if not ids:
             ids = [str(uuid.uuid4()) for _ in texts]
         
-        print(f"📝 Adding {len(texts)} documents to Qdrant...")
+        print(f"ðŸ“ Adding {len(texts)} documents to Qdrant...")
         
         try:
             # Create Document objects
@@ -141,19 +141,19 @@ class QdrantVectorStoreService(BaseVectorStore):
             # Add documents to Qdrant
             added_ids = self.vector_store.add_documents(documents, ids=ids)
             
-            print(f"✅ Successfully added {len(added_ids)} documents to Qdrant")
+            print(f"âœ… Successfully added {len(added_ids)} documents to Qdrant")
             
             # Wait a moment for indexing
             time.sleep(1)
             
             # Verify documents were added
             if self._verify_documents_added(metadatas[0].get("document_id") if metadatas else None):
-                print("🔍 Documents verified and searchable")
+                print("ðŸ” Documents verified and searchable")
             
             return added_ids
             
         except Exception as e:
-            print(f"❌ Error adding documents to Qdrant: {e}")
+            print(f"âŒ Error adding documents to Qdrant: {e}")
             raise
     
     def _verify_documents_added(self, document_id: Optional[str] = None) -> bool:
@@ -182,7 +182,7 @@ class QdrantVectorStoreService(BaseVectorStore):
             return results
             
         except Exception as e:
-            print(f"❌ Error during similarity search with score: {e}")
+            print(f"âŒ Error during similarity search with score: {e}")
             return []
     
     def as_retriever(self, **kwargs) -> Any:
@@ -198,11 +198,11 @@ class QdrantVectorStoreService(BaseVectorStore):
         try:
             # Qdrant uses delete method
             self.vector_store.delete(ids)
-            print(f"🗑️ Deleted {len(ids)} documents from Qdrant")
+            print(f"ðŸ—‘ï¸ Deleted {len(ids)} documents from Qdrant")
             return True
             
         except Exception as e:
-            print(f"❌ Error deleting documents: {e}")
+            print(f"âŒ Error deleting documents: {e}")
             return False
     
     def get_document_count(self, namespace: Optional[str] = None) -> int:
@@ -212,7 +212,7 @@ class QdrantVectorStoreService(BaseVectorStore):
             return collection_info.points_count or 0
             
         except Exception as e:
-            print(f"❌ Error getting document count: {e}")
+            print(f"âŒ Error getting document count: {e}")
             return 0
     
     def delete_all_documents(self, namespace: Optional[str] = None) -> bool:
@@ -229,9 +229,9 @@ class QdrantVectorStoreService(BaseVectorStore):
                 embedding=self.embeddings
             )
             
-            print(f"🗑️ Deleted all documents from collection '{self.collection_name}'")
+            print(f"ðŸ—‘ï¸ Deleted all documents from collection '{self.collection_name}'")
             return True
             
         except Exception as e:
-            print(f"❌ Error deleting all documents: {e}")
+            print(f"âŒ Error deleting all documents: {e}")
             return False

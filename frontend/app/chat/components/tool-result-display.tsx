@@ -400,7 +400,7 @@ function ToolResultDisplayInternal({
                       <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 transition-colors">
                         <ToolIcon className="w-4 h-4" />
                         <span>View Results</span>
-                        <span className="text-xs">• {toolDisplayName} completed successfully</span>
+                        <span className="text-xs">â€¢ {toolDisplayName} completed successfully</span>
                       </div>
                     </AccordionTrigger>
                     

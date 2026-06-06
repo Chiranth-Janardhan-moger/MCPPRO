@@ -17,28 +17,24 @@ function PureSuggestedActions({
 }: SuggestedActionsProps) {
   const suggestedActions = [
     {
-      title: "Round 6 Code",
-      label: "Find smallest almost-equal substring index (LLM-only)",
-      action:
-        `Query: You are given two strings s and pattern.\nA string x is called almost equal to y if you can change at most one character in x to make it identical to y.\nReturn the smallest starting index of a substring in s that is almost equal to pattern. If no such index exists, return -1.\n\nWrite a code to solve the problem. You should generate the code through LLM and run it and get the answer as response and return this answer as the API response. Then, also push the code in a folder names ROUND_6 to the repo STRICTLY provided by the HACKRX TEAM.\n\nTHIS ENTIRE CHALLENGE TO BE DONE BY LLM ONLY. NO HUMAN INTERVENTION ALLOWED. THIS INCLUDES GENERATION OF CODE, RUNNING IT AND PUSHING TO GITHUB REPO, TO THE SAME REPO PROVIDED BY THE HACKRX TEAM.\n\nQuestions:\n1. The value of s is abcdefg and pattern is bcdffg\n2. The value of s is ababbababa and pattern is bacaba`,
+      title: "Summarize Document",
+      label: "Extract key insights and bullet points",
+      action: "Summarize the main points, key findings, and action items from my uploaded document.",
     },
     {
-      title: "Round 7 Github",
-      label: "Analyze GitHub repo for mmkv-shared version (LLM-only)",
-      action:
-        `Query: You are given a github repository link. Analyse the repo and answer the question. THIS ENTIRE CHALLENGE TO BE DONE BY LLM ONLY. NO HUMAN INTERVENTION ALLOWED.\n\nQuestions:\n1. What is the version of mmkv-shared in this Repo? https://github.com/mrousavy/react-native-mmkv/blob/main/package/android/build.gradle`,
+      title: "Browse & Extract",
+      label: "Navigate to a URL and fetch data",
+      action: "Navigate to the site https://news.ycombinator.com and extract the top 5 stories with their URLs.",
     },
     {
-      title: "Round 7 Hidden",
-      label: "Start challenge and extract ID & code (LLM-only)",
-      action:
-        `Query: Go to the website and start the challenge. Complete the challenge and return the answers for the following questions.\n\nQuestions:\n1. What is the challenge ID? (URL: https://register.hackrx.in/showdown/startChallenge/ZXlKaGJHY2lPaUpJVXpJMU5pSXNJblI1Y0NJNklrcFhWQ0o5LmV5SmpiMjlzUjNWNUlqb2lVa2xVUlZOSUlpd2lZMmhoYkd4bGJtZGxTVVFpT2lKb2FXUmtaVzRpTENKMWMyVnlTV1FpT2lKMWMyVnlYM0pwZEdWemFDSXNJbVZ0WVdsc0lqb2ljbWwwWlhOb1FHSmhhbUZxWm1sdWMyVnlkbWhsWVd4MGFDNXBiaUlzSW5KdmJHVWlPaUpqYjI5c1gyZDFlU0lzSW1saGRDSTZNVGMxTlRnMk1USTFPQ3dpWlhod0lqb3hOelUxT1RRM05qVTRmUS4zWjRqZWFRN0dOSWd0ck1qY2MxbldCX2JiNkZnY2tvWTF5QjFOX3hVZV9F)\n2. What is the completion code? (URL: https://register.hackrx.in/showdown/startChallenge/ZXlKaGJHY2lPaUpJVXpJMU5pSXNJblI1Y0NJNklrcFhWQ0o5LmV5SmpiMjlzUjNWNUlqb2lVa2xVUlZOSUlpd2lZMmhoYkd4bGJtZGxTVVFpT2lKb2FXUmtaVzRpTENKMWMyVnlTV1FpT2lKMWMyVnlYM0pwZEdWemFDSXNJbVZ0WVdsc0lqb2ljbWwwWlhOb1FHSmhhbUZxWm1sdWMyVnlkbWhsWVd4MGFDNXBiaUlzSW5KdmJHVWlPaUpqYjI5c1gyZDFlU0lzSW1saGRDSTZNVGMxTlRnMk1USTFPQ3dpWlhod0lqb3hOelUxT1RRM05qVTRmUS4zWjRqZWFRN0dOSWd0ck1qY2MxbldCX2JiNkZnY2tvWTF5QjFOX3hVZV9F)`,
+      title: "Generate Chart",
+      label: "Visualize data trends instantly",
+      action: "Create a bar chart comparing the population of Tokyo, Delhi, Shanghai, and New York.",
     },
     {
-      title: "Round 7 Sequence",
-      label: "Start challenge and extract sequence info (LLM-only)",
-      action:
-        `Query: Go to the website and start the challenge. Complete the challenge and return the answers for the following questions.\n\nQuestions:\n1. What is the challenge ID? (URL: https://register.hackrx.in/showdown/startChallenge/$)\n2. What is the completion code? (URL: https://register.hackrx.in/showdown/v2/startChallenge/ZXlKMGVYQWlPaUpLVjFRaUxDSmhiR2NpT2lKSVV6STFOaUo5LmV5SmphR0ZzYkdWdVoyVkpSQ0k2SW5ObGNYVmxibU5sSWl3aVpYaHdJam94TnpNMU5qZzVOakF3TENKcFlYUWlPakUzTXpJd09UYzJNREFzSW1ScFptWnBZM1ZzZEhraU9pSnRaV1JwZFcwaUxDSjBhVzFsYzNSaGJYQWlPakUzTXpJd09UYzJNREF3TURCOS5aR1Z0YnkxemFXZHVZWFIxY21VdE1UYzFOVGt3TkRrME5qY3dOZw==)`,
+      title: "Analyze Code",
+      label: "Review structure and find bugs",
+      action: "Help me review my typescript component code for potential performance bottlenecks or styling improvements.",
     },
   ];
   return (

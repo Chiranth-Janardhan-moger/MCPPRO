@@ -39,7 +39,7 @@ class TraditionalRAGTool(BaseTool):
             "properties": {
                 "document_url": {
                     "type": "string",
-                    "description": "URL (PDF, DOCX, TXT, webpage…) of the document to analyse",
+                    "description": "URL (PDF, DOCX, TXT, webpageâ€¦) of the document to analyse",
                 },
                 "questions": {
                     "type": "array",
@@ -80,7 +80,7 @@ class TraditionalRAGTool(BaseTool):
 
             try:
                 if not document_id:
-                    raise ValueError("'document_id' missing – call process_document first and pass its id.")
+                    raise ValueError("'document_id' missing â€“ call process_document first and pass its id.")
                 retrieval_res = await self.retrieval_service.process_document_queries(
                     document_id=document_id, questions=questions, k=k
                 )

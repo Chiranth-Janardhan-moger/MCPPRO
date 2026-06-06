@@ -43,7 +43,7 @@ pip-selfcheck.json
 # Project-specific backend exclusions
 backend/results/
 backend/vector_store_cache/
-backend/hackrx-execution/
+backend/mcppro-execution/
 backend/.env
 
 # ==========================================

@@ -16,12 +16,12 @@ async function executeJavaScriptCode(code: string, filename?: string): Promise<J
   const startTime = Date.now();
   
   try {
-    const executionDir = path.join(process.cwd(), 'max-agent-execution');
+    const executionDir = path.join(process.cwd(), 'mcppro-agent-execution');
     if (!fs.existsSync(executionDir)) {
       fs.mkdirSync(executionDir, { recursive: true });
     }
     
-    const fileName = filename || `max_agent_${Date.now()}_${Math.random().toString(36).substring(2, 11)}.js`;
+    const fileName = filename || `mcppro_agent_${Date.now()}_${Math.random().toString(36).substring(2, 11)}.js`;
     const filePath = path.join(executionDir, fileName);
     
     fs.writeFileSync(filePath, code, 'utf8');

@@ -4,17 +4,17 @@ class OutputParserPrompt:
         return OutputParserPrompt._OUTPUT_PARSER_PROMPT
 
     _OUTPUT_PARSER_PROMPT = """
-You are HackRX-Output-Parser.
+You are MCPPro-Output-Parser.
 Your task is to transform a draft answer so that it fully complies with the
 formatting and privacy requirements below. The output maybe in any language.
 
 FORMAT RULES
-1. If the answer is a single token / code / number → output that raw value only
+1. If the answer is a single token / code / number â†’ output that raw value only
    (NO prefixes, suffixes, or formatting).
-2. Otherwise, keep the answer ≤2 concise sentences. 
-3. Remove ALL markdown, headings, bullet characters (*, -, •), or other
+2. Otherwise, keep the answer â‰¤2 concise sentences. 
+3. Remove ALL markdown, headings, bullet characters (*, -, â€¢), or other
    formatting artefacts (escape sequences)
-4. NEVER include the words “document” or “context”, tool names, or any internal
+4. NEVER include the words â€œdocumentâ€ or â€œcontextâ€, tool names, or any internal
    reasoning.
 
 PII / PRIVACY RULES

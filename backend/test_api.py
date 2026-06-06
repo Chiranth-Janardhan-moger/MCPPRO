@@ -6,7 +6,7 @@ import importlib.util
 from datetime import datetime
 from pathlib import Path
 
-async def save_results_to_markdown(result, test_data, test_type="hackrx_api"):    
+async def save_results_to_markdown(result, test_data, test_type="mcppro_api"):    
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     filename = f"results/{test_type}_test_{timestamp}.md"
     
@@ -84,7 +84,7 @@ async def save_results_to_markdown(result, test_data, test_type="hackrx_api"):
     with open(filename, 'w', encoding='utf-8') as f:
         f.write(md_content)
     
-    print(f"📄 Results saved to: {filename}")
+    print(f"ðŸ“„ Results saved to: {filename}")
     return filename
 
 async def save_single_query_results(result, query_data):
@@ -133,7 +133,7 @@ async def save_single_query_results(result, query_data):
     with open(filename, 'w', encoding='utf-8') as f:
         f.write(md_content)
     
-    print(f"📄 Single query results saved to: {filename}")
+    print(f"ðŸ“„ Single query results saved to: {filename}")
     return filename
 
 def load_test_data_from_file(file_path):
@@ -159,7 +159,7 @@ def discover_test_files():
                     "data": test_data
                 })
             except Exception as e:
-                print(f"⚠️ Error loading {file_path}: {e}")
+                print(f"âš ï¸ Error loading {file_path}: {e}")
     
     return test_files
 
@@ -167,15 +167,15 @@ async def run_single_test(session, base_url, headers, test_info):
     test_data = test_info["data"]
     test_name = test_info["name"]
     
-    print(f"\n🧪 Running test: {test_name}")
-    print(f"📝 Description: {test_info['description']}")
-    print(f"❓ Questions: {len(test_data.get('questions', []))}")
-    print(f"📊 Chunks per question: {test_data.get('k', 'N/A')}")
+    print(f"\nðŸ§ª Running test: {test_name}")
+    print(f"ðŸ“ Description: {test_info['description']}")
+    print(f"â“ Questions: {len(test_data.get('questions', []))}")
+    print(f"ðŸ“Š Chunks per question: {test_data.get('k', 'N/A')}")
     print("=" * 60)
     
     try:
         async with session.post(
-            f"{base_url}/hackrx/run",
+            f"{base_url}/mcppro/run",
             headers=headers,
             json=test_data
         ) as response:
@@ -185,7 +185,7 @@ async def run_single_test(session, base_url, headers, test_info):
             if response.status == 200:
                 result = await response.json()
                 print(result)
-                print("✅ Request successful!")
+                print("âœ… Request successful!")
                 print(f"Processing time: {result.get('processing_time', 'N/A')} seconds")
                 print(f"Document metadata: {result.get('document_metadata', {})}")
                 print(f"Documents deleted: {result.get('deleted_documents', False)}")
@@ -193,7 +193,7 @@ async def run_single_test(session, base_url, headers, test_info):
                 file_name = test_info["file_path"].replace("tests\\", "").replace(".py", "")
                 await save_results_to_markdown(result, test_data, file_name)
                 
-                print(f"\n📝 Answers Summary for {test_name}:")
+                print(f"\nðŸ“ Answers Summary for {test_name}:")
                 print("=" * 50)
                 
                 for i, (question, answer) in enumerate(zip(test_data["questions"], result["answers"]), 1):
@@ -204,19 +204,19 @@ async def run_single_test(session, base_url, headers, test_info):
                 return True
             else:
                 error_text = await response.text()
-                print(f"❌ Request failed: {error_text}")
+                print(f"âŒ Request failed: {error_text}")
                 return False
                 
     except Exception as e:
-        print(f"❌ Error occurred: {str(e)}")
+        print(f"âŒ Error occurred: {str(e)}")
         return False
 
 
-async def test_hackrx_api_modular(selected_tests):
+async def test_mcppro_api_modular(selected_tests):
     """Run the selected modular tests"""
-    # base_url = "https://hackrx-api-illvzn.onrender.com"
+    # base_url = "https://mcppro-api-illvzn.onrender.com"
     # base_url = " https://liberal-free-dove.ngrok-free.app"
-    # base_url = "https://hackrx-backend.yellowsmoke-e9621a2b.centralindia.azurecontainerapps.io"
+    # base_url = "https://mcppro-backend.yellowsmoke-e9621a2b.centralindia.azurecontainerapps.io"
 
     base_url = "https://liberal-free-dove.ngrok-free.app/api"
     # base_url = "https://legible-preferably-bird.ngrok-free.app/api"
@@ -226,18 +226,18 @@ async def test_hackrx_api_modular(selected_tests):
     }
     
     async with aiohttp.ClientSession() as session:
-        print("\n🚀 Testing HackRX API...")
-        print(f"🌐 URL: {base_url}/hackrx/run")
+        print("\nðŸš€ Testing MCPPro API...")
+        print(f"ðŸŒ URL: {base_url}/mcppro/run")
         print("=" * 70)
         
         try:
             # print("1. Testing health endpoint...")
-            # async with session.get(f"{base_url}/hackrx/health") as response:
+            # async with session.get(f"{base_url}/mcppro/health") as response:
             #     if response.status == 200:
             #         health_data = await response.json()
-            #         print(f"✅ Health check passed: {health_data}")
+            #         print(f"âœ… Health check passed: {health_data}")
             #     else:
-            #         print(f"❌ Health check failed: {response.status}")
+            #         print(f"âŒ Health check failed: {response.status}")
             #         return
             
             successful_tests = 0
@@ -252,34 +252,34 @@ async def test_hackrx_api_modular(selected_tests):
                 
                 await asyncio.sleep(1)
             
-            print(f"\n📊 Test Results Summary:")
+            print(f"\nðŸ“Š Test Results Summary:")
             print("=" * 50)
-            print(f"✅ Successful tests: {successful_tests}")
-            print(f"❌ Failed tests: {failed_tests}")
-            print(f"📄 Detailed results saved to markdown files in results/")
+            print(f"âœ… Successful tests: {successful_tests}")
+            print(f"âŒ Failed tests: {failed_tests}")
+            print(f"ðŸ“„ Detailed results saved to markdown files in results/")
                     
         except Exception as e:
-            print(f"❌ Error occurred: {str(e)}")
+            print(f"âŒ Error occurred: {str(e)}")
 
 
 if __name__ == "__main__":
-    print("🔬 HackRX API Test Script")
+    print("ðŸ”¬ MCPPro API Test Script")
     print("Make sure the server is running on localhost:8000")
     print("=" * 60)
     
     test_files = discover_test_files()
     
     if not test_files:
-        print("❌ No test files found in the tests directory!")
-        print("📁 Please make sure you have test files in the 'tests/' folder")
+        print("âŒ No test files found in the tests directory!")
+        print("ðŸ“ Please make sure you have test files in the 'tests/' folder")
         exit(1)
     
-    print("📁 Available test files:")
+    print("ðŸ“ Available test files:")
     print("=" * 50)
     for i, test_info in enumerate(test_files, 1):
         print(f"{i}. {test_info['name']}")
-        print(f"   📝 {test_info['description']}")
-        print(f"   ❓ Questions: {len(test_info['data'].get('questions', []))}")
+        print(f"   ðŸ“ {test_info['description']}")
+        print(f"   â“ Questions: {len(test_info['data'].get('questions', []))}")
         print()
     
     print("Select tests to run:")
@@ -290,18 +290,18 @@ if __name__ == "__main__":
     selection = input("Your choice: ").strip().lower()
     
     if selection == 'q':
-        print("👋 Exiting...")
+        print("ðŸ‘‹ Exiting...")
         exit()
     elif selection == 'all':
         print("Running all tests...")
-        asyncio.run(test_hackrx_api_modular(test_files))
+        asyncio.run(test_mcppro_api_modular(test_files))
     else:
         try:
             indices = [int(x.strip()) - 1 for x in selection.split(',')]
             selected_tests = [test_files[i] for i in indices if 0 <= i < len(test_files)]
             if selected_tests:
-                asyncio.run(test_hackrx_api_modular(selected_tests))
+                asyncio.run(test_mcppro_api_modular(selected_tests))
             else:
-                print("❌ No valid tests selected!")
+                print("âŒ No valid tests selected!")
         except (ValueError, IndexError):
-            print("❌ Invalid selection!")
+            print("âŒ Invalid selection!")

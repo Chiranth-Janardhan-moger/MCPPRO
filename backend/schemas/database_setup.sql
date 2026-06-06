@@ -1,7 +1,7 @@
--- HackRX API Request Logging Tables
+-- MCPPro API Request Logging Tables
 -- Run this script in your Supabase SQL editor to create the required tables
 
-CREATE TABLE IF NOT EXISTS hackrx_requests (
+CREATE TABLE IF NOT EXISTS mcppro_requests (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     timestamp TIMESTAMPTZ DEFAULT NOW(),
     document_url TEXT NOT NULL,
@@ -18,6 +18,6 @@ CREATE TABLE IF NOT EXISTS hackrx_requests (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX IF NOT EXISTS idx_hackrx_requests_timestamp ON hackrx_requests(timestamp);
-CREATE INDEX IF NOT EXISTS idx_hackrx_requests_success ON hackrx_requests(success);
-CREATE INDEX IF NOT EXISTS idx_hackrx_requests_vector_store ON hackrx_requests(vector_store);
+CREATE INDEX IF NOT EXISTS idx_mcppro_requests_timestamp ON mcppro_requests(timestamp);
+CREATE INDEX IF NOT EXISTS idx_mcppro_requests_success ON mcppro_requests(success);
+CREATE INDEX IF NOT EXISTS idx_mcppro_requests_vector_store ON mcppro_requests(vector_store);

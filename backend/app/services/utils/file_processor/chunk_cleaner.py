@@ -80,7 +80,7 @@ class ChunkCleaner:
                 
             processed_chunks.append(chunk)
         
-        print(f"Minimal cleaning (OCR): {len(chunks)} chunks → {len(processed_chunks)} clean chunks")
+        print(f"Minimal cleaning (OCR): {len(chunks)} chunks â†’ {len(processed_chunks)} clean chunks")
         return processed_chunks
     
     def _basic_clean_chunks(self, chunks: List, extraction_method: str = None) -> List:
@@ -119,7 +119,7 @@ class ChunkCleaner:
                 
             processed_chunks.append(chunk)
         
-        print(f"Basic cleaning ({script_type} script): {len(chunks)} chunks → {len(processed_chunks)} clean chunks")
+        print(f"Basic cleaning ({script_type} script): {len(chunks)} chunks â†’ {len(processed_chunks)} clean chunks")
         return processed_chunks
     
     def _aggressive_clean_chunks(self, chunks: List, repetitive_patterns: List[str] = None) -> List:
@@ -150,7 +150,7 @@ class ChunkCleaner:
             chunk.page_content = cleaned_content
             processed_chunks.append(chunk)
         
-        print(f"Aggressive cleaning (PDF): {len(chunks)} chunks → {len(processed_chunks)} clean chunks")
+        print(f"Aggressive cleaning (PDF): {len(chunks)} chunks â†’ {len(processed_chunks)} clean chunks")
         return processed_chunks
     
     def detect_repetitive_patterns(self, documents: List) -> List[str]:

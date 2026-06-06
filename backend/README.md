@@ -1,4 +1,4 @@
-# OmniAgent Backend - Python FastAPI Server (Rounds 1-4)
+# MCPPro Backend - Python FastAPI Server (Rounds 1-4)
 
 - Python FastAPI backend with MCP server for document processing and LLM tools
 - This was the primary backend for Rounds 1-4. For Rounds 5,6,7, the Next.js API routes are the primary backend.
@@ -6,7 +6,7 @@
 
 ## Overview
 
-This is the Python backend component of the OmniAgent Intelligence System. It provides:
+This is the Python backend component of the MCPPro Intelligence System. It provides:
 - **FastAPI Server**: High-performance API with automatic documentation
 - **MCP Server**: Model Context Protocol server for tool integration using FastMCP
 - **Document Processing**: Advanced RAG pipeline with multiple vector store support
@@ -134,7 +134,7 @@ Create a `.env` file from `.env.example` and configure the following:
 
 ```env
 # Environment Configuration
-PROJECT_NAME="HackRX Intelligence System"
+PROJECT_NAME="MCPPro Intelligence System"
 ENVIRONMENT=production
 
 # Authentication (optional)
@@ -153,7 +153,7 @@ CEREBRAS_API_KEY=your-cerebras-key
 
 # Vector Database Configuration (optional)
 PINECONE_API_KEY=your-pinecone-key
-PINECONE_INDEX_NAME=hackrx-documents
+PINECONE_INDEX_NAME=mcppro-documents
 PINECONE_ENVIRONMENT=us-east-1
 
 # Processing Configuration
@@ -178,7 +178,7 @@ AGENT_ENABLED=true
 #### Primary Endpoints
 - **Health Check**: `GET /health`
 - **API Documentation**: `GET /docs`
-- **HackRX Evaluation**: `POST /api/hackrx/run`
+- **MCPPro Evaluation**: `POST /api/mcppro/run`
 
 ### MCP Server (Port 8001)
 
@@ -219,7 +219,7 @@ python test_api.py
 docker-compose up -d --build
 
 # View logs
-docker-compose logs -f hackrx-backend
+docker-compose logs -f mcppro-backend
 
 # Stop services
 docker-compose down
@@ -244,27 +244,27 @@ python test_api.py
 
 ```
 backend/
-├── app/                    # FastAPI application
-│   ├── api/               # API routes
-│   ├── core/              # Core functionality
-│   ├── models/            # Data models
-│   ├── services/          # Business logic
-│   └── main.py           # FastAPI app configuration
-├── mcp_server/            # MCP server implementation
-│   ├── tools/            # MCP tools
-│   ├── config/           # MCP configuration
-│   ├── main.py          # MCP server entry point
-│   └── server.py        # FastMCP server setup
-├── tests/                 # Test files
-├── results/              # Test results and outputs
-├── schemas/              # Database schemas
-├── requirements.txt      # Python dependencies
-├── requirements-mcp.txt  # MCP dependencies
-├── main.py              # FastAPI server launcher
-├── run_mcp.py           # MCP server launcher
-├── Dockerfile           # Docker configuration
-├── docker-compose.yml   # Docker Compose setup
-└── .env.example         # Environment template
+â”œâ”€â”€ app/                    # FastAPI application
+â”‚   â”œâ”€â”€ api/               # API routes
+â”‚   â”œâ”€â”€ core/              # Core functionality
+â”‚   â”œâ”€â”€ models/            # Data models
+â”‚   â”œâ”€â”€ services/          # Business logic
+â”‚   â””â”€â”€ main.py           # FastAPI app configuration
+â”œâ”€â”€ mcp_server/            # MCP server implementation
+â”‚   â”œâ”€â”€ tools/            # MCP tools
+â”‚   â”œâ”€â”€ config/           # MCP configuration
+â”‚   â”œâ”€â”€ main.py          # MCP server entry point
+â”‚   â””â”€â”€ server.py        # FastMCP server setup
+â”œâ”€â”€ tests/                 # Test files
+â”œâ”€â”€ results/              # Test results and outputs
+â”œâ”€â”€ schemas/              # Database schemas
+â”œâ”€â”€ requirements.txt      # Python dependencies
+â”œâ”€â”€ requirements-mcp.txt  # MCP dependencies
+â”œâ”€â”€ main.py              # FastAPI server launcher
+â”œâ”€â”€ run_mcp.py           # MCP server launcher
+â”œâ”€â”€ Dockerfile           # Docker configuration
+â”œâ”€â”€ docker-compose.yml   # Docker Compose setup
+â””â”€â”€ .env.example         # Environment template
 ```
 
 ## License

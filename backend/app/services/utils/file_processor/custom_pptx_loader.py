@@ -85,10 +85,10 @@ class CustomPptxLoader:
             images_with_metadata = self._extract_images_from_pptx(prs)
             
             if not images_with_metadata:
-                print("⚠️ No images found in presentation, falling back to standard text extraction")
+                print("âš ï¸ No images found in presentation, falling back to standard text extraction")
                 return self._load_standard()
             
-            print(f"🔍 Found {len(images_with_metadata)} images, extracting text using {self.ocr_engine.upper()}...")
+            print(f"ðŸ” Found {len(images_with_metadata)} images, extracting text using {self.ocr_engine.upper()}...")
             
             for img_data in images_with_metadata:
                 try:
@@ -125,7 +125,7 @@ class CustomPptxLoader:
                         documents.append(doc)
                         
                 except Exception as e:
-                    print(f"⚠️ Failed to extract text from slide {slide_num}, image {image_index}: {str(e)}")
+                    print(f"âš ï¸ Failed to extract text from slide {slide_num}, image {image_index}: {str(e)}")
                     doc = Document(
                         page_content=f"[Slide {slide_num}, Image {image_index} - Error extracting text: {str(e)}]",
                         metadata={

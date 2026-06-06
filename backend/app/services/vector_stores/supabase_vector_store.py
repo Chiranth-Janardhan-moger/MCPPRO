@@ -54,10 +54,10 @@ class SupabaseVectorStoreService(BaseVectorStore):
         """Verify that the database has the required table and function"""
         try:
             result = self.supabase_client.table(self.table_name).select("id").limit(1).execute()
-            print(f"✅ Supabase table '{self.table_name}' is accessible")
+            print(f"âœ… Supabase table '{self.table_name}' is accessible")
         except Exception as e:
-            print(f"⚠️ Warning: Could not verify Supabase table '{self.table_name}': {e}")
-            print("💡 Make sure you have created the documents table with the pgvector extension")
+            print(f"âš ï¸ Warning: Could not verify Supabase table '{self.table_name}': {e}")
+            print("ðŸ’¡ Make sure you have created the documents table with the pgvector extension")
     
     def _get_embedding_dimension(self):
         """Get dimension based on embedding model"""
@@ -78,7 +78,7 @@ class SupabaseVectorStoreService(BaseVectorStore):
         if not ids:
             ids = [str(uuid.uuid4()) for _ in texts]
         
-        print(f"📝 Adding {len(texts)} documents to Supabase...")
+        print(f"ðŸ“ Adding {len(texts)} documents to Supabase...")
         
         try:
             documents = [
@@ -88,11 +88,11 @@ class SupabaseVectorStoreService(BaseVectorStore):
             
             added_ids = self.vector_store.add_documents(documents, ids=ids)
             
-            print(f"✅ Successfully added {len(added_ids)} documents to Supabase")
+            print(f"âœ… Successfully added {len(added_ids)} documents to Supabase")
             return added_ids
             
         except Exception as e:
-            print(f"❌ Error adding documents to Supabase: {e}")
+            print(f"âŒ Error adding documents to Supabase: {e}")
             raise e
     
     def similarity_search_with_score(
@@ -134,14 +134,14 @@ class SupabaseVectorStoreService(BaseVectorStore):
             result = self.supabase_client.table(self.table_name).delete().in_("id", ids).execute()
             
             if result.data:
-                print(f"✅ Deleted {len(result.data)} documents from Supabase")
+                print(f"âœ… Deleted {len(result.data)} documents from Supabase")
                 return True
             else:
-                print("⚠️ No documents were deleted (they may not exist)")
+                print("âš ï¸ No documents were deleted (they may not exist)")
                 return False
                 
         except Exception as e:
-            print(f"❌ Error deleting documents from Supabase: {e}")
+            print(f"âŒ Error deleting documents from Supabase: {e}")
             return False
     
     def get_document_count(self, namespace: Optional[str] = None) -> int:
@@ -156,25 +156,25 @@ class SupabaseVectorStoreService(BaseVectorStore):
             return result.count if result.count is not None else 0
             
         except Exception as e:
-            print(f"❌ Error getting document count from Supabase: {e}")
+            print(f"âŒ Error getting document count from Supabase: {e}")
             return 0
     
     def delete_all_documents(self, namespace: Optional[str] = None) -> bool:
         """Delete all documents from Supabase"""
         try:
-            print(f"🗑️ Deleting all documents from Supabase table: {self.table_name}")
+            print(f"ðŸ—‘ï¸ Deleting all documents from Supabase table: {self.table_name}")
             
             if namespace:
                 result = self.supabase_client.table(self.table_name).delete().eq("metadata->namespace", namespace).execute()
                 deleted_count = len(result.data) if result.data else 0
-                print(f"✅ Deleted {deleted_count} documents from namespace '{namespace}' in Supabase")
+                print(f"âœ… Deleted {deleted_count} documents from namespace '{namespace}' in Supabase")
             else:
                 result = self.supabase_client.table(self.table_name).delete().neq("id", "00000000-0000-0000-0000-000000000000").execute()
                 deleted_count = len(result.data) if result.data else 0
-                print(f"✅ Deleted all {deleted_count} documents from Supabase")
+                print(f"âœ… Deleted all {deleted_count} documents from Supabase")
             
             return True
             
         except Exception as e:
-            print(f"❌ Error deleting all documents from Supabase: {e}")
+            print(f"âŒ Error deleting all documents from Supabase: {e}")
             return False

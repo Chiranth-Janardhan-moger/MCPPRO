@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 from typing import List, Dict, Optional
 
-class MaxAgentResponse(BaseModel):
+class MCPProResponse(BaseModel):
     success: bool
     answers: List[str]
     processing_time: Optional[float] = None
@@ -9,7 +9,7 @@ class MaxAgentResponse(BaseModel):
     raw_response: Optional[Dict] = None  
     deleted_documents: Optional[bool] = None
 
-class MaxAgentProductionResponse(BaseModel):
+class MCPProProductionResponse(BaseModel):
     success: bool
     answers: List[str]
 

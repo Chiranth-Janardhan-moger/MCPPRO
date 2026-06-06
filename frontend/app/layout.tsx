@@ -8,8 +8,8 @@ import { Toaster } from "@/components/ui/toaster"
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'Max-Agent',
-  description: 'Max-Agent: Advanced Multi-Agent AI System',
+  title: 'MCPPro',
+  description: 'MCPPro: Advanced Multi-Agent AI System',
 }
 
 export default function RootLayout({

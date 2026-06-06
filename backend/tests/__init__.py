@@ -1,1 +1,1 @@
-# Tests module for HackRX API
+# Tests module for MCPPro API

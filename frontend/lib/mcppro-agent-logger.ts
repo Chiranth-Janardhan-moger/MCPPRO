@@ -1,4 +1,4 @@
-import { createSupabaseServer } from '@/lib/supabase/server';
+import supabaseAdmin from '@/lib/supabase/admin';
 
 export interface ToolCall {
   toolName: string;
@@ -8,7 +8,7 @@ export interface ToolCall {
   executionTime?: number;
 }
 
-export interface HackRxLogEntry {
+export interface MCPProLogEntry {
   url?: string;
   query?: string;
   questions: string[];
@@ -20,13 +20,13 @@ export interface HackRxLogEntry {
   toolCalls?: ToolCall[];
 }
 
-export async function logHackRxRequest(logEntry: HackRxLogEntry): Promise<void> {
+export async function logMCPProRequest(logEntry: MCPProLogEntry): Promise<void> {
   try {
-    const supabase = await createSupabaseServer();
+    const supabase = supabaseAdmin(); // Uses admin client to bypass RLS issues
 
     const dbLogEntry = {
       timestamp: new Date().toISOString(),
-      document_url: logEntry.url || logEntry.query || 'hackrx-challenge',
+      document_url: logEntry.url || logEntry.query || 'mcppro-agent-challenge',
       questions: logEntry.questions,
       answers: logEntry.answers,
       processing_time: logEntry.processingTime,
@@ -34,7 +34,7 @@ export async function logHackRxRequest(logEntry: HackRxLogEntry): Promise<void> 
         url: logEntry.url,
         query: logEntry.query,
         timestamp: new Date().toISOString(),
-        tool_type: 'hackrx_unified'
+        tool_type: 'mcppro_agent_unified'
       },
       raw_response: {
         ...logEntry.rawResponse || {},
@@ -44,11 +44,11 @@ export async function logHackRxRequest(logEntry: HackRxLogEntry): Promise<void> 
       error_message: logEntry.errorMessage,
       questions_count: logEntry.questions.length,
       chunks_processed: 0,
-      vector_store: 'hackrx_unified'
+      vector_store: 'mcppro_agent_unified'
     };
 
     const { error } = await supabase
-      .from('hackrx_requests')
+      .from('mcppro_requests') // Insert into renamed table
       .insert(dbLogEntry);
 
     if (error) {

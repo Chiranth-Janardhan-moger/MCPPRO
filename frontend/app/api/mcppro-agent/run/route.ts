@@ -1,11 +1,11 @@
 import { generateText } from 'ai';
 import { myProvider } from '@/app/chat/lib/ai/providers/providers';
-import { getMaxAgentUnifiedSystemPrompt } from '@/app/chat/lib/ai/prompts/base-prompt';
+import { getMCPProUnifiedSystemPrompt } from '@/app/chat/lib/ai/prompts/base-prompt';
 import { getQueryRefinementPrompt } from '@/app/chat/lib/ai/prompts/query-refinement-prompt';
 import { getStaticTools } from '@/app/chat/lib/ai/tools/tool-registry';
 import { mcpClientManager } from '@/app/chat/lib/ai/mcp-servers/mcp-client-manager';
-import { logMaxAgentRequest, type ToolCall } from '@/lib/max-agent-logger';
-import { parseSimpleAnswers } from '@/lib/max-agent-utils';
+import { logMCPProRequest, type ToolCall } from '@/lib/mcppro-agent-logger';
+import { parseSimpleAnswers } from '@/lib/mcppro-agent-utils';
 
 export const maxDuration = 600;
 
@@ -23,7 +23,7 @@ export async function POST(req: Request) {
     questions = requestBody.questions || [];
 
     if (!Array.isArray(questions) || questions.length === 0) {
-      await logMaxAgentRequest({
+      await logMCPProRequest({
         url,
         query,
         questions: questions || [],
@@ -103,7 +103,7 @@ export async function POST(req: Request) {
     const modelName = process.env.SELECTED_MODEL || 'gpt-4o-mini';
     const result = await generateText({
       model: myProvider.languageModel(modelName),
-      system: getMaxAgentUnifiedSystemPrompt(),
+      system: getMCPProUnifiedSystemPrompt(),
       prompt: prompt,
       tools,
       maxSteps: 15,
@@ -135,7 +135,7 @@ export async function POST(req: Request) {
     const answers = parseSimpleAnswers(result.text, questions.length);
     const processingTime = (Date.now() - startTime) / 1000;
 
-    await logMaxAgentRequest({
+    await logMCPProRequest({
       url,
       query,
       questions,
@@ -158,10 +158,10 @@ export async function POST(req: Request) {
     });
 
   } catch (error: any) {
-    console.error('[Max-Agent API] Error:', error);
+    console.error('[MCPPro API] Error:', error);
 
     const processingTime = (Date.now() - startTime) / 1000;
-    await logMaxAgentRequest({
+    await logMCPProRequest({
       url,
       query,
       questions,

@@ -60,5 +60,5 @@ export const footerConfig: FooterConfig = {
       ]
     }
   ],
-  copyright: `© ${new Date().getFullYear()} NextJS Template. All rights reserved.`
+  copyright: `Â© ${new Date().getFullYear()} NextJS Template. All rights reserved.`
 }

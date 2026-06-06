@@ -52,7 +52,7 @@ create table public.messages (
   constraint messages_conversation_id_fkey foreign KEY (conversation_id) references conversations (id) on delete CASCADE
 ) TABLESPACE pg_default;
 
-CREATE TABLE IF NOT EXISTS max_agent_requests (
+CREATE TABLE IF NOT EXISTS mcppro_requests (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     timestamp TIMESTAMPTZ DEFAULT NOW(),
     document_url TEXT NOT NULL,
@@ -69,6 +69,6 @@ CREATE TABLE IF NOT EXISTS max_agent_requests (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX IF NOT EXISTS idx_max_agent_requests_timestamp ON max_agent_requests(timestamp);
-CREATE INDEX IF NOT EXISTS idx_max_agent_requests_success ON max_agent_requests(success);
-CREATE INDEX IF NOT EXISTS idx_max_agent_requests_vector_store ON max_agent_requests(vector_store);
+CREATE INDEX IF NOT EXISTS idx_mcppro_requests_timestamp ON mcppro_requests(timestamp);
+CREATE INDEX IF NOT EXISTS idx_mcppro_requests_success ON mcppro_requests(success);
+CREATE INDEX IF NOT EXISTS idx_mcppro_requests_vector_store ON mcppro_requests(vector_store);

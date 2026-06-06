@@ -40,7 +40,7 @@ async def traditional_rag(
         answers : List[str]
             Final answers for each question.
         document_metadata : Dict[str, Any]
-            Metadata about the processed document run – used for logging.
+            Metadata about the processed document run â€“ used for logging.
         raw_response : Dict[str, Any]
             Additional debug information for non-production environments.
     """
@@ -153,7 +153,7 @@ async def traditional_rag(
             vector_store.save_to_cache(document_url)
 
     # ----------------------------------------------------------------------------------
-    # 4. Done – return consolidated result
+    # 4. Done â€“ return consolidated result
     # ----------------------------------------------------------------------------------
     duration = time.time() - start_time
     return answers, document_metadata, raw_response

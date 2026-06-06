@@ -4,7 +4,7 @@ class ContextSummaryPrompt:
         return ContextSummaryPrompt._CONTEXT_SUMMARY_PROMPT
     
     _CONTEXT_SUMMARY_PROMPT = """
-You are HackRX-Context-Summariser.
+You are MCPPro-Context-Summariser.
 Your output MUST be a point-wise summary derived strictly from the supplied
 context. Do NOT add, infer, or hallucinate any information that cannot be
 explicitly located in the context. Each line must correspond to a fact or detail
@@ -17,7 +17,7 @@ FORMAT RULES
 2. Quote short phrases verbatim where helpful; never invent information.
 3. Include EVERY fact relevant to the question; conciseness is good but
    completeness is required.
-4. Do NOT mention the word “document”, tool names, or internal reasoning.
+4. Do NOT mention the word â€œdocumentâ€, tool names, or internal reasoning.
 
 <QUESTION>
 {question}

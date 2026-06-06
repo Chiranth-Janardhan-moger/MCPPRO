@@ -7,24 +7,24 @@ from app.tools.registry import tool_registry
 from app.prompts.master_agent_prompt import MasterAgentPrompt
 from app.providers.factory import LLMProviderFactory
 from app.config.settings import settings
-from app.services.agents.worker_max_agent import WorkerMaxAgent
+from app.services.agents.worker_mcppro_agent import WorkerMCPPro
 from app.services.vector_stores.vector_store_factory import VectorStoreFactory
 
 
-class MasterMaxAgent:
+class MasterMCPPro:
     """Coordinates preprocessing and question answering.
 
     Execution flow:
-    1. Classify the incoming `document_url` → (is_supported_file, unsupported_ext).
-    2. If it is a supported local file → preprocess & fetch context snippet.
+    1. Classify the incoming `document_url` â†’ (is_supported_file, unsupported_ext).
+    2. If it is a supported local file â†’ preprocess & fetch context snippet.
     3. Decide `mode_token` using simple heuristics + an LLM selector prompt.
-       - unsupported file ext      → agentic (changed from traditional)
-       - non-file URL              → agentic
-       - otherwise                 → LLM decides
+       - unsupported file ext      â†’ agentic (changed from traditional)
+       - non-file URL              â†’ agentic
+       - otherwise                 â†’ LLM decides
     4. Execute the chosen pipeline with graceful fallback to agentic.
     """
     def __init__(self):
-        self.worker_agent = WorkerMaxAgent()
+        self.worker_agent = WorkerMCPPro()
 
     async def process_request(
         self,

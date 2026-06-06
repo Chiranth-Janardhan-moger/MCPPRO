@@ -17,8 +17,8 @@ export interface HeaderConfig {
 
 export const headerConfig: HeaderConfig = {
   brand: {
-    title: "Max-Agent",
-    icon: "/logos/omni-logo.webp"
+    title: "MCPPro",
+    icon: "/logos/mcppro-logo.png"
   },
   navigationLinks: [
     { 

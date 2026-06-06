@@ -35,7 +35,7 @@ class URLRequestTool(BaseTool):
                 )
                 
                 headers = {
-                    "User-Agent": "HackRX-Agent/1.0"
+                    "User-Agent": "MCPPro-Agent/1.0"
                 }
                 
                 cls._shared_session = aiohttp.ClientSession(

@@ -1,0 +1,86 @@
+name: MCPPro CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, master, dev ]
+  pull_request:
+    branches: [ main, master, dev ]
+
+jobs:
+  backend-ci:
+    name: Backend CI
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python 3.12
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+
+    - name: Install uv
+      run: |
+        curl -LsSf https://astral.sh/uv/install.sh | sh
+        echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+    - name: Install dependencies
+      run: |
+        cd backend
+        uv pip install --system -r requirements.txt
+
+    - name: Run code validation
+      run: |
+        cd backend
+        python -m py_compile main.py run_mcp.py app/*.py app/**/*.py
+
+    - name: Set up Docker Buildx
+      uses: actions/setup-buildx-action@v3
+
+    - name: Build Backend Docker Image (Dry Run)
+      uses: docker/build-push-action@v5
+      with:
+        context: ./backend
+        file: ./backend/Dockerfile
+        push: false
+        tags: mcppro-backend:latest
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+  frontend-ci:
+    name: Frontend CI
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Node.js 18
+      uses: actions/setup-node@v4
+      with:
+        node-version: 18
+        cache: 'npm'
+        cache-dependency-path: './frontend/package-lock.json'
+
+    - name: Install dependencies
+      run: |
+        cd frontend
+        npm ci
+
+    - name: Build Next.js Application
+      run: |
+        cd frontend
+        export NEXT_PUBLIC_SUPABASE_URL="https://dummy-url.supabase.co"
+        export NEXT_PUBLIC_SUPABASE_ANON_KEY="dummy-anon-key"
+        npm run build
+
+    - name: Build Frontend Docker Image (Dry Run)
+      uses: docker/build-push-action@v5
+      with:
+        context: ./frontend
+        file: ./frontend/Dockerfile
+        push: false
+        tags: mcppro-frontend:latest
+        cache-from: type=gha
+        cache-to: type=gha,mode=max

@@ -1,12 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
-from app.models.request import MaxAgentRequest
-from app.models.response import MaxAgentResponse, MaxAgentProductionResponse, HealthResponse
+from app.models.request import MCPProRequest
+from app.models.response import MCPProResponse, MCPProProductionResponse, HealthResponse
 from app.core.auth import verify_token
 from app.services.preprocessors.document_processor import DocumentProcessor
 from app.services.retrievers.retrieval_service import RetrievalService
 from app.services.vector_stores.vector_store_factory import VectorStoreFactory
 from app.services.logging.supabase_logger import supabase_logger
-from app.services.agents.master_max_agent import MasterMaxAgent
+from app.services.agents.master_mcppro_agent import MasterMCPPro
 from app.providers.factory import LLMProviderFactory
 from app.config.settings import settings
 from app.services.pipelines.traditional_rag import traditional_rag
@@ -23,7 +23,7 @@ llm_provider = LLMProviderFactory.create_provider(
     settings
 )
 
-max_agent = MasterMaxAgent()
+mcppro_agent = MasterMCPPro()
 
 document_processor = DocumentProcessor(
     vector_store=vector_store,
@@ -48,7 +48,7 @@ async def log_request_background(
 ):
     """Background task for logging requests to Supabase"""
     try:
-        await supabase_logger.log_max_agent_request(
+        await supabase_logger.log_mcppro_agent_request(
             document_url=document_url,
             questions=questions,
             answers=answers,
@@ -61,13 +61,13 @@ async def log_request_background(
     except Exception as e:
         print(f"Background logging failed: {e}")
 
-@router.post("/run", response_model=Union[MaxAgentResponse, MaxAgentProductionResponse])
-async def run_max_agent(
-    request: MaxAgentRequest,
+@router.post("/run", response_model=Union[MCPProResponse, MCPProProductionResponse])
+async def run_mcppro_agent(
+    request: MCPProRequest,
     background_tasks: BackgroundTasks,
     _: bool = Depends(verify_token)
 ):
-    """Main Max-Agent endpoint - process document and answer questions
+    """Main MCPPro endpoint - process document and answer questions
     
     Supports both traditional RAG processing and agentic processing with tools.
     
@@ -91,7 +91,7 @@ async def run_max_agent(
         if settings.AGENT_ENABLED:
             print("Using agentic processing with tools.")
             
-            agent_result = await max_agent.process_request(
+            agent_result = await mcppro_agent.process_request(
                 document_url=request.documents,
                 questions=request.questions,
                 k=request.k
@@ -142,12 +142,12 @@ async def run_max_agent(
         )
 
         if settings.ENVIRONMENT.lower() == "production":
-            return MaxAgentProductionResponse(
+            return MCPProProductionResponse(
                 success=True,
                 answers=answers
             )
         else:
-            return MaxAgentResponse(
+            return MCPProResponse(
                 success=True,
                 answers=answers,
                 processing_time=processing_time,

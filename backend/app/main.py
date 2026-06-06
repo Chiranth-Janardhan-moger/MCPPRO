@@ -24,7 +24,7 @@ app.include_router(api_router)
 @app.on_event("startup")
 async def startup_event():
     """Handle startup events"""
-    print("Starting Max-Agent API Server...")
+    print("Starting MCPPro API Server...")
     if platform.system() == "Windows":
         asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
         print("Set Windows asyncio loop policy to ProactorEventLoopPolicy")
@@ -32,7 +32,7 @@ async def startup_event():
 @app.on_event("shutdown")
 async def shutdown_event():
     """Handle shutdown events and cleanup"""
-    print("Shutting down Max-Agent API Server...")
+    print("Shutting down MCPPro API Server...")
     
     try:
         from app.tools.url_request_tool import URLRequestTool
@@ -46,7 +46,7 @@ async def shutdown_event():
 @app.get("/")
 async def root():
     return {
-        "message": "Max-Agent Intelligence System API",
+        "message": "MCPPro Intelligence System API",
         "version": "1.0.0",
         "docs": "/docs"
     }

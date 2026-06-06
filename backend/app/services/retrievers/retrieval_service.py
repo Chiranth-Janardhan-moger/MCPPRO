@@ -80,7 +80,7 @@ class RetrievalService:
                     }
                 }
                 
-                # print(f"✅ Answer: {answer}")
+                # print(f"âœ… Answer: {answer}")
                 return result
                 
             except Exception as e:

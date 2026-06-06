@@ -1,11 +1,11 @@
 version: '3.8'
 
 services:
-  hackrx-backend:
+  mcppro-backend:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: hackrx-api
+    container_name: mcppro-api
     ports:
       - "8000:8000"
     env_file:
@@ -24,8 +24,8 @@ services:
       retries: 3
       start_period: 40s
     networks:
-      - hackrx-network
+      - mcppro-network
 
 networks:
-  hackrx-network:
+  mcppro-network:
     driver: bridge

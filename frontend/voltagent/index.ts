@@ -51,7 +51,7 @@ async function getAllTools() {
 }
 
 const agent = new Agent({
-  name: "MaxAgent",
+  name: "MCPPro",
   instructions: getGeneralAgentPrompt(),
   llm: new VercelAIProvider(),
   model: getModelForAgent(), 

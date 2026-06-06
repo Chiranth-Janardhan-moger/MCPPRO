@@ -1,6 +1,6 @@
 # MCP Client Manager
 
-A centralized manager for handling multiple Model Context Protocol (MCP) servers in the HackRx application.
+A centralized manager for handling multiple Model Context Protocol (MCP) servers in the MCPPro application.
 
 ## Features
 
@@ -102,9 +102,9 @@ try {
 }
 ```
 
-## Integration with HackRx API
+## Integration with MCPPro API
 
-The manager is integrated into the main HackRx API route:
+The manager is integrated into the main MCPPro API route:
 
 ```typescript
 // In route.ts
@@ -125,18 +125,18 @@ const tools = {
 
 ```
 MCPClientManager
-├── Server Configs (playwright, github, etc.)
-├── Client States (per server)
-│   ├── client: MCP Client instance
-│   ├── tools: Available tools
-│   ├── initialized: Status flag
-│   └── initPromise: Initialization promise
-└── Methods
-    ├── init(): Initialize all servers
-    ├── getClient(): Get specific client
-    ├── getTools(): Get server tools
-    ├── getAllTools(): Aggregate all tools
-    └── Management methods
+â”œâ”€â”€ Server Configs (playwright, github, etc.)
+â”œâ”€â”€ Client States (per server)
+â”‚   â”œâ”€â”€ client: MCP Client instance
+â”‚   â”œâ”€â”€ tools: Available tools
+â”‚   â”œâ”€â”€ initialized: Status flag
+â”‚   â””â”€â”€ initPromise: Initialization promise
+â””â”€â”€ Methods
+    â”œâ”€â”€ init(): Initialize all servers
+    â”œâ”€â”€ getClient(): Get specific client
+    â”œâ”€â”€ getTools(): Get server tools
+    â”œâ”€â”€ getAllTools(): Aggregate all tools
+    â””â”€â”€ Management methods
 ```
 
 ## Benefits

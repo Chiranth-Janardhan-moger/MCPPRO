@@ -227,7 +227,7 @@ class FileProcessor:
     def process_to_chunks(self, documents: List, detected_type: str) -> Dict:
         """Process documents into cleaned chunks"""
         try:
-            print(f"📖 Processing {len(documents)} pages into chunks...")
+            print(f"ðŸ“– Processing {len(documents)} pages into chunks...")
             
             is_ocr_content = any(doc.metadata.get('extraction_method') == 'OCR' for doc in documents)
             extraction_method = 'OCR' if is_ocr_content else None

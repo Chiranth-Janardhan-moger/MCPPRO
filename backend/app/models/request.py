@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 from typing import List, Optional
 
-class MaxAgentRequest(BaseModel):
+class MCPProRequest(BaseModel):
     documents: str 
     questions: List[str]
     k: Optional[int] = 10 

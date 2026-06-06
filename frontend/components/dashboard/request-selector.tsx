@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { RequestSummary, getRequestSummaries } from '@/lib/queries/max-agent-requests';
+import { RequestSummary, getRequestSummaries } from '@/lib/queries/mcppro-requests';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';

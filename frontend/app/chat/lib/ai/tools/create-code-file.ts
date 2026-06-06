@@ -130,7 +130,7 @@ export const createCodeFileTool = tool({
         filePath: result.filePath,
         cliOutput: result.cliOutput,
         details: `File operation completed:
-- Repository: Max-Agent/ILLVZN
+- Repository: MCPPro/ILLVZN
 - File: ${targetFolder}/${filename}
 - CLI commands executed: ${cliCommands.length > 0 ? cliCommands.join(', ') : 'None'}`
       };

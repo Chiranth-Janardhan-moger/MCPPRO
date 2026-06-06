@@ -11,7 +11,7 @@ load_dotenv(env_path)
 class Settings(BaseSettings):
     # API Configuration (Required)
     API_V1_PREFIX: str = ""
-    PROJECT_NAME: str = "Max-Agent Intelligence System"
+    PROJECT_NAME: str = "MCPPro Intelligence System"
     
     # Environment Configuration (Required)
     ENVIRONMENT: str = os.getenv("ENVIRONMENT", "development")  # production, development
@@ -25,13 +25,13 @@ class Settings(BaseSettings):
     
     # Pinecone Configuration (Optional)
     PINECONE_API_KEY: str
-    PINECONE_INDEX_NAME: str = "hackrx-documents"
+    PINECONE_INDEX_NAME: str = "mcppro-documents"
     PINECONE_ENVIRONMENT: str = "us-east-1"
     
     # Qdrant Configuration (Optional)
     QDRANT_URL: Optional[str] = os.getenv("QDRANT_URL")
     QDRANT_API_KEY: Optional[str] = os.getenv("QDRANT_API_KEY")
-    QDRANT_COLLECTION_NAME: str = os.getenv("QDRANT_COLLECTION_NAME", "hackrx-documents")
+    QDRANT_COLLECTION_NAME: str = os.getenv("QDRANT_COLLECTION_NAME", "mcppro-documents")
     QDRANT_PATH: Optional[str] = os.getenv("QDRANT_PATH")  # For local on-disk storage
     QDRANT_PREFER_GRPC: bool = os.getenv("QDRANT_PREFER_GRPC", "true").lower() == "true"
     

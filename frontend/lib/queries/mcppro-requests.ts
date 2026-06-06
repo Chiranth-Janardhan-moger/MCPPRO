@@ -1,7 +1,7 @@
 import { createSupabaseBrowser } from '../supabase/client';
 
 // Types for the database schema
-export interface HackrxRequest {
+export interface MCPProRequest {
   id: string;
   timestamp: string;
   document_url: string;
@@ -59,33 +59,33 @@ export interface RequestSummary {
 }
 
 // Query functions
-export async function getAllHackrxRequests(): Promise<HackrxRequest[]> {
+export async function getAllMCPProRequests(): Promise<MCPProRequest[]> {
   const supabase = createSupabaseBrowser();
   
   const { data, error } = await supabase
-    .from('hackrx_requests')
+    .from('mcppro_requests') // Query renamed table
     .select('*')
     .order('created_at', { ascending: false });
 
   if (error) {
-    console.error('Error fetching hackrx requests:', error);
+    console.error('Error fetching mcppro_agent requests:', error);
     throw error;
   }
 
   return data || [];
 }
 
-export async function getHackrxRequestById(id: string): Promise<HackrxRequest | null> {
+export async function getMCPProRequestById(id: string): Promise<MCPProRequest | null> {
   const supabase = createSupabaseBrowser();
   
   const { data, error } = await supabase
-    .from('hackrx_requests')
+    .from('mcppro_requests')
     .select('*')
     .eq('id', id)
     .single();
 
   if (error) {
-    console.error('Error fetching hackrx request:', error);
+    console.error('Error fetching mcppro_agent request:', error);
     return null;
   }
 
@@ -96,7 +96,7 @@ export async function getRequestSummaries(): Promise<RequestSummary[]> {
   const supabase = createSupabaseBrowser();
   
   const { data, error } = await supabase
-    .from('hackrx_requests')
+    .from('mcppro_requests')
     .select('id, timestamp, document_url, questions_count, processing_time, success, vector_store')
     .order('created_at', { ascending: false });
 
@@ -108,11 +108,11 @@ export async function getRequestSummaries(): Promise<RequestSummary[]> {
   return data || [];
 }
 
-export async function getMultipleRequestsById(ids: string[]): Promise<HackrxRequest[]> {
+export async function getMultipleRequestsById(ids: string[]): Promise<MCPProRequest[]> {
   const supabase = createSupabaseBrowser();
   
   const { data, error } = await supabase
-    .from('hackrx_requests')
+    .from('mcppro_requests')
     .select('*')
     .in('id', ids);
 

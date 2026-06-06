@@ -55,7 +55,7 @@ class SupabaseLogger:
             return result
         
         try:
-            test_result = self.client.table("max_agent_requests").select("id").limit(1).execute()
+            test_result = self.client.table("mcppro_requests").select("id").limit(1).execute()
             result["connection_test"] = "success"
             result["table_accessible"] = True
         except Exception as e:
@@ -73,7 +73,7 @@ class SupabaseLogger:
         
         return result
     
-    async def log_max_agent_request(
+    async def log_mcppro_agent_request(
         self,
         document_url: str,
         questions: List[str],
@@ -84,7 +84,7 @@ class SupabaseLogger:
         success: bool = True,
         error_message: Optional[str] = None
     ) -> Optional[str]:
-        """Log a Max-Agent API request to Supabase"""
+        """Log a MCPPro API request to Supabase"""
         
         if not self.enabled or not self.client:
             logger.debug("Supabase logging disabled - skipping log entry")
@@ -109,10 +109,10 @@ class SupabaseLogger:
                 "vector_store": document_metadata.get("vector_store", "unknown")
             }
             
-            result = self.client.table("max_agent_requests").insert(log_entry).execute()
+            result = self.client.table("mcppro_requests").insert(log_entry).execute()
             
             if result.data:
-                logger.info(f"Logged Max-Agent request: {request_id}")
+                logger.info(f"Logged MCPPro request: {request_id}")
                 return request_id
             else:
                 logger.error(f"Failed to log request: {result}")
@@ -121,10 +121,10 @@ class SupabaseLogger:
         except Exception as e:
             error_type = type(e).__name__
             if "getaddrinfo failed" in str(e) or "11001" in str(e):
-                logger.error(f"DNS/Network error logging Max-Agent request: {str(e)}")
+                logger.error(f"DNS/Network error logging MCPPro request: {str(e)}")
                 logger.error(f"   Check your internet connection and Supabase URL: {settings.SUPABASE_URL}")
             else:
-                logger.error(f"Error logging Max-Agent request ({error_type}): {str(e)}")
+                logger.error(f"Error logging MCPPro request ({error_type}): {str(e)}")
             return None
     
 

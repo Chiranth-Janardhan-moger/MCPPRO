@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { MaxAgentRequest, getMultipleRequestsById, DebugInfo } from '@/lib/queries/max-agent-requests';
+import { MCPProRequest, getMultipleRequestsById, DebugInfo } from '@/lib/queries/mcppro-requests';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -15,7 +15,7 @@ interface ComparisonViewProps {
 }
 
 export function ComparisonView({ selectedRequests }: ComparisonViewProps) {
-  const [requests, setRequests] = useState<MaxAgentRequest[]>([]);
+  const [requests, setRequests] = useState<MCPProRequest[]>([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -169,7 +169,7 @@ export function ComparisonView({ selectedRequests }: ComparisonViewProps) {
   );
 }
 
-function QuestionComparisonGrid({ requests }: { requests: MaxAgentRequest[] }) {
+function QuestionComparisonGrid({ requests }: { requests: MCPProRequest[] }) {
   const maxQuestions = Math.max(
     ...requests.map(r => r.raw_response?.debug_info?.length || 0)
   );
@@ -204,7 +204,7 @@ function QuestionComparisonGrid({ requests }: { requests: MaxAgentRequest[] }) {
   );
 }
 
-function QuestionByQuestionView({ requests }: { requests: MaxAgentRequest[] }) {
+function QuestionByQuestionView({ requests }: { requests: MCPProRequest[] }) {
   const allQuestions = requests.flatMap((request, rIndex) => 
     (request.raw_response?.debug_info || []).map((debugInfo, qIndex) => ({
       requestIndex: rIndex,
@@ -296,7 +296,7 @@ function QuestionAnswerCard({ debugInfo }: { debugInfo: DebugInfo }) {
   );
 }
 
-function DiffComparisonView({ requests }: { requests: MaxAgentRequest[] }) {
+function DiffComparisonView({ requests }: { requests: MCPProRequest[] }) {
   if (requests.length !== 2) return null;
 
   const [request1, request2] = requests;

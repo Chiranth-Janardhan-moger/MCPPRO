@@ -4,7 +4,7 @@ from mcp_server.config.mcp_settings import MCP_SERVER_PORT
 from mcp_server.tools.retrieve_context_mcp import retrieve_context_mcp
 from mcp_server.tools.rag_mcp import rag_mcp
 
-mcp = FastMCP("hackrx-rag-server")
+mcp = FastMCP("mcppro-rag-server")
 
 @mcp.tool(description="Retrieve relevant chunks from documents using natural language queries")
 async def retrieve_context(questions: Union[str, List[str]], k: int = 10):

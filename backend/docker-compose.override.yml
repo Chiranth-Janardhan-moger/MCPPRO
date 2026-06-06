@@ -3,7 +3,7 @@
 version: '3.8'
 
 services:
-  hackrx-backend:
+  mcppro-backend:
     # Enable environment variable debugging
     environment:
       - DEBUG=true

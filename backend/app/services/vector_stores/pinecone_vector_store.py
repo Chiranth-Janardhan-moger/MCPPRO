@@ -115,7 +115,7 @@ class PineconeVectorStoreService(BaseVectorStore):
             enhanced_metadata = {k: str(v) for k, v in enhanced_metadata.items()}
             enhanced_metadatas.append(enhanced_metadata)
         
-        print(f"📝 Adding {len(texts)} documents to Pinecone...")
+        print(f"ðŸ“ Adding {len(texts)} documents to Pinecone...")
         
         # Add documents synchronously (blocking)
         self.vector_store.add_texts(
@@ -124,7 +124,7 @@ class PineconeVectorStoreService(BaseVectorStore):
             ids=ids,
         )
 
-        print(f"⏳ Waiting for Pinecone indexing to complete...")
+        print(f"â³ Waiting for Pinecone indexing to complete...")
         
         # More robust indexing verification with exponential backoff
         max_attempts = 15
@@ -153,19 +153,19 @@ class PineconeVectorStoreService(BaseVectorStore):
                     )
                 
                 if test_results and len(test_results) > 0:
-                    print(f"✅ Documents indexed and searchable after {attempt + 1} attempts")
-                    print(f"🔍 Found {len(test_results)} searchable documents")
+                    print(f"âœ… Documents indexed and searchable after {attempt + 1} attempts")
+                    print(f"ðŸ” Found {len(test_results)} searchable documents")
                     return ids
                 else:
                     # Exponential backoff with jitter
                     delay = min(base_delay * (2 ** min(attempt, 4)), 8)  # Cap at 8 seconds
-                    print(f"⏳ Waiting for indexing... (attempt {attempt + 1}/{max_attempts}, next check in {delay}s)")
+                    print(f"â³ Waiting for indexing... (attempt {attempt + 1}/{max_attempts}, next check in {delay}s)")
                     time.sleep(delay)
                     
             except Exception as e:
                 delay = min(base_delay * (2 ** min(attempt, 3)), 6)
-                print(f"⚠️ Error verifying indexing (attempt {attempt + 1}): {e}")
-                print(f"⏳ Retrying in {delay} seconds...")
+                print(f"âš ï¸ Error verifying indexing (attempt {attempt + 1}): {e}")
+                print(f"â³ Retrying in {delay} seconds...")
                 time.sleep(delay)
         
         # Final verification attempt
@@ -176,13 +176,13 @@ class PineconeVectorStoreService(BaseVectorStore):
                 filter={"document_id": document_id}
             )
             if final_test:
-                print("✅ Final verification successful!")
+                print("âœ… Final verification successful!")
                 return ids
         except:
             pass
             
-        print("⚠️ Warning: Could not fully verify document indexing, but proceeding...")
-        print(f"📊 Added {len(ids)} document IDs to index")
+        print("âš ï¸ Warning: Could not fully verify document indexing, but proceeding...")
+        print(f"ðŸ“Š Added {len(ids)} document IDs to index")
         return ids
     
     def similarity_search(
@@ -252,7 +252,7 @@ class PineconeVectorStoreService(BaseVectorStore):
     def delete_all_documents(self, namespace: Optional[str] = None) -> bool:
         """Delete all documents from Pinecone index and wait for deletion to propagate"""
         try:
-            print(f"🗑️ Deleting all documents from Pinecone index: {self.index_name}")
+            print(f"ðŸ—‘ï¸ Deleting all documents from Pinecone index: {self.index_name}")
             
             if namespace:
                 self.index.delete(delete_all=True, namespace=namespace)
@@ -260,7 +260,7 @@ class PineconeVectorStoreService(BaseVectorStore):
                 self.index.delete(delete_all=True)
             
             # Wait for deletion to propagate to avoid conflicts with subsequent requests
-            print("⏳ Waiting for deletion to propagate...")
+            print("â³ Waiting for deletion to propagate...")
             time.sleep(3)
             
             # Verify deletion by checking document count
@@ -273,22 +273,22 @@ class PineconeVectorStoreService(BaseVectorStore):
                     if namespace and namespace in stats.namespaces:
                         namespace_count = stats.namespaces[namespace].vector_count
                         if namespace_count == 0:
-                            print(f"✅ All documents deleted from namespace '{namespace}'")
+                            print(f"âœ… All documents deleted from namespace '{namespace}'")
                             return True
                     elif total_count == 0:
-                        print(f"✅ All documents deleted from Pinecone index")
+                        print(f"âœ… All documents deleted from Pinecone index")
                         return True
                     else:
-                        print(f"⏳ Waiting for deletion to complete... ({total_count} docs remaining, attempt {attempt + 1})")
+                        print(f"â³ Waiting for deletion to complete... ({total_count} docs remaining, attempt {attempt + 1})")
                         time.sleep(1)
                         
                 except Exception as e:
-                    print(f"⚠️ Error checking deletion status (attempt {attempt + 1}): {e}")
+                    print(f"âš ï¸ Error checking deletion status (attempt {attempt + 1}): {e}")
                     time.sleep(1)
             
-            print(f"✅ Deletion command sent successfully (may still be propagating)")
+            print(f"âœ… Deletion command sent successfully (may still be propagating)")
             return True
             
         except Exception as e:
-            print(f"❌ Error deleting documents: {e}")
+            print(f"âŒ Error deleting documents: {e}")
             return False
