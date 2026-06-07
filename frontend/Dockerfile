@@ -1,12 +1,12 @@
 # Stage 1: Build dependency cache
-FROM node:18-alpine AS deps
+FROM node:20-alpine AS deps
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
 
 # Stage 2: Build the source code
-FROM node:18-alpine AS builder
+FROM node:20-alpine AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
@@ -16,10 +16,11 @@ ENV NEXT_TELEMETRY_DISABLED=1
 # We set dummy values so build succeeds
 ENV NEXT_PUBLIC_SUPABASE_URL=https://dummy-url.supabase.co
 ENV NEXT_PUBLIC_SUPABASE_ANON_KEY=dummy-anon-key
+ENV CI=true
 RUN npm run build
 
 # Stage 3: Production runner
-FROM node:18-alpine AS runner
+FROM node:20-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=3000

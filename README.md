@@ -1,24 +1,93 @@
 # 🤖 MCPPro Intelligence System
 
-Welcome to the **MCPPro Intelligence System**, a production-grade, state-of-the-art AI agent and Document RAG (Retrieval-Augmented Generation) orchestration platform. MCPPro features a decoupled architecture with a modern Next.js frontend, a robust FastAPI backend, support for the **Model Context Protocol (MCP)**, and native containerization.
+Welcome to the **MCPPro Intelligence System**, a production-grade, state-of-the-art AI agent and Document RAG (Retrieval-Augmented Generation) orchestration platform. MCPPro features a decoupled architecture split across an orchestrator layer, a specialized Model Context Protocol (MCP) tool layer, a FastAPI document processing pipeline, and secure telemetry/vector storage.
 
 ---
 
 ## 🏗️ System Architecture
 
+The MCPPro architecture consists of five main layers, structured as follows:
+
 ```mermaid
 graph TD
-    User([User]) <--> NextJS[Next.js 14 Frontend<br/>Port: 3000]
-    NextJS <--> FastAPI[FastAPI Backend & MCP Server<br/>Port: 8000/8001]
-    NextJS <--> LLM[LLM Providers<br/>OpenAI, Gemini, Anthropic, etc.]
-    FastAPI <--> VectorStore[(Vector Database<br/>InMemory / Qdrant / Pinecone)]
-    FastAPI <--> DB[(Supabase PostgreSQL<br/>Telemetry & Logs)]
+    %% Client Layer
+    subgraph ClientLayer["1. CLIENT LAYER"]
+        Chat["Web Chat Interface<br/>- Chat Interface<br/>- Streaming Responses<br/>- File/Document Upload"]
+        Admin["Admin Dashboard<br/>- API Monitoring<br/>- Analytics & Metrics<br/>- Request Logs"]
+    end
+
+    %% Backend 1 Layer
+    subgraph Backend1["2. BACKEND 1 (ORCHESTRATOR - Next.js)"]
+        RunEndpoint["/api/run (Evaluation)<br/>- Query Refinement (up to 15 steps)<br/>- Tool Orchestration"]
+        ChatEndpoint["/api/chat (Chat)<br/>- Multi-agent Coordination<br/>- Context Management"]
+        AuthEndpoint["/api/auth (Auth)<br/>- Session Management<br/>- Supabase Auth"]
+        MCPClient["MCP Client Manager<br/>- Discovers & manages MCP servers<br/>- Routes tools/agents dynamically"]
+        Observability["Observability Layer<br/>- Tracing & Performance Metrics<br/>- Tool Execution Logs"]
+    end
+
+    %% LLM Providers
+    LLM["LLM PROVIDERS<br/>- OpenAI (GPT-4.1)<br/>- Google Gemini<br/>- Grok"]
+
+    %% Tool Layer
+    subgraph ToolLayer["3. TOOL LAYER (Registered & executed by MCP Client Manager)"]
+        subgraph CoreTools["Core Tools"]
+            JS["JavaScript Runner<br/>(Sandboxed Execution)"]
+            FC["File Creator<br/>(Create/Edit Files)"]
+            WS["Web Search<br/>(Search & Retrieve)"]
+        end
+        subgraph MCPServers["MCP Servers"]
+            BrowserMCP["Browser MCP Server<br/>(Automation & Scraping)"]
+            RAGMCP["RAG MCP Server<br/>(connects to Backend 2)"]
+            ComputerMCP["Computer MCP Server<br/>(OS automation)"]
+        end
+        subgraph ExternalAPIs["External APIs & Services"]
+            Tavily["Tavily Web Search"]
+            GitHub["GitHub API"]
+            Resend["Resend Email"]
+            V0["v0 UI Generator"]
+        end
+    end
+
+    %% Backend 2 Layer
+    subgraph Backend2["4. BACKEND 2 (FastAPI / Python)"]
+        subgraph RAGPipeline["Document Intelligence & RAG Pipeline"]
+            DocPipe["Document Pipeline<br/>(PDF, DOCX, PPTX, Images)"] --> OCR["OCR Engine<br/>(Tesseract, EasyOCR)"]
+            OCR --> Embed["Embedding Engine<br/>(OpenAI Embeddings, BGE-M3)"]
+            Embed --> Retrieve["RAG Retrieval Engine<br/>(Similarity Search, LangChain QA)"]
+            Retrieve --> Context["Relevant Context<br/>for the Agent"]
+        end
+    end
+
+    %% Data Layer
+    subgraph DataLayer["5. DATA LAYER"]
+        Supabase["Supabase PostgreSQL<br/>- Users & Sessions<br/>- Logs & Analytics<br/>- Settings & File Metadata"]
+        VectorDBs["Vector Databases<br/>- Pinecone<br/>- Qdrant<br/>- PGVector"]
+    end
+
+    %% Connections
+    Chat & Admin <-->|"HTTPS / WebSocket"| Backend1
+    Backend1 <--> LLM
+    Backend1 <--> MCPClient
+    Backend1 <--> Observability
+    
+    MCPClient <--> CoreTools
+    MCPClient <--> MCPServers
+    MCPClient <--> ExternalAPIs
+    
+    RAGMCP <--> Backend2
+    
+    RAGPipeline <--> VectorDBs
+    Backend1 <--> Supabase
+    Supabase <-->|"Secure Connection"| VectorDBs
 ```
 
-MCPPro is split into three main components:
-1. **Frontend (Next.js 14 Web App)**: Implements interactive chat interfaces, document upload workflows, and an API gateway for serverless LLM/MCP orchestrations. Exposes pages optimized for user interaction and real-time streaming responses.
-2. **Backend (FastAPI Python Microservice)**: Drives the agentic RAG pipeline, providing document parsing (PDF, DOCX, TXT, OCR), chunking, and embedding. It also runs a **Model Context Protocol (MCP)** server via FastMCP to expose RAG tools.
-3. **Database & Storage**: Integrates with PostgreSQL (Supabase) for logging agent executions and vector databases (SQLite/In-Memory, Qdrant, or Pinecone) for high-performance semantic search.
+### The 5 Architectural Layers:
+
+1. **Client Layer**: Contains the **Web Chat Interface** (with streaming responses, multi-model selection, and file uploading) and the **Admin Dashboard** (with request logs, analytics, and service metrics).
+2. **Backend 1 (Orchestrator)**: Next.js 14 API routes (`/api/run`, `/api/chat`, and `/api/auth`) act as the entry point. The **MCP Client Manager** in this layer coordinates multi-agent interactions and decides which tool or agent should handle a query.
+3. **Tool Layer**: Houses core tools (such as JavaScript execution and file editing), specialized **MCP Servers** (like the web-browsing agent and RAG query agent), and external integrations (Tavily search, GitHub, Resend, and v0).
+4. **Backend 2 (FastAPI/Python)**: Houses the **Document Intelligence & RAG Pipeline**. Handles document uploading, OCR extraction (using Tesseract/EasyOCR), embeddings generation (BGE-M3 or OpenAI), and document retrieval.
+5. **Data Layer**: Relies on **Supabase PostgreSQL** as the core transactional database for logging, sessions, user settings, and metadata, alongside **Vector Databases** (Qdrant, Pinecone, or PGVector) for semantic storage.
 
 ---
 

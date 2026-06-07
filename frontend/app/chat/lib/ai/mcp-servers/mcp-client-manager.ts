@@ -34,6 +34,7 @@ interface ClientState {
 function createMCPClientManager(): MCPClientManager {
   const clients: Map<string, ClientState> = new Map();
   let globalInitPromise: Promise<void> | null = null;
+  const isCIEnvironment = process.env.CI === 'true';
 
   const serverConfigs: Record<string, MCPServerConfig> = {
     playwright: {
@@ -50,21 +51,21 @@ function createMCPClientManager(): MCPClientManager {
         'c7eefd65-fbfe-405c-b071-f54ad4165201'
       ],
       transport: 'stdio',
-      enabled: true
+      enabled: !isCIEnvironment
     },
 
     computer: {
       name: 'computer',
       url: 'http://127.0.0.1:8002/mcp',
       transport: 'http',
-      enabled: true
+      enabled: !isCIEnvironment
     },
 
     rag: {
       name: 'rag',
       url: 'http://127.0.0.1:8001/mcp',
       transport: 'http',
-      enabled: true
+      enabled: !isCIEnvironment
     },
 
     v0: {
@@ -78,7 +79,7 @@ function createMCPClientManager(): MCPClientManager {
         `Authorization: Bearer ${process.env.V0_BEARER_TOKEN || 'v1:d26X3nJ7mNh9UZPFeeC5Cy0T:FbeW8NZLX8zugE58Bf7TopCJ'}`
       ],
       transport: 'stdio',
-      enabled: true
+      enabled: !isCIEnvironment
     }
   
     
@@ -175,7 +176,11 @@ function createMCPClientManager(): MCPClientManager {
       state.client = null;
       state.tools = {};
       state.initialized = false;
-      throw error;
+      if (process.env.CI === 'true') {
+        console.warn(`Ignoring MCP client initialization error for ${serverName} due to CI environment`);
+      } else {
+        throw error;
+      }
     }
   }
 
