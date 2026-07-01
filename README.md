@@ -1,10 +1,10 @@
-# 🤖 MCPPro Intelligence System
+#  MCPPro Intelligence System
 
 Welcome to the **MCPPro Intelligence System**, a production-grade, state-of-the-art AI agent and Document RAG (Retrieval-Augmented Generation) orchestration platform. MCPPro features a decoupled architecture split across an orchestrator layer, a specialized Model Context Protocol (MCP) tool layer, a FastAPI document processing pipeline, and secure telemetry/vector storage.
 
 ---
 
-## 🏗️ System Architecture
+## ️ System Architecture
 
 The MCPPro architecture consists of five main layers, structured as follows:
 
@@ -91,9 +91,9 @@ graph TD
 
 ---
 
-## 🚀 Quick Start
+##  Quick Start
 
-### 📋 Prerequisites
+###  Prerequisites
 Make sure you have the following installed on your machine:
 - **Node.js**: `18.x` or later (with `npm` package manager)
 - **Python**: `3.12.x` (recommended)
@@ -182,7 +182,7 @@ If you prefer to run the components manually for development:
 
 ---
 
-## ⚙️ Environment Variables Configuration
+## ️ Environment Variables Configuration
 
 Both frontend and backend rely on configuration files (`.env` and `.env.local` respectively). Key configuration values include:
 
@@ -201,7 +201,7 @@ Both frontend and backend rely on configuration files (`.env` and `.env.local` r
 
 ---
 
-## 🛠️ CI/CD Pipeline
+## ️ CI/CD Pipeline
 
 The project is configured with an automated CI/CD pipeline using GitHub Actions, located in [.github/workflows/ci-cd.yml](file:///D:/Antigravity/Major-project/MCPPRO%20agent-main/.github/workflows/ci-cd.yml). 
 
@@ -211,7 +211,7 @@ The pipeline runs validation steps on every push and pull request to `main`, `ma
 
 ---
 
-## 📈 RAG Evaluation & Diagnostics
+##  RAG Evaluation & Diagnostics
 
 To verify the quality and latency of the RAG (Retrieval-Augmented Generation) search engine, run the automated evaluation runner:
 
@@ -224,5 +224,5 @@ This evaluations suite tests index latency, query-answering latency, and cosine 
 
 ---
 
-## 📄 Production Readiness
+##  Production Readiness
 For production deployments, high-availability architecture, failover guidelines, and scaling checklists, please consult the complete [PRODUCTION_READINESS.md](file:///D:/Antigravity/Major-project/MCPPRO%20agent-main/PRODUCTION_READINESS.md).
