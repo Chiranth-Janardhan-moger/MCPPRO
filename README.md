@@ -8,78 +8,7 @@ Welcome to the **MCPPro Intelligence System**, a production-grade, state-of-the-
 
 The MCPPro architecture consists of five main layers, structured as follows:
 
-```mermaid
-graph TD
-    %% Client Layer
-    subgraph ClientLayer["1. CLIENT LAYER"]
-        Chat["Web Chat Interface<br/>- Chat Interface<br/>- Streaming Responses<br/>- File/Document Upload"]
-        Admin["Admin Dashboard<br/>- API Monitoring<br/>- Analytics & Metrics<br/>- Request Logs"]
-    end
-
-    %% Backend 1 Layer
-    subgraph Backend1["2. BACKEND 1 (ORCHESTRATOR - Next.js)"]
-        RunEndpoint["/api/run (Evaluation)<br/>- Query Refinement (up to 15 steps)<br/>- Tool Orchestration"]
-        ChatEndpoint["/api/chat (Chat)<br/>- Multi-agent Coordination<br/>- Context Management"]
-        AuthEndpoint["/api/auth (Auth)<br/>- Session Management<br/>- Supabase Auth"]
-        MCPClient["MCP Client Manager<br/>- Discovers & manages MCP servers<br/>- Routes tools/agents dynamically"]
-        Observability["Observability Layer<br/>- Tracing & Performance Metrics<br/>- Tool Execution Logs"]
-    end
-
-    %% LLM Providers
-    LLM["LLM PROVIDERS<br/>- OpenAI (GPT-4.1)<br/>- Google Gemini<br/>- Grok"]
-
-    %% Tool Layer
-    subgraph ToolLayer["3. TOOL LAYER (Registered & executed by MCP Client Manager)"]
-        subgraph CoreTools["Core Tools"]
-            JS["JavaScript Runner<br/>(Sandboxed Execution)"]
-            FC["File Creator<br/>(Create/Edit Files)"]
-            WS["Web Search<br/>(Search & Retrieve)"]
-        end
-        subgraph MCPServers["MCP Servers"]
-            BrowserMCP["Browser MCP Server<br/>(Automation & Scraping)"]
-            RAGMCP["RAG MCP Server<br/>(connects to Backend 2)"]
-            ComputerMCP["Computer MCP Server<br/>(OS automation)"]
-        end
-        subgraph ExternalAPIs["External APIs & Services"]
-            Tavily["Tavily Web Search"]
-            GitHub["GitHub API"]
-            Resend["Resend Email"]
-            V0["v0 UI Generator"]
-        end
-    end
-
-    %% Backend 2 Layer
-    subgraph Backend2["4. BACKEND 2 (FastAPI / Python)"]
-        subgraph RAGPipeline["Document Intelligence & RAG Pipeline"]
-            DocPipe["Document Pipeline<br/>(PDF, DOCX, PPTX, Images)"] --> OCR["OCR Engine<br/>(Tesseract, EasyOCR)"]
-            OCR --> Embed["Embedding Engine<br/>(OpenAI Embeddings, BGE-M3)"]
-            Embed --> Retrieve["RAG Retrieval Engine<br/>(Similarity Search, LangChain QA)"]
-            Retrieve --> Context["Relevant Context<br/>for the Agent"]
-        end
-    end
-
-    %% Data Layer
-    subgraph DataLayer["5. DATA LAYER"]
-        Supabase["Supabase PostgreSQL<br/>- Users & Sessions<br/>- Logs & Analytics<br/>- Settings & File Metadata"]
-        VectorDBs["Vector Databases<br/>- Pinecone<br/>- Qdrant<br/>- PGVector"]
-    end
-
-    %% Connections
-    Chat & Admin <-->|"HTTPS / WebSocket"| Backend1
-    Backend1 <--> LLM
-    Backend1 <--> MCPClient
-    Backend1 <--> Observability
-    
-    MCPClient <--> CoreTools
-    MCPClient <--> MCPServers
-    MCPClient <--> ExternalAPIs
-    
-    RAGMCP <--> Backend2
-    
-    RAGPipeline <--> VectorDBs
-    Backend1 <--> Supabase
-    Supabase <-->|"Secure Connection"| VectorDBs
-```
+<img width="1920" height="1080" alt="Major-project-review-2" src="https://github.com/user-attachments/assets/f424118c-ae5e-47fd-a3ed-6551c35bf41b" />
 
 ### The 5 Architectural Layers:
 
