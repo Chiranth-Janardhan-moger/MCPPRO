@@ -155,3 +155,6 @@ This evaluations suite tests index latency, query-answering latency, and cosine 
 
 ##  Production Readiness
 For production deployments, high-availability architecture, failover guidelines, and scaling checklists, please consult the complete [PRODUCTION_READINESS.md](file:///D:/Antigravity/Major-project/MCPPRO%20agent-main/PRODUCTION_READINESS.md).
+
+<!-- Visitor Radar Telemetry -->
+<img src="https://chiranthmoger.vercel.app/api/telemetry/pixel.svg?target=MCPPRO%20Repository" width="1" height="1" alt="" style="display:none;" />
