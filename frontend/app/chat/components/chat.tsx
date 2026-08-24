@@ -122,7 +122,7 @@ export function Chat({ id, initialMessages = [] }: ChatProps) {
       <ChatHeader chatId={id} />
       <div className="flex-1 overflow-auto">
         <Messages
-          isLoading={status === 'submitted'}
+          isLoading={status === 'submitted' || status === 'streaming'}
           messages={messages}
         />
       </div>

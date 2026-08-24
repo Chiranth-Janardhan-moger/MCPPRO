@@ -41,9 +41,10 @@ function PureMessages({
         </div>
       ))}
 
-      {isLoading && messages[messages.length - 1]?.role === 'user' && (
-        <ThinkingMessage />
-      )}
+      {isLoading &&
+        (messages[messages.length - 1]?.role === 'user' ||
+          (messages[messages.length - 1]?.role === 'assistant' &&
+            !messages[messages.length - 1]?.content)) && <ThinkingMessage />}
 
       <div ref={messagesEndRef as React.RefObject<HTMLDivElement>} />
     </div>
