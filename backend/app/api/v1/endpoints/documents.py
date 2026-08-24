@@ -12,6 +12,7 @@ router = APIRouter()
 ALLOWED_EXTENSIONS = {
     ".pdf", ".doc", ".docx", ".ppt", ".pptx",
     ".txt", ".md", ".xlsx", ".xls", ".jpg", ".jpeg", ".png",
+    ".csv", ".json", ".xml", ".html",
 }
 MAX_UPLOAD_BYTES = 25 * 1024 * 1024
 

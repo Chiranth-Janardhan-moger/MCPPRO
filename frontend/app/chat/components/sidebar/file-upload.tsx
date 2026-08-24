@@ -32,30 +32,34 @@ export function FileUpload() {
 
       if (!response.ok) {
         const detail = await response.json().catch(() => null);
-        throw new Error(detail?.error || 'Upload failed');
+        throw new Error(detail?.detail || detail?.error || `Upload failed with HTTP ${response.status}`);
       }
 
       const result = await response.json().catch(() => null);
 
       // Record the upload for the Document Manager (RLS-scoped to this user).
-      const supabase = createSupabaseBrowser();
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        await supabase.from('user_documents').insert({
-          user_id: user.id,
-          file_name: file.name,
-          status: result?.success ? 'ready' : 'failed',
-          document_ref: result?.document_id ?? null,
-          chunk_count: result?.chunks_processed ?? null,
-        });
+      try {
+        const supabase = createSupabaseBrowser();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          await supabase.from('user_documents').insert({
+            user_id: user.id,
+            file_name: file.name,
+            status: result?.success ? 'ready' : 'failed',
+            document_ref: result?.document_id ?? null,
+            chunk_count: result?.chunks_processed ?? null,
+          });
+        }
+      } catch (dbErr) {
+        console.warn('[file-upload] Metadata recording skipped:', dbErr);
       }
 
       toast.success('Uploaded successfully!', {
         id: uploadToast,
-        description: `${file.name} uploaded and indexed successfully (${result?.chunks_processed ?? 'ready'}).`,
+        description: `${file.name} uploaded and indexed successfully (${result?.chunks_processed ?? 'ready'} chunks).`,
       });
     } catch (error) {
-      toast.error('Error',
+      toast.error('Upload Error',
         {
           id: uploadToast,
           description: error instanceof Error ? error.message : 'Could not upload file.',
@@ -98,7 +102,7 @@ export function FileUpload() {
                 ref={fileInputRef}
                 onChange={handleFileChange}
                 className="hidden"
-                accept=".pdf,.txt,.md,.docx"
+                accept=".pdf,.txt,.md,.docx,.doc,.csv,.json,.xlsx,.xls,.ppt,.pptx,.png,.jpg,.jpeg"
               />
               <Button variant="outline" onClick={() => setIsDialogOpen(true)}>
                 Manage Documents

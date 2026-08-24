@@ -45,11 +45,12 @@ export async function POST(req: Request) {
       if (typeof value === 'string') upstreamForm.append(key, value);
     }
 
+    const backendUrl = (process.env.BACKEND_URL || 'http://127.0.0.1:8000').trim().replace(/\/$/, '');
     const headers: Record<string, string> = {};
     const token = process.env.BACKEND_BEARER_TOKEN || process.env.BEARER_TOKEN;
-    if (token) headers.Authorization = `Bearer ${token}`;
+    if (token) headers.Authorization = `Bearer ${token.trim()}`;
 
-    const upstream = await fetch(`${BACKEND_URL}/documents/upload`, {
+    const upstream = await fetch(`${backendUrl}/documents/upload`, {
       method: 'POST',
       headers,
       body: upstreamForm,
