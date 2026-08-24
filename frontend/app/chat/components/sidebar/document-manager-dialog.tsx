@@ -147,52 +147,88 @@ export function DocumentManagerDialog({ isOpen, onOpenChange }: DocumentManagerD
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           ) : (
-            <ScrollArea className="h-[400px] pr-4">
-              <div className="grid gap-3">
+            <ScrollArea className="h-[360px] pr-3">
+              <div className="space-y-2">
                 {documents.length > 0 ? (
                   documents.map((doc) => (
-                    <Card key={doc.id} className="border-border/60 hover:border-border transition-colors">
-                      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium truncate pr-2 max-w-[280px]">
-                          {doc.file_name}
-                        </CardTitle>
-                        <div className="flex items-center gap-2">
-                          <Badge
-                            variant={getStatusVariant(doc.status)}
-                            className={`capitalize ${getStatusColorClass(doc.status)}`}
+                    <div
+                      key={doc.id}
+                      className="group flex items-center justify-between gap-3 p-2.5 sm:p-3 rounded-xl border border-border/70 bg-card hover:bg-accent/40 hover:border-blue-300 dark:hover:border-blue-800 transition-all"
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600 dark:bg-blue-950/50 dark:text-blue-400">
+                          <svg
+                            className="h-4 w-4"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
                           >
-                            {doc.status.replace(/_/g, ' ')}
-                          </Badge>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-muted-foreground hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
-                            onClick={() => handleDelete(doc.id, doc.file_name)}
-                            disabled={deletingId === doc.id}
-                            title="Delete document"
-                          >
-                            {deletingId === doc.id ? (
-                              <Loader2 className="h-4 w-4 animate-spin text-red-500" />
-                            ) : (
-                              <Trash2 className="h-4 w-4" />
-                            )}
-                          </Button>
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                            />
+                          </svg>
                         </div>
-                      </CardHeader>
-                      <CardContent>
-                        <p className="text-xs text-muted-foreground">
-                          {typeof doc.chunk_count === 'number' && doc.chunk_count > 0
-                            ? `${doc.chunk_count} chunks · `
-                            : ''}
-                          Last updated: {new Date(doc.updated_at).toLocaleString()}
-                        </p>
-                      </CardContent>
-                    </Card>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-xs sm:text-sm font-semibold truncate text-foreground">
+                            {doc.file_name}
+                          </p>
+                          <p className="text-[11px] text-muted-foreground flex items-center gap-1.5 mt-0.5">
+                            {typeof doc.chunk_count === 'number' && doc.chunk_count > 0 ? (
+                              <span className="font-medium text-blue-600 dark:text-sky-400">
+                                {doc.chunk_count} chunks
+                              </span>
+                            ) : null}
+                            {typeof doc.chunk_count === 'number' && doc.chunk_count > 0 ? (
+                              <span>•</span>
+                            ) : null}
+                            <span>
+                              {new Date(doc.updated_at).toLocaleDateString(undefined, {
+                                month: 'short',
+                                day: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              })}
+                            </span>
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 shrink-0">
+                        <Badge
+                          variant={getStatusVariant(doc.status)}
+                          className={`text-[10px] px-2 py-0.5 font-medium capitalize rounded-md ${getStatusColorClass(doc.status)}`}
+                        >
+                          {doc.status.replace(/_/g, ' ')}
+                        </Badge>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 text-muted-foreground hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-lg transition-colors cursor-pointer"
+                          onClick={() => handleDelete(doc.id, doc.file_name)}
+                          disabled={deletingId === doc.id}
+                          title="Delete document"
+                        >
+                          {deletingId === doc.id ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin text-red-500" />
+                          ) : (
+                            <Trash2 className="h-3.5 w-3.5" />
+                          )}
+                        </Button>
+                      </div>
+                    </div>
                   ))
                 ) : (
-                  <p className="text-sm text-muted-foreground text-center py-10">
-                    No documents have been uploaded yet.
-                  </p>
+                  <div className="text-center py-12 px-4">
+                    <p className="text-sm text-muted-foreground font-medium">
+                      No documents indexed yet.
+                    </p>
+                    <p className="text-xs text-muted-foreground/70 mt-1">
+                      Upload PDFs, Markdown, or text files to query with RAG.
+                    </p>
+                  </div>
                 )}
               </div>
             </ScrollArea>

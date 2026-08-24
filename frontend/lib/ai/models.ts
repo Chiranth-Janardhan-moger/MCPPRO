@@ -306,7 +306,29 @@ export const MODEL_CATALOG: ModelInfo[] = [
     capabilities: TOOLS_STREAM,
   },
 
-  // ---------- xAI ----------
+  // ---------- xAI Grok ----------
+  {
+    id: 'grok-3',
+    label: 'Grok 3',
+    provider: 'xai',
+    description: 'xAI flagship deep reasoning and STEM frontier model',
+    contextWindow: 131_072,
+    maxOutputTokens: 16_384,
+    inputPricePerMTok: 3,
+    outputPricePerMTok: 15,
+    capabilities: FULL,
+  },
+  {
+    id: 'grok-3-mini',
+    label: 'Grok 3 Mini',
+    provider: 'xai',
+    description: 'High-speed reasoning model for coding and logic',
+    contextWindow: 131_072,
+    maxOutputTokens: 16_384,
+    inputPricePerMTok: 0.8,
+    outputPricePerMTok: 4,
+    capabilities: FULL,
+  },
   {
     id: 'grok-2-1212',
     label: 'Grok 2',
@@ -327,6 +349,31 @@ export const MODEL_CATALOG: ModelInfo[] = [
     maxOutputTokens: 8_192,
     inputPricePerMTok: 2,
     outputPricePerMTok: 10,
+    capabilities: FULL,
+  },
+  {
+    id: 'grok-beta',
+    label: 'Grok Beta',
+    provider: 'xai',
+    description: 'Original high-throughput Grok model',
+    contextWindow: 131_072,
+    maxOutputTokens: 8_192,
+    inputPricePerMTok: 5,
+    outputPricePerMTok: 15,
+    capabilities: FULL,
+  },
+
+  // ---------- Groq (Free Tier LPUs) ----------
+  {
+    id: 'deepseek-r1-distill-llama-70b',
+    label: 'DeepSeek R1 Distill 70B (Groq)',
+    provider: 'groq',
+    description: 'Ultra-fast DeepSeek R1 reasoning on Groq LPU',
+    contextWindow: 128_000,
+    maxOutputTokens: 8_192,
+    inputPricePerMTok: 0.59,
+    outputPricePerMTok: 0.79,
+    freeTier: true,
     capabilities: FULL,
   },
 
@@ -359,6 +406,15 @@ export const MODEL_CATALOG: ModelInfo[] = [
     capabilities: TOOLS_STREAM,
   },
   {
+    id: 'meta-llama/llama-3.1-8b-instruct:free',
+    label: 'Llama 3.1 8B (free)',
+    provider: 'openrouter',
+    description: 'Fast lightweight free Llama model',
+    contextWindow: 131_072,
+    freeTier: true,
+    capabilities: TOOLS_STREAM,
+  },
+  {
     id: 'qwen/qwen-2.5-72b-instruct:free',
     label: 'Qwen 2.5 72B (free)',
     provider: 'openrouter',
@@ -366,6 +422,15 @@ export const MODEL_CATALOG: ModelInfo[] = [
     contextWindow: 32_768,
     freeTier: true,
     capabilities: TOOLS_STREAM,
+  },
+  {
+    id: 'google/gemini-2.0-flash-exp:free',
+    label: 'Gemini 2.0 Flash Exp (free)',
+    provider: 'openrouter',
+    description: 'Free experimental Gemini 2.0 Flash via OpenRouter',
+    contextWindow: 1_000_000,
+    freeTier: true,
+    capabilities: FULL,
   },
   {
     id: 'mistralai/mistral-7b-instruct:free',
@@ -410,6 +475,17 @@ export const MODEL_CATALOG: ModelInfo[] = [
     capabilities: FULL,
   },
   {
+    id: 'openai/o3-mini',
+    label: 'o3-mini (OpenRouter)',
+    provider: 'openrouter',
+    description: 'OpenAI STEM reasoning model via OpenRouter',
+    contextWindow: 200_000,
+    inputPricePerMTok: 1.1,
+    outputPricePerMTok: 4.4,
+    freeTier: false,
+    capabilities: FULL,
+  },
+  {
     id: 'deepseek/deepseek-r1',
     label: 'DeepSeek R1 (OpenRouter)',
     provider: 'openrouter',
@@ -447,13 +523,9 @@ export function getModelInfo(id: string): ModelInfo | undefined {
   return MODEL_CATALOG.find((m) => m.id === id);
 }
 
-/** Curated models from configured providers only, default first. */
+/** Curated models: always expose the full catalog so users can select any model */
 export function availableModels(): ModelInfo[] {
-  const configured = MODEL_CATALOG.filter((m) =>
-    isProviderConfigured(m.provider)
-  );
-  if (configured.length === 0) return MODEL_CATALOG;
-  const sorted = [...configured].sort(
+  const sorted = [...MODEL_CATALOG].sort(
     (a, b) => Number(b.freeTier ?? false) - Number(a.freeTier ?? false)
   );
   if (!sorted.some((m) => m.id === DEFAULT_MODEL_ID)) return sorted;
@@ -466,14 +538,10 @@ export function availableModels(): ModelInfo[] {
 export function resolveModel(requested?: string | null): ModelInfo {
   if (requested) {
     const info = getModelInfo(requested);
-    if (info && isProviderConfigured(info.provider)) return info;
+    if (info) return info;
     // Unknown ids are allowed through for providers that accept dynamic ids
     // (OpenRouter hosts hundreds); route by prefix when possible.
-    if (info) return info;
-    if (
-      requested.includes('/') &&
-      isProviderConfigured('openrouter')
-    ) {
+    if (requested.includes('/')) {
       return {
         id: requested,
         label: requested,
@@ -483,9 +551,8 @@ export function resolveModel(requested?: string | null): ModelInfo {
     }
   }
   const fallback =
-    getModelInfo(DEFAULT_MODEL_ID) &&
-    isProviderConfigured('google')
-      ? getModelInfo(DEFAULT_MODEL_ID)!
-      : availableModels()[0] ?? getModelInfo('gpt-4o-mini')!;
+    getModelInfo(DEFAULT_MODEL_ID) ??
+    availableModels()[0] ??
+    MODEL_CATALOG[0];
   return fallback;
 }

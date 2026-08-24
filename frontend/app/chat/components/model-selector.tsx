@@ -99,12 +99,12 @@ function PickerBody({ models, selectedModel, onSelect }: PickerBodyProps) {
   const [view, setView] = React.useState<"providers" | "models">("providers")
   const [activeProvider, setActiveProvider] = React.useState<string | null>(null)
   const [query, setQuery] = React.useState("")
-  const [openRouterFilter, setOpenRouterFilter] = React.useState<"all" | "free" | "paid">("all")
+  const [modelFilter, setModelFilter] = React.useState<"all" | "free" | "paid">("all")
 
   const groups = React.useMemo(() => {
     const map = new Map<string, SelectorModel[]>()
-    // Ordered providers
-    const providerOrder = ["anthropic", "openai", "google", "openrouter", "groq", "xai"]
+    // Ordered providers: Anthropic, OpenAI, Google, xAI Grok, Groq, OpenRouter
+    const providerOrder = ["anthropic", "openai", "google", "xai", "groq", "openrouter"]
     for (const p of providerOrder) {
       map.set(p, [])
     }
@@ -128,22 +128,17 @@ function PickerBody({ models, selectedModel, onSelect }: PickerBodyProps) {
           )
         : list
 
-      if (provider === "openrouter" && openRouterFilter !== "all") {
-        filtered = filtered.filter((m) =>
-          openRouterFilter === "free" ? Boolean(m.freeTier) : !m.freeTier
-        )
-      }
-
       if (filtered.length > 0) out.set(provider, filtered)
     }
     return out
-  }, [groups, query, openRouterFilter])
+  }, [groups, query])
 
   function choose(value: string) {
     onSelect(value)
     setView("providers")
     setActiveProvider(null)
     setQuery("")
+    setModelFilter("all")
   }
 
   const activeList = React.useMemo(() => {
@@ -158,13 +153,13 @@ function PickerBody({ models, selectedModel, onSelect }: PickerBodyProps) {
         )
       : list
 
-    if (activeProvider === "openrouter" && openRouterFilter !== "all") {
-      filtered = filtered.filter((m) =>
-        openRouterFilter === "free" ? Boolean(m.freeTier) : !m.freeTier
-      )
+    if (modelFilter === "free") {
+      filtered = filtered.filter((m) => Boolean(m.freeTier))
+    } else if (modelFilter === "paid") {
+      filtered = filtered.filter((m) => !m.freeTier)
     }
     return filtered
-  }, [activeProvider, groups, query, openRouterFilter])
+  }, [activeProvider, groups, query, modelFilter])
 
   if (view === "providers") {
     return (
@@ -174,15 +169,16 @@ function PickerBody({ models, selectedModel, onSelect }: PickerBodyProps) {
             autoFocus
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search all models..."
+            placeholder="Search all frontier & open models..."
             className="h-8 bg-transparent text-xs"
           />
         </div>
-        <div className="max-h-[340px] overflow-y-auto p-1.5 space-y-1">
+        <div className="max-h-[360px] overflow-y-auto p-1.5 space-y-1">
           {[...filteredGroups.entries()].map(([provider, list]) => {
             const config = PROVIDER_CONFIG[provider]
             const Icon = config?.icon ?? Bot
             const hasFree = list.some((m) => m.freeTier)
+            const count = list.length
 
             return (
               <button
@@ -191,37 +187,38 @@ function PickerBody({ models, selectedModel, onSelect }: PickerBodyProps) {
                   setActiveProvider(provider)
                   setView("models")
                   setQuery("")
+                  setModelFilter("all")
                 }}
-                className="flex w-full items-center justify-between rounded-lg p-2 text-left text-sm transition-colors hover:bg-accent/70 group"
+                className="flex w-full items-center justify-between rounded-xl p-2.5 text-left text-sm transition-all hover:bg-accent/80 hover:border-blue-200 dark:hover:border-blue-900 group cursor-pointer"
               >
-                <div className="flex items-center gap-2.5 min-w-0">
-                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600 dark:bg-blue-950/50 dark:text-blue-400 group-hover:bg-blue-600 group-hover:text-white transition-colors shadow-sm">
                     <Icon className="h-4 w-4" />
                   </div>
                   <div className="flex flex-col min-w-0">
-                    <span className="font-medium text-xs truncate">
+                    <span className="font-semibold text-xs text-foreground truncate">
                       {providerLabel(provider)}
                     </span>
-                    <span className="text-[10px] text-muted-foreground truncate">
-                      {config?.description ?? `${list.length} models available`}
+                    <span className="text-[11px] text-muted-foreground truncate">
+                      {config?.description ?? `${count} models available`}
                     </span>
                   </div>
                 </div>
-                <div className="flex items-center gap-1 shrink-0 ml-2">
+                <div className="flex items-center gap-1.5 shrink-0 ml-2">
                   {hasFree && (
-                    <Badge variant="outline" className="text-[9px] px-1 py-0 border-emerald-500/40 text-emerald-600 dark:text-emerald-400">
+                    <Badge variant="outline" className="text-[9px] px-1.5 py-0 border-emerald-500/40 text-emerald-600 dark:text-emerald-400 font-medium">
                       Free Tier
                     </Badge>
                   )}
-                  <span className="text-xs text-muted-foreground font-mono">
-                    {list.length}
+                  <span className="text-xs text-muted-foreground font-mono bg-muted/60 px-1.5 py-0.5 rounded-md">
+                    {count}
                   </span>
                 </div>
               </button>
             )
           })}
           {filteredGroups.size === 0 && (
-            <p className="px-2 py-6 text-center text-xs text-muted-foreground">
+            <p className="px-2 py-8 text-center text-xs text-muted-foreground">
               No models found matching &quot;{query}&quot;
             </p>
           )}
@@ -230,98 +227,109 @@ function PickerBody({ models, selectedModel, onSelect }: PickerBodyProps) {
     )
   }
 
+  const hasFreeInActive = (groups.get(activeProvider ?? "") ?? []).some((m) => m.freeTier)
+
   return (
     <div className="flex flex-col outline-none">
-      <div className="flex items-center justify-between border-b p-1.5">
-        <div className="flex items-center gap-1 min-w-0">
+      <div className="flex items-center justify-between border-b p-2">
+        <div className="flex items-center gap-1.5 min-w-0">
           <Button
             variant="ghost"
             size="icon"
-            className="h-6 w-6 rounded-md"
+            className="h-6 w-6 rounded-md hover:bg-accent cursor-pointer"
             onClick={() => {
               setView("providers")
               setQuery("")
+              setModelFilter("all")
             }}
           >
-            <ChevronLeftIcon className="h-3.5 w-3.5" />
+            <ChevronLeftIcon className="h-4 w-4" />
           </Button>
-          <span className="truncate text-xs font-semibold">
+          <span className="truncate text-xs font-bold text-foreground">
             {activeProvider ? providerLabel(activeProvider) : "Models"}
           </span>
         </div>
-        <span className="text-[10px] text-muted-foreground font-mono px-1">
+        <span className="text-[10px] text-muted-foreground font-mono bg-muted/60 px-1.5 py-0.5 rounded-md">
           {activeList.length} models
         </span>
       </div>
 
-      <div className="border-b p-1.5 flex flex-col gap-1.5">
+      <div className="border-b p-2 flex flex-col gap-1.5">
         <Input
           autoFocus
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder={`Filter ${activeProvider ? providerLabel(activeProvider) : ''} models...`}
+          placeholder={`Search ${activeProvider ? providerLabel(activeProvider) : ''} models...`}
           className="h-7 text-xs bg-transparent"
         />
 
-        {activeProvider === "openrouter" && (
-          <div className="flex items-center gap-1 pt-0.5">
-            <span className="text-[10px] text-muted-foreground font-medium mr-1">Filter:</span>
-            {(["all", "free", "paid"] as const).map((filterType) => (
+        {/* Free / Paid Model Filter */}
+        <div className="flex items-center gap-1.5 pt-0.5">
+          <span className="text-[10px] text-muted-foreground font-medium mr-0.5">Models:</span>
+          {(["all", "free", "paid"] as const).map((filterType) => {
+            const isActive = modelFilter === filterType
+            return (
               <button
                 key={filterType}
                 type="button"
-                onClick={() => setOpenRouterFilter(filterType)}
+                onClick={() => setModelFilter(filterType)}
                 className={cn(
-                  "text-[10px] px-2 py-0.5 rounded-full font-medium transition-colors",
-                  openRouterFilter === filterType
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted text-muted-foreground hover:text-foreground"
+                  "text-[10px] px-2.5 py-0.5 rounded-full font-medium transition-all cursor-pointer",
+                  isActive
+                    ? "bg-blue-600 text-white shadow-sm"
+                    : "bg-muted text-muted-foreground hover:text-foreground hover:bg-muted/80"
                 )}
               >
-                {filterType === "all" ? "All" : filterType === "free" ? "Free Only" : "Paid"}
+                {filterType === "all" ? "All" : filterType === "free" ? "Free Tier" : "Paid"}
               </button>
-            ))}
-          </div>
-        )}
+            )
+          })}
+        </div>
       </div>
 
-      <div className="max-h-[300px] overflow-y-auto p-1 space-y-0.5">
+      <div className="max-h-[320px] overflow-y-auto p-1.5 space-y-1">
         {activeList.map((m) => (
           <button
             key={m.value}
             onClick={() => choose(m.value)}
             className={cn(
-              "flex w-full items-start justify-between gap-2 rounded-md px-2 py-1.5 text-left text-xs transition-colors hover:bg-accent",
-              m.value === selectedModel && "bg-accent/80 font-medium"
+              "flex w-full items-start justify-between gap-2 rounded-xl p-2 text-left text-xs transition-all hover:bg-accent/80 cursor-pointer",
+              m.value === selectedModel && "bg-blue-50/80 border border-blue-200 text-blue-950 font-medium"
             )}
           >
-            <div className="flex min-w-0 flex-col items-start">
-              <span className="flex items-center gap-1.5 truncate font-medium">
+            <div className="flex min-w-0 flex-col items-start gap-0.5">
+              <span className="flex items-center gap-1.5 truncate font-semibold text-foreground">
                 {m.label}
                 {m.freeTier && (
-                  <Badge variant="outline" className="text-[9px] px-1 py-0 text-emerald-600 dark:text-emerald-400 border-emerald-500/30">
+                  <Badge variant="outline" className="text-[9px] px-1 py-0 text-emerald-600 border-emerald-500/40 font-medium">
                     Free
                   </Badge>
                 )}
               </span>
-              {!m.freeTier && m.inputPricePerMTok != null && (
+              {!m.freeTier && m.inputPricePerMTok != null ? (
                 <span className="text-[10px] text-muted-foreground">
                   ${m.inputPricePerMTok}/M in · ${m.outputPricePerMTok ?? "?"}/M out
                 </span>
-              )}
+              ) : m.freeTier ? (
+                <span className="text-[10px] text-emerald-600/80 font-medium">
+                  Free tier available
+                </span>
+              ) : null}
             </div>
             <CheckIcon
               className={cn(
-                "mt-0.5 h-3.5 w-3.5 shrink-0 text-primary",
+                "mt-0.5 h-4 w-4 shrink-0 text-blue-600",
                 selectedModel === m.value ? "opacity-100" : "opacity-0"
               )}
             />
           </button>
         ))}
         {activeList.length === 0 && (
-          <p className="px-2 py-6 text-center text-xs text-muted-foreground">
-            No models available under this filter.
-          </p>
+          <div className="text-center py-8 px-3">
+            <p className="text-xs text-muted-foreground font-medium">
+              No models available under &quot;{modelFilter}&quot; filter.
+            </p>
+          </div>
         )}
       </div>
     </div>
@@ -338,7 +346,7 @@ function TriggerLabel({
   const current =
     models.find((m) => m.value === selectedModel)?.label ?? "Select model"
   return (
-    <span className="truncate max-w-[130px] sm:max-w-[180px]">{current}</span>
+    <span className="truncate max-w-[140px] sm:max-w-[200px]">{current}</span>
   )
 }
 
@@ -352,7 +360,7 @@ export function ModelSelector({ models, selectedModel, setSelectedModel }: Model
       variant="ghost"
       role="combobox"
       aria-expanded={open}
-      className="h-7 w-auto px-2 justify-start gap-1 text-xs text-muted-foreground hover:text-foreground font-medium rounded-lg hover:bg-accent/60"
+      className="h-7 w-auto px-2 justify-start gap-1 text-xs text-muted-foreground hover:text-foreground font-medium rounded-lg hover:bg-accent/60 cursor-pointer"
     >
       <TriggerLabel models={models} selectedModel={selectedModel} />
       {current === undefined && models.length === 0 ? (
@@ -369,7 +377,7 @@ export function ModelSelector({ models, selectedModel, setSelectedModel }: Model
     return (
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>{trigger}</PopoverTrigger>
-        <PopoverContent align="start" className="w-[320px] p-0 shadow-lg border">
+        <PopoverContent align="start" className="w-[340px] sm:w-[370px] p-0 shadow-xl border rounded-2xl overflow-hidden">
           <PickerBody {...bodyProps} />
         </PopoverContent>
       </Popover>
