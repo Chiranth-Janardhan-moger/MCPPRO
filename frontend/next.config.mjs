@@ -13,11 +13,6 @@ const nextConfig = {
     '@voltagent/vercel-ai',
     '@voltagent/vercel-ui',
   ],
-  experimental: {
-    serverActions: {
-      bodySizeLimit: '5mb',
-    },
-  },
 };
 
 export default nextConfig;
