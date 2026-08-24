@@ -25,39 +25,46 @@ _singletons = {}
 
 
 def _get_services():
-    """Lazily build the heavy singletons on first use.
-
-    Import-time construction made `/health` fail (and Pinecone block for 10s)
-    whenever optional credentials were missing; lazy construction keeps the
-    API process up and only fails the endpoints that actually need them.
-    """
+    """Lazily build the heavy singletons on first use."""
     if "services" not in _singletons:
         try:
             vector_store = VectorStoreFactory.create_vector_store(settings)
-            llm_provider = LLMProviderFactory.create_provider(
-                settings.DEFAULT_LLM_PROVIDER, settings
-            )
+
+            llm_provider = None
+            try:
+                provider_name = settings.DEFAULT_LLM_PROVIDER
+                if provider_name == "openai" and not settings.OPENAI_API_KEY:
+                    if settings.GEMINI_API_KEY or getattr(settings, "GOOGLE_API_KEY", None):
+                        provider_name = "gemini"
+                    elif settings.GROQ_API_KEY:
+                        provider_name = "groq"
+                llm_provider = LLMProviderFactory.create_provider(provider_name, settings)
+            except Exception as e:
+                logger.warning("LLM provider init deferred: %s", e)
+
+            _singletons["services"] = {
+                "vector_store": vector_store,
+                "llm_provider": llm_provider,
+                "mcppro_agent": MasterMCPPro() if llm_provider else None,
+                "document_processor": DocumentProcessor(
+                    vector_store=vector_store,
+                    chunk_size=settings.CHUNK_SIZE,
+                    chunk_overlap=settings.CHUNK_OVERLAP,
+                ),
+                "retrieval_service": (
+                    RetrievalService(
+                        vector_store=vector_store,
+                        llm_provider=llm_provider,
+                    )
+                    if llm_provider
+                    else None
+                ),
+            }
         except Exception as exc:
-            # Configuration problems (missing keys, unreachable stores) must
-            # surface as a clean 503, not an unhandled 500.
             raise HTTPException(
                 status_code=503,
                 detail=f"Backend services unavailable: {exc}",
             )
-        _singletons["services"] = {
-            "vector_store": vector_store,
-            "llm_provider": llm_provider,
-            "mcppro_agent": MasterMCPPro(),
-            "document_processor": DocumentProcessor(
-                vector_store=vector_store,
-                chunk_size=settings.CHUNK_SIZE,
-                chunk_overlap=settings.CHUNK_OVERLAP,
-            ),
-            "retrieval_service": RetrievalService(
-                vector_store=vector_store,
-                llm_provider=llm_provider,
-            ),
-        }
     return _singletons["services"]
 
 

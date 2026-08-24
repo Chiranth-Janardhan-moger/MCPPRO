@@ -48,6 +48,11 @@ app.add_middleware(
     allow_headers=["Authorization", "Content-Type"],
 )
 
+from app.api.v1.endpoints.documents import router as documents_router
+from app.api.v1.endpoints.mcppro_agent import router as mcppro_agent_router
+
+app.include_router(mcppro_agent_router, prefix="/mcppro-agent", tags=["MCPPro"])
+app.include_router(documents_router, prefix="/documents", tags=["Documents"])
 app.include_router(api_router)
 
 
