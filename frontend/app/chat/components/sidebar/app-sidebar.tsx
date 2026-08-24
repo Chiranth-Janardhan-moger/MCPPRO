@@ -30,7 +30,7 @@ interface AppSidebarProps {
 export function AppSidebar({ user }: AppSidebarProps) {
   const router = useRouter();
   const { setOpenMobile } = useSidebar();
-  const { createConversation } = useConversationsContext();
+  const { createConversation, conversations } = useConversationsContext();
   const appName = process.env.NEXT_PUBLIC_APP_NAME || "MCPPro";
   const appIcon = process.env.NEXT_PUBLIC_APP_ICON || "/logo.svg";
   return (
@@ -64,14 +64,19 @@ export function AppSidebar({ user }: AppSidebarProps) {
             </Link>
             <Tooltip>
               <TooltipTrigger asChild>
-                {/* <Link href="/chat"> */}
                 <Button
                   variant="ghost"
                   type="button"
-                  className="p-2 h-fit"
+                  className="p-2 h-fit cursor-pointer"
                   onClick={async () => {
                     setOpenMobile(false);
                     if (!user) return;
+                    // If an empty "New Chat" already exists, reuse it instead of creating duplicates
+                    const existingEmpty = conversations.find(c => c.title === "New Chat");
+                    if (existingEmpty) {
+                      router.push(`/chat/${existingEmpty.id}`);
+                      return;
+                    }
                     const newConv = await createConversation(user.id, "New Chat");
                     if (newConv) {
                       router.push(`/chat/${newConv.id}`);
@@ -80,7 +85,6 @@ export function AppSidebar({ user }: AppSidebarProps) {
                 >
                   <PlusIcon />
                 </Button>
-                {/* </Link> */}
 
               </TooltipTrigger>
               <TooltipContent align="end">process</TooltipContent>
