@@ -16,6 +16,7 @@ export function FileUpload() {
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
+    setIsPopoverOpen(false);
 
     const formData = new FormData();
     formData.append('file', file);
@@ -54,7 +55,7 @@ export function FileUpload() {
         console.warn('[file-upload] Metadata recording skipped:', dbErr);
       }
 
-      toast.success('Uploaded successfully!', {
+      toast.success('Successfully file uploaded', {
         id: uploadToast,
         description: `${file.name} uploaded and indexed successfully (${result?.chunks_processed ?? 'ready'} chunks).`,
       });
