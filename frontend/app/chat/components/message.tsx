@@ -45,10 +45,10 @@ const PurePreviewMessage = ({
           >
             {message.content && (
               <div
-                className={cn("px-4 py-2.5 rounded-2xl text-sm leading-relaxed transition-colors", {
-                  "bg-blue-600 text-white font-normal rounded-tr-xs shadow-sm":
+                className={cn("px-4 py-2.5 rounded-2xl text-sm leading-relaxed transition-all", {
+                  "bg-gradient-to-br from-blue-100/80 via-white to-sky-100/70 border border-blue-200/80 dark:from-blue-950/50 dark:via-zinc-900 dark:to-sky-950/40 dark:border-blue-800/50 text-blue-950 dark:text-blue-100 font-normal rounded-tr-xs shadow-xs":
                     isUser,
-                  "bg-zinc-100 dark:bg-zinc-800/90 border border-zinc-200 dark:border-zinc-700/60 text-zinc-900 dark:text-zinc-100 rounded-tl-xs shadow-sm":
+                  "bg-white/90 dark:bg-zinc-800/90 border border-zinc-200/80 dark:border-zinc-700/60 text-zinc-900 dark:text-zinc-100 rounded-tl-xs shadow-xs":
                     !isUser,
                 })}
               >
