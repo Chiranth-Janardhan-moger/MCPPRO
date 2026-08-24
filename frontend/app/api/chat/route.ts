@@ -5,7 +5,7 @@ import { getModelInfo, isProviderConfigured } from '@/lib/ai/models';
 import { getLanguageModel } from '@/app/chat/lib/ai/providers/providers';
 import { getGeneralAgentPrompt } from '@/app/chat/lib/ai/prompts/general-agent';
 import { getMCPTools } from '@/voltagent/tools/mcpTools';
-import { tavilySearchTool, generateChartTool, generateImageTool } from '@/voltagent/tools/customTools';
+import { tavilySearchTool, generateChartTool, generateImageTool, searchUploadedDocumentsTool } from '@/voltagent/tools/customTools';
 
 export const maxDuration = 60;
 
@@ -67,6 +67,11 @@ export async function POST(req: Request) {
               }
 
               const tools: Record<string, any> = {
+                searchUploadedDocuments: {
+                  description: searchUploadedDocumentsTool.description,
+                  parameters: (searchUploadedDocumentsTool as any).parameters,
+                  execute: searchUploadedDocumentsTool.execute,
+                },
                 tavilySearch: {
                   description: tavilySearchTool.description,
                   parameters: (tavilySearchTool as any).parameters,

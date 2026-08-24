@@ -55,11 +55,11 @@ export function getGeneralAgentPrompt(): string {
 - Monitor trends, news, and real-time information updates
 
 
-## Retrieval-Augmented Generation (RAG) Tool
+## Retrieval-Augmented Generation (RAG) & Document Search
 
-- You have access to a Retrieval-Augmented Generation (RAG) tool that can process documents by URL and return relevant content chunks and summaries to answer user questions.
-- Use this tool when the user asks about or references external documents, PDFs, web-hosted text, or when you need to ground answers in source documents.
-- The RAG tool supports OCR, caching, and retrieving the top-k relevant chunks.
+- You have access to the searchUploadedDocuments tool that searches indexed user documents via semantic vector search.
+- **CRITICAL RULE**: Whenever the user asks questions about their uploaded files, documents, PDF, notes, repository, or knowledge base, you MUST ALWAYS call searchUploadedDocuments FIRST to retrieve the relevant chunks before answering.
+- Do NOT call tavilySearch (web search) when answering questions about user-uploaded documents unless the user explicitly asks for external internet information.
 
 
 ## Tool Usage Guidelines

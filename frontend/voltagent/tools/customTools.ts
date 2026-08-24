@@ -78,6 +78,42 @@ export const tavilySearchTool = createTool({
   },
 });
 
+export const searchUploadedDocumentsTool = createTool({
+  name: "searchUploadedDocuments",
+  description: "Search indexed user documents and files via RAG vector search. ALWAYS call this tool first whenever the user asks questions about their uploaded files, documents, text, code, or knowledge base.",
+  parameters: z.object({
+    query: z.string().describe("The search query or question to retrieve relevant chunks from the uploaded documents"),
+  }),
+  execute: async (args) => {
+    try {
+      const backendUrl = (process.env.BACKEND_URL || 'http://127.0.0.1:8000').trim().replace(/\/$/, '');
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      const token = process.env.BACKEND_BEARER_TOKEN || process.env.BEARER_TOKEN;
+      if (token) headers.Authorization = `Bearer ${token.trim()}`;
+
+      const res = await fetch(`${backendUrl}/documents/query`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ query: args.query, k: 5 }),
+        signal: AbortSignal.timeout(30_000),
+      });
+
+      if (!res.ok) {
+        const errText = await res.text().catch(() => '');
+        return JSON.stringify({ error: `Could not retrieve document chunks: ${errText || res.status}` });
+      }
+
+      const data = await res.json();
+      return JSON.stringify(data);
+    } catch (err: any) {
+      console.error('Error in searchUploadedDocumentsTool:', err);
+      return JSON.stringify({ error: `RAG search error: ${err.message}` });
+    }
+  },
+});
+
 export const generateImageTool = createTool({
   name: "generateImage",
   description: "Generate an image based on a textual prompt",

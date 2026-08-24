@@ -79,3 +79,48 @@ async def list_documents(_: bool = Depends(verify_token)):
     services = _get_services()
     vector_store = services["vector_store"]
     return vector_store.get_document_summaries()
+
+
+from pydantic import BaseModel
+
+class DocumentSearchRequest(BaseModel):
+    query: str
+    k: int = 5
+
+
+@router.post("/query")
+async def query_documents(
+    payload: DocumentSearchRequest,
+    _: bool = Depends(verify_token),
+):
+    """Semantic vector search across indexed documents."""
+    services = _get_services()
+    vector_store = services["vector_store"]
+    try:
+        if hasattr(vector_store, "similarity_search_with_score"):
+            results = vector_store.similarity_search_with_score(payload.query, k=payload.k)
+        elif hasattr(vector_store, "similarity_search"):
+            raw = vector_store.similarity_search(payload.query, k=payload.k)
+            results = [(d, 0.0) for d in raw]
+        else:
+            results = []
+
+        chunks = []
+        for doc, score in results:
+            content = getattr(doc, "page_content", "") or (doc.get("text") if isinstance(doc, dict) else str(doc))
+            meta = getattr(doc, "metadata", {}) or (doc.get("metadata") if isinstance(doc, dict) else {})
+            chunks.append({
+                "content": content,
+                "metadata": meta,
+                "score": float(score) if score is not None else 0.0,
+            })
+
+        return {
+            "success": True,
+            "query": payload.query,
+            "count": len(chunks),
+            "chunks": chunks,
+        }
+    except Exception as e:
+        return {"success": False, "error": str(e), "chunks": []}
+
