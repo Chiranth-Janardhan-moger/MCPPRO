@@ -4,7 +4,7 @@ import { agent } from '@/voltagent';
 import { runWithRequestContext } from '@/lib/request-context';
 import { getModelInfo, isProviderConfigured } from '@/lib/ai/models';
 
-export const maxDuration = 300;
+export const maxDuration = 60;
 
 export async function POST(req: Request) {
   try {

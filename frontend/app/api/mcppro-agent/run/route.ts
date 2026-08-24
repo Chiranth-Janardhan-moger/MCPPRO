@@ -8,7 +8,7 @@ import { parseSimpleAnswers } from '@/lib/mcppro-agent-utils';
 import { getUser } from '@/app/chat/hooks/get-user';
 import { runWithRequestContext } from '@/lib/request-context';
 
-export const maxDuration = 600;
+export const maxDuration = 60;
 
 const MAX_QUESTIONS = 25;
 const MAX_TEXT_LENGTH = 8_000;
