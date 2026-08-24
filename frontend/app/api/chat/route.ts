@@ -1,8 +1,11 @@
-import { createDataStreamResponse } from "ai";
+import { streamText, createDataStreamResponse } from "ai";
 import { getUser } from '@/app/chat/hooks/get-user';
-import { agent } from '@/voltagent';
 import { runWithRequestContext } from '@/lib/request-context';
 import { getModelInfo, isProviderConfigured } from '@/lib/ai/models';
+import { getLanguageModel } from '@/app/chat/lib/ai/providers/providers';
+import { getGeneralAgentPrompt } from '@/app/chat/lib/ai/prompts/general-agent';
+import { getMCPTools } from '@/voltagent/tools/mcpTools';
+import { tavilySearchTool, generateChartTool, generateImageTool } from '@/voltagent/tools/customTools';
 
 export const maxDuration = 60;
 
@@ -54,62 +57,59 @@ export async function POST(req: Request) {
         createDataStreamResponse({
           async execute(dataStream) {
             try {
-              const result = await agent.streamText(messages);
+              const model = getLanguageModel(selectedModel);
+              
+              let mcpTools: Record<string, any> = {};
+              try {
+                mcpTools = await getMCPTools();
+              } catch (err) {
+                console.warn('[chat/route] MCP tools lookup skipped:', err);
+              }
 
-          if (result.provider?.mergeIntoDataStream) {
-            result.provider.mergeIntoDataStream(dataStream);
-          }
+              const tools: Record<string, any> = {
+                tavilySearch: {
+                  description: tavilySearchTool.description,
+                  parameters: (tavilySearchTool as any).parameters,
+                  execute: tavilySearchTool.execute,
+                },
+                generateChart: {
+                  description: generateChartTool.description,
+                  parameters: (generateChartTool as any).parameters,
+                  execute: generateChartTool.execute,
+                },
+                generateImage: {
+                  description: generateImageTool.description,
+                  parameters: (generateImageTool as any).parameters,
+                  execute: generateImageTool.execute,
+                },
+                ...mcpTools,
+              };
 
-          for await (const chunk of result.fullStream || []) {
-            switch (chunk.type) {
-              case "tool-call":
-                dataStream.writeMessageAnnotation({
-                  type: "tool-call",
-                  value: {
-                    toolCallId: chunk.toolCallId,
-                    toolName: chunk.toolName,
-                    args: chunk.args,
-                    status: "calling",
-                  },
-                });
-                break;
-              case "tool-result":
-                dataStream.writeMessageAnnotation({
-                  type: "tool-result",
-                  value: {
-                    toolCallId: chunk.toolCallId,
-                    toolName: chunk.toolName,
-                    result: chunk.result,
-                    status: "completed",
-                  },
-                });
-                break;
-              case "error":
-                dataStream.writeMessageAnnotation({
-                  type: "error",
-                  value: {
-                    error: chunk.error?.message || "Unknown error",
-                  },
-                });
-                break;
+              const result = streamText({
+                model,
+                system: getGeneralAgentPrompt(),
+                messages,
+                tools,
+                maxSteps: 10,
+              });
+
+              result.mergeIntoDataStream(dataStream);
+            } catch (error) {
+              console.error("[chat/route] Stream processing error:", error);
+              dataStream.writeMessageAnnotation({
+                type: "error",
+                value: {
+                  error: error instanceof Error ? error.message : "Unknown error",
+                },
+              });
             }
-          }
-        } catch (error) {
-          console.error("Stream processing error:", error);
-          dataStream.writeMessageAnnotation({
-            type: "error",
-            value: {
-              error: error instanceof Error ? error.message : "Unknown error",
-            },
-          });
-        }
-      },
-      onError: (error) =>
-        `VoltAgent stream error: ${error instanceof Error ? error.message : String(error)}`,
-      })
+          },
+          onError: (error) =>
+            `AI Stream error: ${error instanceof Error ? error.message : String(error)}`,
+        })
     );
   } catch (error) {
-    console.error("API route error:", error);
+    console.error("[chat/route] API route error:", error);
     return new Response(JSON.stringify({ error: "Internal server error" }), {
       status: 500,
       headers: { "Content-Type": "application/json" },

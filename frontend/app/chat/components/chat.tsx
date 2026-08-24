@@ -102,8 +102,13 @@ export function Chat({ id, initialMessages = [] }: ChatProps) {
       content,
     };
 
-    // Append message to UI and send to API
-    append(userMessage);
+    // Append message to UI and send to API with active model and custom API keys
+    append(userMessage, {
+      body: {
+        selectedModel: selectedModel || modelsData?.defaultModel || undefined,
+        customApiKeys: typeof window !== 'undefined' ? getUserApiKeys() : {},
+      },
+    });
 
     // Clear input
     setInput('');
