@@ -8,7 +8,11 @@ const nextConfig = {
       },
     ],
   },
-  serverExternalPackages: ['@voltagent/*'],
+  serverExternalPackages: [
+    '@voltagent/core',
+    '@voltagent/vercel-ai',
+    '@voltagent/vercel-ui',
+  ],
   experimental: {
     serverActions: {
       bodySizeLimit: '5mb',
