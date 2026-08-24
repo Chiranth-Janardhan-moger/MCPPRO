@@ -50,9 +50,9 @@ export function FileUpload() {
         });
       }
 
-      toast.success('Success!', {
+      toast.success('Uploaded successfully!', {
         id: uploadToast,
-        description: `${file.name} indexed (${result?.chunks_processed ?? '?'} chunks).`,
+        description: `${file.name} uploaded and indexed successfully (${result?.chunks_processed ?? 'ready'}).`,
       });
     } catch (error) {
       toast.error('Error',
