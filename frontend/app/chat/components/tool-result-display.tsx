@@ -31,7 +31,9 @@ const TOOL_COMPONENTS: { [key: string]: React.FC<any> } = {
 
 function getToolComponent(toolName: string): React.FC<any> {
   if (toolName.startsWith('v0_')) {
-    return ({ result }: any) => <V0ToolDisplay data={result} />;
+    const V0Wrapper = ({ result }: any) => <V0ToolDisplay data={result} />;
+    V0Wrapper.displayName = 'V0Wrapper';
+    return V0Wrapper;
   }
   return TOOL_COMPONENTS[toolName] || GenericToolDisplay;
 }

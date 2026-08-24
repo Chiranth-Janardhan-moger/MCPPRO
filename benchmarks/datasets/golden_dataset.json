@@ -1,0 +1,1893 @@
+{
+  "version": "1.0.0",
+  "total_documents": 30,
+  "total_questions": 115,
+  "categories_breakdown": {
+    "factual": 35,
+    "multi_hop": 25,
+    "document_specific": 25,
+    "cross_document": 3,
+    "difficult_retrieval": 3,
+    "irrelevant_query": 24
+  },
+  "documents": [
+    {
+      "doc_id": "doc_01_arch_overview",
+      "filename": "doc_01_arch_overview.pdf",
+      "file_path": "benchmarks\\datasets\\documents\\doc_01_arch_overview.pdf",
+      "format": "pdf",
+      "title": "MCPPRO Core Architecture Specification",
+      "topics": [
+        "architecture",
+        "orchestration",
+        "mcp",
+        "fastapi"
+      ],
+      "size_bytes": 2335
+    },
+    {
+      "doc_id": "doc_02_vector_stores",
+      "filename": "doc_02_vector_stores.pdf",
+      "file_path": "benchmarks\\datasets\\documents\\doc_02_vector_stores.pdf",
+      "format": "pdf",
+      "title": "Vector Database Infrastructure and Indexing Benchmarks",
+      "topics": [
+        "vector_store",
+        "qdrant",
+        "pinecone",
+        "pgvector",
+        "inmemory"
+      ],
+      "size_bytes": 1779
+    },
+    {
+      "doc_id": "doc_03_mcp_protocol",
+      "filename": "doc_03_mcp_protocol.docx",
+      "file_path": "benchmarks\\datasets\\documents\\doc_03_mcp_protocol.docx",
+      "format": "docx",
+      "title": "Model Context Protocol Integration Guide",
+      "topics": [
+        "mcp",
+        "fastmcp",
+        "json-rpc",
+        "transports"
+      ],
+      "size_bytes": 37214
+    },
+    {
+      "doc_id": "doc_04_ocr_pipeline",
+      "filename": "doc_04_ocr_pipeline.pptx",
+      "file_path": "benchmarks\\datasets\\documents\\doc_04_ocr_pipeline.pptx",
+      "format": "pptx",
+      "title": "Document Parsing and OCR Processing Specifications",
+      "topics": [
+        "ocr",
+        "pytesseract",
+        "easyocr",
+        "pptx",
+        "pdf"
+      ],
+      "size_bytes": 31203
+    },
+    {
+      "doc_id": "doc_05_caching_strategy",
+      "filename": "doc_05_caching_strategy.pdf",
+      "file_path": "benchmarks\\datasets\\documents\\doc_05_caching_strategy.pdf",
+      "format": "pdf",
+      "title": "Vector Store Serialization and Cache Acceleration",
+      "topics": [
+        "cache",
+        "speedup",
+        "serialization",
+        "latency"
+      ],
+      "size_bytes": 1622
+    },
+    {
+      "doc_id": "doc_06_security_hardening",
+      "filename": "doc_06_security_hardening.pdf",
+      "file_path": "benchmarks\\datasets\\documents\\doc_06_security_hardening.pdf",
+      "format": "pdf",
+      "title": "Security Architecture and Fault Tolerance Protocols",
+      "topics": [
+        "security",
+        "auth",
+        "validation",
+        "robustness"
+      ],
+      "size_bytes": 1660
+    },
+    {
+      "doc_id": "doc_07_llm_providers",
+      "filename": "doc_07_llm_providers.docx",
+      "file_path": "benchmarks\\datasets\\documents\\doc_07_llm_providers.docx",
+      "format": "docx",
+      "title": "Multi-Provider LLM Gateway Configuration",
+      "topics": [
+        "llm",
+        "providers",
+        "openai",
+        "gemini",
+        "anthropic",
+        "groq"
+      ],
+      "size_bytes": 37103
+    },
+    {
+      "doc_id": "doc_08_financial_metrics",
+      "filename": "doc_08_financial_metrics.xlsx",
+      "file_path": "benchmarks\\datasets\\documents\\doc_08_financial_metrics.xlsx",
+      "format": "xlsx",
+      "title": "Q3 Financial Performance and Operational Metrics",
+      "topics": [
+        "finance",
+        "revenue",
+        "costs",
+        "metrics"
+      ],
+      "size_bytes": 5968
+    },
+    {
+      "doc_id": "doc_09_agentic_workflows",
+      "filename": "doc_09_agentic_workflows.pdf",
+      "file_path": "benchmarks\\datasets\\documents\\doc_09_agentic_workflows.pdf",
+      "format": "pdf",
+      "title": "Autonomous Agentic Multi-Step Reasoning Specification",
+      "topics": [
+        "agent",
+        "master_mcppro",
+        "worker_mcppro",
+        "reasoning"
+      ],
+      "size_bytes": 1644
+    },
+    {
+      "doc_id": "doc_10_telemetry_logging",
+      "filename": "doc_10_telemetry_logging.txt",
+      "file_path": "benchmarks\\datasets\\documents\\doc_10_telemetry_logging.txt",
+      "format": "txt",
+      "title": "Telemetry, Observability, and Audit Logging",
+      "topics": [
+        "telemetry",
+        "logging",
+        "supabase",
+        "audit"
+      ],
+      "size_bytes": 975
+    },
+    {
+      "doc_id": "doc_11_chunking_strategies",
+      "filename": "doc_11_chunking_strategies.pdf",
+      "file_path": "benchmarks\\datasets\\documents\\doc_11_chunking_strategies.pdf",
+      "format": "pdf",
+      "title": "Semantic and Fixed-Size Chunking Benchmark Guide",
+      "topics": [
+        "chunking",
+        "splitter",
+        "tokenization"
+      ],
+      "size_bytes": 1580
+    },
+    {
+      "doc_id": "doc_12_embeddings_bge_m3",
+      "filename": "doc_12_embeddings_bge_m3.pdf",
+      "file_path": "benchmarks\\datasets\\documents\\doc_12_embeddings_bge_m3.pdf",
+      "format": "pdf",
+      "title": "BGE-M3 Dense, Sparse, and Multi-Vector Representation",
+      "topics": [
+        "embeddings",
+        "bge-m3",
+        "dense"
+      ],
+      "size_bytes": 1584
+    },
+    {
+      "doc_id": "doc_13_pdf_loaders_comparison",
+      "filename": "doc_13_pdf_loaders_comparison.pdf",
+      "file_path": "benchmarks\\datasets\\documents\\doc_13_pdf_loaders_comparison.pdf",
+      "format": "pdf",
+      "title": "PyMuPDF versus PyMuPDF4LLM Parsing Fidelity",
+      "topics": [
+        "pdf",
+        "pymupdf",
+        "markdown"
+      ],
+      "size_bytes": 1579
+    },
+    {
+      "doc_id": "doc_14_cloud_deployment",
+      "filename": "doc_14_cloud_deployment.md",
+      "file_path": "benchmarks\\datasets\\documents\\doc_14_cloud_deployment.md",
+      "format": "md",
+      "title": "Docker Containerization and Azure Container Apps Setup",
+      "topics": [
+        "docker",
+        "deployment",
+        "azure"
+      ],
+      "size_bytes": 919
+    },
+    {
+      "doc_id": "doc_15_database_schema",
+      "filename": "doc_15_database_schema.txt",
+      "file_path": "benchmarks\\datasets\\documents\\doc_15_database_schema.txt",
+      "format": "txt",
+      "title": "Supabase PostgreSQL Schema and Migration Reference",
+      "topics": [
+        "supabase",
+        "sql",
+        "database"
+      ],
+      "size_bytes": 904
+    },
+    {
+      "doc_id": "doc_16_playwright_mcp",
+      "filename": "doc_16_playwright_mcp.docx",
+      "file_path": "benchmarks\\datasets\\documents\\doc_16_playwright_mcp.docx",
+      "format": "docx",
+      "title": "Playwright Web Automation MCP Integration",
+      "topics": [
+        "playwright",
+        "mcp",
+        "automation"
+      ],
+      "size_bytes": 37078
+    },
+    {
+      "doc_id": "doc_17_frontend_state",
+      "filename": "doc_17_frontend_state.pdf",
+      "file_path": "benchmarks\\datasets\\documents\\doc_17_frontend_state.pdf",
+      "format": "pdf",
+      "title": "Next.js React Hooks and Conversation State Management",
+      "topics": [
+        "frontend",
+        "react",
+        "hooks"
+      ],
+      "size_bytes": 1571
+    },
+    {
+      "doc_id": "doc_18_rate_limiting",
+      "filename": "doc_18_rate_limiting.pdf",
+      "file_path": "benchmarks\\datasets\\documents\\doc_18_rate_limiting.pdf",
+      "format": "pdf",
+      "title": "API Rate Limiting and Token Bucket Implementation",
+      "topics": [
+        "security",
+        "rate_limiting",
+        "api"
+      ],
+      "size_bytes": 1567
+    },
+    {
+      "doc_id": "doc_19_pptx_loader_deepdive",
+      "filename": "doc_19_pptx_loader_deepdive.pptx",
+      "file_path": "benchmarks\\datasets\\documents\\doc_19_pptx_loader_deepdive.pptx",
+      "format": "pptx",
+      "title": "Custom PowerPoint Parser Architecture and Image Extraction",
+      "topics": [
+        "pptx",
+        "loader",
+        "ocr"
+      ],
+      "size_bytes": 28732
+    },
+    {
+      "doc_id": "doc_20_spreadsheet_qa",
+      "filename": "doc_20_spreadsheet_qa.xlsx",
+      "file_path": "benchmarks\\datasets\\documents\\doc_20_spreadsheet_qa.xlsx",
+      "format": "xlsx",
+      "title": "Financial Table Parsing with XlsxLoader",
+      "topics": [
+        "spreadsheet",
+        "xlsx",
+        "tables"
+      ],
+      "size_bytes": 5013
+    },
+    {
+      "doc_id": "doc_21_multimodal_rag",
+      "filename": "doc_21_multimodal_rag.pdf",
+      "file_path": "benchmarks\\datasets\\documents\\doc_21_multimodal_rag.pdf",
+      "format": "pdf",
+      "title": "Multimodal Image and Document Vector Search",
+      "topics": [
+        "multimodal",
+        "rag",
+        "vision"
+      ],
+      "size_bytes": 1554
+    },
+    {
+      "doc_id": "doc_22_groq_inference",
+      "filename": "doc_22_groq_inference.pdf",
+      "file_path": "benchmarks\\datasets\\documents\\doc_22_groq_inference.pdf",
+      "format": "pdf",
+      "title": "Groq LPU Acceleration and Sub-Second Inference",
+      "topics": [
+        "groq",
+        "inference",
+        "latency"
+      ],
+      "size_bytes": 1556
+    },
+    {
+      "doc_id": "doc_23_eval_methodology",
+      "filename": "doc_23_eval_methodology.pdf",
+      "file_path": "benchmarks\\datasets\\documents\\doc_23_eval_methodology.pdf",
+      "format": "pdf",
+      "title": "RAG Evaluation Metrics and Groundedness Scoring",
+      "topics": [
+        "evaluation",
+        "rag",
+        "groundedness"
+      ],
+      "size_bytes": 1566
+    },
+    {
+      "doc_id": "doc_24_qdrant_clustering",
+      "filename": "doc_24_qdrant_clustering.pdf",
+      "file_path": "benchmarks\\datasets\\documents\\doc_24_qdrant_clustering.pdf",
+      "format": "pdf",
+      "title": "Qdrant HNSW Index Optimization and Quantization",
+      "topics": [
+        "qdrant",
+        "hnsw",
+        "quantization"
+      ],
+      "size_bytes": 1560
+    },
+    {
+      "doc_id": "doc_25_langchain_bridges",
+      "filename": "doc_25_langchain_bridges.txt",
+      "file_path": "benchmarks\\datasets\\documents\\doc_25_langchain_bridges.txt",
+      "format": "txt",
+      "title": "LangChain Expression Language (LCEL) Wrappers",
+      "topics": [
+        "langchain",
+        "lcel",
+        "wrapper"
+      ],
+      "size_bytes": 892
+    },
+    {
+      "doc_id": "doc_26_image_ocr_sample",
+      "filename": "doc_26_image_ocr_sample.png",
+      "file_path": "benchmarks\\datasets\\documents\\doc_26_image_ocr_sample.png",
+      "format": "png",
+      "title": "System Hardware Diagram with Embedded Text Card",
+      "topics": [
+        "ocr",
+        "image",
+        "hardware"
+      ],
+      "size_bytes": 17591
+    },
+    {
+      "doc_id": "doc_27_cerebras_wafer",
+      "filename": "doc_27_cerebras_wafer.pdf",
+      "file_path": "benchmarks\\datasets\\documents\\doc_27_cerebras_wafer.pdf",
+      "format": "pdf",
+      "title": "Cerebras CS-3 Ultra-Fast Generation Specs",
+      "topics": [
+        "cerebras",
+        "fast_llm",
+        "tokens"
+      ],
+      "size_bytes": 1565
+    },
+    {
+      "doc_id": "doc_28_cache_invalidation",
+      "filename": "doc_28_cache_invalidation.pdf",
+      "file_path": "benchmarks\\datasets\\documents\\doc_28_cache_invalidation.pdf",
+      "format": "pdf",
+      "title": "Vector Store Cache TTL and Invalidation Protocols",
+      "topics": [
+        "cache",
+        "invalidation",
+        "ttl"
+      ],
+      "size_bytes": 1559
+    },
+    {
+      "doc_id": "doc_29_error_recovery",
+      "filename": "doc_29_error_recovery.docx",
+      "file_path": "benchmarks\\datasets\\documents\\doc_29_error_recovery.docx",
+      "format": "docx",
+      "title": "Fault Isolation and Self-Healing Agent Mechanisms",
+      "topics": [
+        "error",
+        "recovery",
+        "agent"
+      ],
+      "size_bytes": 37087
+    },
+    {
+      "doc_id": "doc_30_cost_modeling",
+      "filename": "doc_30_cost_modeling.pdf",
+      "file_path": "benchmarks\\datasets\\documents\\doc_30_cost_modeling.pdf",
+      "format": "pdf",
+      "title": "Enterprise TCO Modeling for Self-Hosted vs Cloud RAG",
+      "topics": [
+        "cost",
+        "tco",
+        "tokens"
+      ],
+      "size_bytes": 1570
+    }
+  ],
+  "questions": [
+    {
+      "id": "q_001",
+      "category": "factual",
+      "document_id": "doc_01_arch_overview",
+      "question": "What is the maximum number of iterations configured for the autonomous agent loop?",
+      "expected_answer": "The maximum number of iterations configured for the autonomous agent loop is 15 steps.",
+      "expected_source": "doc_01_arch_overview.pdf",
+      "expected_topics": [
+        "iterations",
+        "agent",
+        "parameters"
+      ]
+    },
+    {
+      "id": "q_002",
+      "category": "factual",
+      "document_id": "doc_01_arch_overview",
+      "question": "What are the default chunk size and chunk overlap parameters in MCPPRO?",
+      "expected_answer": "The default chunk size is 1000 characters with a chunk overlap of 200 characters.",
+      "expected_source": "doc_01_arch_overview.pdf",
+      "expected_topics": [
+        "chunk_size",
+        "chunk_overlap",
+        "chunking"
+      ]
+    },
+    {
+      "id": "q_003",
+      "category": "factual",
+      "document_id": "doc_02_vector_stores",
+      "question": "Which four vector store implementations are supported in MCPPRO?",
+      "expected_answer": "MCPPRO supports InMemoryVectorStoreService, QdrantVectorStoreService, SupabaseVectorStoreService, and PineconeVectorStoreService.",
+      "expected_source": "doc_02_vector_stores.pdf",
+      "expected_topics": [
+        "vector_stores",
+        "qdrant",
+        "pinecone",
+        "inmemory",
+        "supabase"
+      ]
+    },
+    {
+      "id": "q_004",
+      "category": "factual",
+      "document_id": "doc_02_vector_stores",
+      "question": "What is the estimated RAM consumption of InMemoryVectorStore per 1,000 vectors with 1536 dimensions?",
+      "expected_answer": "InMemoryVectorStore consumes approximately 1.8MB of RAM per 1,000 vectors with 1536 dimensions.",
+      "expected_source": "doc_02_vector_stores.pdf",
+      "expected_topics": [
+        "ram",
+        "memory",
+        "inmemory",
+        "footprint"
+      ]
+    },
+    {
+      "id": "q_005",
+      "category": "factual",
+      "document_id": "doc_03_mcp_protocol",
+      "question": "On which port does the RAG MCP server run by default?",
+      "expected_answer": "The RAG MCP server runs on port 8001 using streamable HTTP transport.",
+      "expected_source": "doc_03_mcp_protocol.docx",
+      "expected_topics": [
+        "port",
+        "mcp",
+        "streamable-http",
+        "8001"
+      ]
+    },
+    {
+      "id": "q_006",
+      "category": "factual",
+      "document_id": "doc_03_mcp_protocol",
+      "question": "What are the two tools exposed by the Python FastMCP server?",
+      "expected_answer": "The two tools exposed are 'retrieve_context' and 'rag_search'.",
+      "expected_source": "doc_03_mcp_protocol.docx",
+      "expected_topics": [
+        "tools",
+        "fastmcp",
+        "retrieve_context",
+        "rag_search"
+      ]
+    },
+    {
+      "id": "q_007",
+      "category": "factual",
+      "document_id": "doc_04_ocr_pipeline",
+      "question": "Which two OCR engines are supported in MCPPRO?",
+      "expected_answer": "The dual OCR engine architecture supports PyTesseract and EasyOCR.",
+      "expected_source": "doc_04_ocr_pipeline.pptx",
+      "expected_topics": [
+        "ocr",
+        "pytesseract",
+        "easyocr"
+      ]
+    },
+    {
+      "id": "q_008",
+      "category": "factual",
+      "document_id": "doc_05_caching_strategy",
+      "question": "How is the cache key derived in the VectorStoreCache module?",
+      "expected_answer": "The cache key is derived from the SHA-256 hash of the document URL combined with the loader variant suffix (std vs llm).",
+      "expected_source": "doc_05_caching_strategy.pdf",
+      "expected_topics": [
+        "cache_key",
+        "sha256",
+        "vector_store_cache"
+      ]
+    },
+    {
+      "id": "q_009",
+      "category": "factual",
+      "document_id": "doc_06_security_hardening",
+      "question": "Which HTTP status code is returned when an unauthorized request is made to /mcppro endpoints?",
+      "expected_answer": "Unauthorized requests immediately abort with HTTP 401 Unauthorized.",
+      "expected_source": "doc_06_security_hardening.pdf",
+      "expected_topics": [
+        "http_401",
+        "unauthorized",
+        "bearer_token",
+        "security"
+      ]
+    },
+    {
+      "id": "q_010",
+      "category": "factual",
+      "document_id": "doc_07_llm_providers",
+      "question": "List all 7 LLM providers supported by the LLMProviderFactory.",
+      "expected_answer": "The 7 supported providers are OpenAI, Google Gemini, Anthropic, Groq, Cerebras, OpenRouter, and LMStudio.",
+      "expected_source": "doc_07_llm_providers.docx",
+      "expected_topics": [
+        "llm_providers",
+        "factory",
+        "openai",
+        "gemini",
+        "groq",
+        "anthropic"
+      ]
+    },
+    {
+      "id": "q_011",
+      "category": "factual",
+      "document_id": "doc_08_financial_metrics",
+      "question": "What was the Q3 Actual Total Revenue reported in the financial summary?",
+      "expected_answer": "The Q3 Actual Total Revenue was $17.2M, representing a 38.7% YoY growth.",
+      "expected_source": "doc_08_financial_metrics.xlsx",
+      "expected_topics": [
+        "revenue",
+        "financial",
+        "q3_actual"
+      ]
+    },
+    {
+      "id": "q_012",
+      "category": "factual",
+      "document_id": "doc_08_financial_metrics",
+      "question": "What is the monthly hosting cost for LLM Inference APIs?",
+      "expected_answer": "The monthly hosting cost for LLM Inference APIs is $4250.00.",
+      "expected_source": "doc_08_financial_metrics.xlsx",
+      "expected_topics": [
+        "cost",
+        "llm_inference",
+        "monthly"
+      ]
+    },
+    {
+      "id": "q_013",
+      "category": "factual",
+      "document_id": "doc_09_agentic_workflows",
+      "question": "Which prompt is used to format and clean the raw draft answer generated by WorkerMCPPro?",
+      "expected_answer": "The OutputParserPrompt is used to post-process and format the raw draft answer.",
+      "expected_source": "doc_09_agentic_workflows.pdf",
+      "expected_topics": [
+        "output_parser_prompt",
+        "worker_agent",
+        "formatting"
+      ]
+    },
+    {
+      "id": "q_014",
+      "category": "factual",
+      "document_id": "doc_10_telemetry_logging",
+      "question": "How are telemetry writes executed to prevent slowing down API responses?",
+      "expected_answer": "All telemetry writes are scheduled as asynchronous BackgroundTasks in FastAPI.",
+      "expected_source": "doc_10_telemetry_logging.txt",
+      "expected_topics": [
+        "background_tasks",
+        "telemetry",
+        "async",
+        "supabase"
+      ]
+    },
+    {
+      "id": "q_015",
+      "category": "factual",
+      "document_id": "doc_01_arch_overview",
+      "question": "What technology is used for the client layer user interface?",
+      "expected_answer": "The client layer is implemented in Next.js 14 with React Server Components, Tailwind CSS, and Radix UI.",
+      "expected_source": "doc_01_arch_overview.pdf",
+      "expected_topics": [
+        "nextjs",
+        "react",
+        "tailwind",
+        "frontend"
+      ]
+    },
+    {
+      "id": "q_016",
+      "category": "multi_hop",
+      "document_id": "doc_01_arch_overview",
+      "question": "How does MasterMCPPro decide whether to use Traditional RAG or Agentic Mode, and what happens if Traditional RAG fails?",
+      "expected_answer": "MasterMCPPro inspects the file extension, extracts a context snippet via initial preprocessing, and queries an LLM classifier. If Traditional RAG is selected and fails, MasterMCPPro automatically falls back to WorkerMCPPro agentic loop.",
+      "expected_source": "doc_01_arch_overview.pdf",
+      "expected_topics": [
+        "master_mcppro",
+        "routing",
+        "fallback",
+        "agentic"
+      ]
+    },
+    {
+      "id": "q_017",
+      "category": "multi_hop",
+      "document_id": "doc_05_caching_strategy",
+      "question": "Explain the full lifecycle of a document request when caching is enabled, distinguishing cold vs warm execution.",
+      "expected_answer": "On a cold request, the document is downloaded, parsed, chunked, embedded, indexed into the vector store, and serialized to disk in vector_store_cache/. On a warm request, the system computes the SHA-256 cache key, bypasses download/parsing/embedding, deserializes the pre-built index in under 25ms, and proceeds directly to query retrieval.",
+      "expected_source": "doc_05_caching_strategy.pdf",
+      "expected_topics": [
+        "cache_lifecycle",
+        "cold_request",
+        "warm_request",
+        "speedup"
+      ]
+    },
+    {
+      "id": "q_018",
+      "category": "multi_hop",
+      "document_id": "doc_04_ocr_pipeline",
+      "question": "How does CustomPptxLoader extract text from PowerPoint slides containing both text and images?",
+      "expected_answer": "CustomPptxLoader scans presentation shapes for picture objects, extracts image byte blobs into OpenCV matrices, runs OCR (PyTesseract or EasyOCR), and combines the OCR text with standard text extracted by BasePptxLoader.",
+      "expected_source": "doc_04_ocr_pipeline.pptx",
+      "expected_topics": [
+        "pptx",
+        "ocr",
+        "images",
+        "extraction"
+      ]
+    },
+    {
+      "id": "q_019",
+      "category": "multi_hop",
+      "document_id": "doc_06_security_hardening",
+      "question": "Describe the defense-in-depth measures implemented across the frontend orchestrator and backend API.",
+      "expected_answer": "The frontend uses refineQuery with gpt-4o-mini to sanitize prompts against script tags and injection, while the backend enforces Bearer Token authentication via verify_token and handles malformed inputs gracefully through FileProcessor.",
+      "expected_source": "doc_06_security_hardening.pdf",
+      "expected_topics": [
+        "security",
+        "refine_query",
+        "bearer_token",
+        "defense_in_depth"
+      ]
+    },
+    {
+      "id": "q_020",
+      "category": "multi_hop",
+      "document_id": "doc_09_agentic_workflows",
+      "question": "What happens inside the WorkerMCPPro execution loop when an invoked tool returns an error?",
+      "expected_answer": "The tool error message is captured into the execution log and appended to the conversation message list as a 'tool' role response, allowing the LLM to inspect the failure, adjust its strategy, or invoke alternative tools in subsequent iterations.",
+      "expected_source": "doc_09_agentic_workflows.pdf",
+      "expected_topics": [
+        "worker_agent",
+        "error_handling",
+        "tool_retry",
+        "self_correction"
+      ]
+    },
+    {
+      "id": "q_021",
+      "category": "document_specific",
+      "document_id": "doc_08_financial_metrics",
+      "question": "Which infrastructure component had the second highest monthly cost, and who is its provider?",
+      "expected_answer": "Vector DB Hosting had the second highest monthly cost at $850.00, provided by Qdrant Cloud / Pinecone.",
+      "expected_source": "doc_08_financial_metrics.xlsx",
+      "expected_topics": [
+        "financial",
+        "vector_db",
+        "costs",
+        "qdrant"
+      ]
+    },
+    {
+      "id": "q_022",
+      "category": "document_specific",
+      "document_id": "doc_08_financial_metrics",
+      "question": "What was the Gross Margin achieved in Q3 Actual compared to Q1 Actual?",
+      "expected_answer": "Gross Margin was 78.4% in Q3 Actual compared to 74.2% in Q1 Actual, an increase of 420 basis points.",
+      "expected_source": "doc_08_financial_metrics.xlsx",
+      "expected_topics": [
+        "gross_margin",
+        "financial",
+        "growth"
+      ]
+    },
+    {
+      "id": "q_023",
+      "category": "document_specific",
+      "document_id": "doc_02_vector_stores",
+      "question": "What distance metric and indexing algorithm are used by QdrantVectorStoreService?",
+      "expected_answer": "QdrantVectorStoreService uses Cosine distance metric with HNSW indexing.",
+      "expected_source": "doc_02_vector_stores.pdf",
+      "expected_topics": [
+        "qdrant",
+        "cosine",
+        "hnsw"
+      ]
+    },
+    {
+      "id": "q_024",
+      "category": "document_specific",
+      "document_id": "doc_03_mcp_protocol",
+      "question": "Which tool transport is used for Playwright browser automation in MCPPRO?",
+      "expected_answer": "Playwright automation uses the Stdio transport via @smithery/cli.",
+      "expected_source": "doc_03_mcp_protocol.docx",
+      "expected_topics": [
+        "playwright",
+        "stdio",
+        "smithery",
+        "transport"
+      ]
+    },
+    {
+      "id": "q_025",
+      "category": "document_specific",
+      "document_id": "doc_10_telemetry_logging",
+      "question": "List 4 attributes recorded in every telemetry log trace.",
+      "expected_answer": "Recorded attributes include request_id, document_url, processing_time, question_count, token_usage, and execution_log.",
+      "expected_source": "doc_10_telemetry_logging.txt",
+      "expected_topics": [
+        "telemetry",
+        "attributes",
+        "logging"
+      ]
+    },
+    {
+      "id": "q_026",
+      "category": "cross_document",
+      "document_id": "doc_01_arch_overview",
+      "question": "Compare the embedding models described in the Architecture Overview with the Vector Store storage requirements in the Vector Database Specification.",
+      "expected_answer": "The Architecture Overview specifies 1536-dim (OpenAI text-embedding-3-small) and 1024-dim (BGE-M3) models, which correlate directly with the Vector Database specification where 1,000 vectors of 1536 dimensions require approximately 1.8MB of RAM in memory.",
+      "expected_source": "doc_01_arch_overview.pdf, doc_02_vector_stores.pdf",
+      "expected_topics": [
+        "embeddings",
+        "vector_stores",
+        "dimensions",
+        "ram"
+      ]
+    },
+    {
+      "id": "q_027",
+      "category": "cross_document",
+      "document_id": "doc_03_mcp_protocol",
+      "question": "How do the Python FastMCP server tools relate to the backend ToolRegistry in the Agentic Workflow?",
+      "expected_answer": "The FastMCP server exposes retrieve_context and rag_search over HTTP streamable transport, wrapping the underlying ToolRegistry and RetrievalService so remote orchestrators can invoke RAG as standard MCP tools.",
+      "expected_source": "doc_03_mcp_protocol.docx, doc_09_agentic_workflows.pdf",
+      "expected_topics": [
+        "fastmcp",
+        "tool_registry",
+        "mcp_bridge"
+      ]
+    },
+    {
+      "id": "q_028",
+      "category": "cross_document",
+      "document_id": "doc_05_caching_strategy",
+      "question": "How does vector store caching reduce operational costs according to the financial infrastructure breakdown?",
+      "expected_answer": "Vector store caching avoids repeated LLM and embedding API calls on warm requests, directly controlling the LLM Inference API costs which represent the largest infrastructure expense at $4250/month.",
+      "expected_source": "doc_05_caching_strategy.pdf, doc_08_financial_metrics.xlsx",
+      "expected_topics": [
+        "caching",
+        "cost_reduction",
+        "llm_inference",
+        "finance"
+      ]
+    },
+    {
+      "id": "q_029",
+      "category": "difficult_retrieval",
+      "document_id": "doc_04_ocr_pipeline",
+      "question": "What specific threshold does ChunkCleaner use to discard uninformative text fragments?",
+      "expected_answer": "ChunkCleaner applies a minimum chunk length threshold of 100 characters.",
+      "expected_source": "doc_04_ocr_pipeline.pptx",
+      "expected_topics": [
+        "min_chunk_length",
+        "chunk_cleaner",
+        "100_characters"
+      ]
+    },
+    {
+      "id": "q_030",
+      "category": "difficult_retrieval",
+      "document_id": "doc_07_llm_providers",
+      "question": "What is the exact model identifier configured for the LMStudio local inference provider?",
+      "expected_answer": "The configured LMStudio model identifier is 'qwen/qwen3-4b'.",
+      "expected_source": "doc_07_llm_providers.docx",
+      "expected_topics": [
+        "lmstudio",
+        "qwen3-4b",
+        "local_model"
+      ]
+    },
+    {
+      "id": "q_031",
+      "category": "difficult_retrieval",
+      "document_id": "doc_02_vector_stores",
+      "question": "What is the target retrieval latency for Top-10 queries over Qdrant gRPC?",
+      "expected_answer": "The target Top-10 retrieval latency over Qdrant gRPC is under 45 milliseconds.",
+      "expected_source": "doc_02_vector_stores.pdf",
+      "expected_topics": [
+        "qdrant",
+        "latency",
+        "grpc",
+        "45ms"
+      ]
+    },
+    {
+      "id": "q_032",
+      "category": "irrelevant_query",
+      "document_id": "doc_01_arch_overview",
+      "question": "What is the recommended recipe for baking sourdough bread in a Dutch oven?",
+      "expected_answer": "I cannot answer this question based on the provided documents. The documents contain no information regarding sourdough bread baking.",
+      "expected_source": "None",
+      "expected_topics": [
+        "unrelated",
+        "hallucination_trap"
+      ]
+    },
+    {
+      "id": "q_033",
+      "category": "irrelevant_query",
+      "document_id": "doc_08_financial_metrics",
+      "question": "What was the score of the 2024 UEFA Champions League final?",
+      "expected_answer": "I cannot answer this question based on the provided documents. The documents only discuss Q3 financial metrics and infrastructure costs.",
+      "expected_source": "None",
+      "expected_topics": [
+        "unrelated",
+        "hallucination_trap"
+      ]
+    },
+    {
+      "id": "q_034",
+      "category": "irrelevant_query",
+      "document_id": "doc_03_mcp_protocol",
+      "question": "How many moons does the planet Jupiter have?",
+      "expected_answer": "I cannot answer this question based on the provided documents. The documents cover the Model Context Protocol implementation.",
+      "expected_source": "None",
+      "expected_topics": [
+        "unrelated",
+        "hallucination_trap"
+      ]
+    },
+    {
+      "id": "q_035",
+      "category": "irrelevant_query",
+      "document_id": "doc_06_security_hardening",
+      "question": "What are the rules of chess regarding en passant pawn captures?",
+      "expected_answer": "I cannot answer this question based on the provided documents. The provided documents focus on security architecture and fault tolerance.",
+      "expected_source": "None",
+      "expected_topics": [
+        "unrelated",
+        "hallucination_trap"
+      ]
+    },
+    {
+      "id": "q_036",
+      "category": "factual",
+      "document_id": "doc_11_chunking_strategies",
+      "question": "What is the primary architectural focus of Semantic and Fixed-Size Chunking Benchmark Guide?",
+      "expected_answer": "The primary focus of Semantic and Fixed-Size Chunking Benchmark Guide is to detail technical specifications, memory budgets, and benchmarking standards for chunking, splitter, tokenization.",
+      "expected_source": "doc_11_chunking_strategies.pdf",
+      "expected_topics": [
+        "chunking",
+        "splitter",
+        "tokenization"
+      ]
+    },
+    {
+      "id": "q_037",
+      "category": "document_specific",
+      "document_id": "doc_11_chunking_strategies",
+      "question": "Which document format and ID are assigned to 'Semantic and Fixed-Size Chunking Benchmark Guide' in the system manifest?",
+      "expected_answer": "'Semantic and Fixed-Size Chunking Benchmark Guide' is stored under format 'pdf' with document ID 'doc_11_chunking_strategies'.",
+      "expected_source": "doc_11_chunking_strategies.pdf",
+      "expected_topics": [
+        "doc_11_chunking_strategies",
+        "pdf"
+      ]
+    },
+    {
+      "id": "q_038",
+      "category": "multi_hop",
+      "document_id": "doc_11_chunking_strategies",
+      "question": "How do the validation standards in Semantic and Fixed-Size Chunking Benchmark Guide support the overall reliability benchmarks of MCPPRO?",
+      "expected_answer": "The validation standards mandate recording latency percentiles (mean, p50, p90, p95, p99), error rates, and resource usage to ensure enterprise stability.",
+      "expected_source": "doc_11_chunking_strategies.pdf",
+      "expected_topics": [
+        "validation",
+        "percentiles",
+        "reliability"
+      ]
+    },
+    {
+      "id": "q_039",
+      "category": "irrelevant_query",
+      "document_id": "doc_11_chunking_strategies",
+      "question": "What is the average rainfall in the Amazon rainforest during January for doc_11_chunking_strategies?",
+      "expected_answer": "I cannot answer this question based on the provided technical documents. No meteorological data is present.",
+      "expected_source": "None",
+      "expected_topics": [
+        "unrelated",
+        "hallucination_trap"
+      ]
+    },
+    {
+      "id": "q_040",
+      "category": "factual",
+      "document_id": "doc_12_embeddings_bge_m3",
+      "question": "What is the primary architectural focus of BGE-M3 Dense, Sparse, and Multi-Vector Representation?",
+      "expected_answer": "The primary focus of BGE-M3 Dense, Sparse, and Multi-Vector Representation is to detail technical specifications, memory budgets, and benchmarking standards for embeddings, bge-m3, dense.",
+      "expected_source": "doc_12_embeddings_bge_m3.pdf",
+      "expected_topics": [
+        "embeddings",
+        "bge-m3",
+        "dense"
+      ]
+    },
+    {
+      "id": "q_041",
+      "category": "document_specific",
+      "document_id": "doc_12_embeddings_bge_m3",
+      "question": "Which document format and ID are assigned to 'BGE-M3 Dense, Sparse, and Multi-Vector Representation' in the system manifest?",
+      "expected_answer": "'BGE-M3 Dense, Sparse, and Multi-Vector Representation' is stored under format 'pdf' with document ID 'doc_12_embeddings_bge_m3'.",
+      "expected_source": "doc_12_embeddings_bge_m3.pdf",
+      "expected_topics": [
+        "doc_12_embeddings_bge_m3",
+        "pdf"
+      ]
+    },
+    {
+      "id": "q_042",
+      "category": "multi_hop",
+      "document_id": "doc_12_embeddings_bge_m3",
+      "question": "How do the validation standards in BGE-M3 Dense, Sparse, and Multi-Vector Representation support the overall reliability benchmarks of MCPPRO?",
+      "expected_answer": "The validation standards mandate recording latency percentiles (mean, p50, p90, p95, p99), error rates, and resource usage to ensure enterprise stability.",
+      "expected_source": "doc_12_embeddings_bge_m3.pdf",
+      "expected_topics": [
+        "validation",
+        "percentiles",
+        "reliability"
+      ]
+    },
+    {
+      "id": "q_043",
+      "category": "irrelevant_query",
+      "document_id": "doc_12_embeddings_bge_m3",
+      "question": "What is the average rainfall in the Amazon rainforest during January for doc_12_embeddings_bge_m3?",
+      "expected_answer": "I cannot answer this question based on the provided technical documents. No meteorological data is present.",
+      "expected_source": "None",
+      "expected_topics": [
+        "unrelated",
+        "hallucination_trap"
+      ]
+    },
+    {
+      "id": "q_044",
+      "category": "factual",
+      "document_id": "doc_13_pdf_loaders_comparison",
+      "question": "What is the primary architectural focus of PyMuPDF versus PyMuPDF4LLM Parsing Fidelity?",
+      "expected_answer": "The primary focus of PyMuPDF versus PyMuPDF4LLM Parsing Fidelity is to detail technical specifications, memory budgets, and benchmarking standards for pdf, pymupdf, markdown.",
+      "expected_source": "doc_13_pdf_loaders_comparison.pdf",
+      "expected_topics": [
+        "pdf",
+        "pymupdf",
+        "markdown"
+      ]
+    },
+    {
+      "id": "q_045",
+      "category": "document_specific",
+      "document_id": "doc_13_pdf_loaders_comparison",
+      "question": "Which document format and ID are assigned to 'PyMuPDF versus PyMuPDF4LLM Parsing Fidelity' in the system manifest?",
+      "expected_answer": "'PyMuPDF versus PyMuPDF4LLM Parsing Fidelity' is stored under format 'pdf' with document ID 'doc_13_pdf_loaders_comparison'.",
+      "expected_source": "doc_13_pdf_loaders_comparison.pdf",
+      "expected_topics": [
+        "doc_13_pdf_loaders_comparison",
+        "pdf"
+      ]
+    },
+    {
+      "id": "q_046",
+      "category": "multi_hop",
+      "document_id": "doc_13_pdf_loaders_comparison",
+      "question": "How do the validation standards in PyMuPDF versus PyMuPDF4LLM Parsing Fidelity support the overall reliability benchmarks of MCPPRO?",
+      "expected_answer": "The validation standards mandate recording latency percentiles (mean, p50, p90, p95, p99), error rates, and resource usage to ensure enterprise stability.",
+      "expected_source": "doc_13_pdf_loaders_comparison.pdf",
+      "expected_topics": [
+        "validation",
+        "percentiles",
+        "reliability"
+      ]
+    },
+    {
+      "id": "q_047",
+      "category": "irrelevant_query",
+      "document_id": "doc_13_pdf_loaders_comparison",
+      "question": "What is the average rainfall in the Amazon rainforest during January for doc_13_pdf_loaders_comparison?",
+      "expected_answer": "I cannot answer this question based on the provided technical documents. No meteorological data is present.",
+      "expected_source": "None",
+      "expected_topics": [
+        "unrelated",
+        "hallucination_trap"
+      ]
+    },
+    {
+      "id": "q_048",
+      "category": "factual",
+      "document_id": "doc_14_cloud_deployment",
+      "question": "What is the primary architectural focus of Docker Containerization and Azure Container Apps Setup?",
+      "expected_answer": "The primary focus of Docker Containerization and Azure Container Apps Setup is to detail technical specifications, memory budgets, and benchmarking standards for docker, deployment, azure.",
+      "expected_source": "doc_14_cloud_deployment.md",
+      "expected_topics": [
+        "docker",
+        "deployment",
+        "azure"
+      ]
+    },
+    {
+      "id": "q_049",
+      "category": "document_specific",
+      "document_id": "doc_14_cloud_deployment",
+      "question": "Which document format and ID are assigned to 'Docker Containerization and Azure Container Apps Setup' in the system manifest?",
+      "expected_answer": "'Docker Containerization and Azure Container Apps Setup' is stored under format 'md' with document ID 'doc_14_cloud_deployment'.",
+      "expected_source": "doc_14_cloud_deployment.md",
+      "expected_topics": [
+        "doc_14_cloud_deployment",
+        "md"
+      ]
+    },
+    {
+      "id": "q_050",
+      "category": "multi_hop",
+      "document_id": "doc_14_cloud_deployment",
+      "question": "How do the validation standards in Docker Containerization and Azure Container Apps Setup support the overall reliability benchmarks of MCPPRO?",
+      "expected_answer": "The validation standards mandate recording latency percentiles (mean, p50, p90, p95, p99), error rates, and resource usage to ensure enterprise stability.",
+      "expected_source": "doc_14_cloud_deployment.md",
+      "expected_topics": [
+        "validation",
+        "percentiles",
+        "reliability"
+      ]
+    },
+    {
+      "id": "q_051",
+      "category": "irrelevant_query",
+      "document_id": "doc_14_cloud_deployment",
+      "question": "What is the average rainfall in the Amazon rainforest during January for doc_14_cloud_deployment?",
+      "expected_answer": "I cannot answer this question based on the provided technical documents. No meteorological data is present.",
+      "expected_source": "None",
+      "expected_topics": [
+        "unrelated",
+        "hallucination_trap"
+      ]
+    },
+    {
+      "id": "q_052",
+      "category": "factual",
+      "document_id": "doc_15_database_schema",
+      "question": "What is the primary architectural focus of Supabase PostgreSQL Schema and Migration Reference?",
+      "expected_answer": "The primary focus of Supabase PostgreSQL Schema and Migration Reference is to detail technical specifications, memory budgets, and benchmarking standards for supabase, sql, database.",
+      "expected_source": "doc_15_database_schema.txt",
+      "expected_topics": [
+        "supabase",
+        "sql",
+        "database"
+      ]
+    },
+    {
+      "id": "q_053",
+      "category": "document_specific",
+      "document_id": "doc_15_database_schema",
+      "question": "Which document format and ID are assigned to 'Supabase PostgreSQL Schema and Migration Reference' in the system manifest?",
+      "expected_answer": "'Supabase PostgreSQL Schema and Migration Reference' is stored under format 'txt' with document ID 'doc_15_database_schema'.",
+      "expected_source": "doc_15_database_schema.txt",
+      "expected_topics": [
+        "doc_15_database_schema",
+        "txt"
+      ]
+    },
+    {
+      "id": "q_054",
+      "category": "multi_hop",
+      "document_id": "doc_15_database_schema",
+      "question": "How do the validation standards in Supabase PostgreSQL Schema and Migration Reference support the overall reliability benchmarks of MCPPRO?",
+      "expected_answer": "The validation standards mandate recording latency percentiles (mean, p50, p90, p95, p99), error rates, and resource usage to ensure enterprise stability.",
+      "expected_source": "doc_15_database_schema.txt",
+      "expected_topics": [
+        "validation",
+        "percentiles",
+        "reliability"
+      ]
+    },
+    {
+      "id": "q_055",
+      "category": "irrelevant_query",
+      "document_id": "doc_15_database_schema",
+      "question": "What is the average rainfall in the Amazon rainforest during January for doc_15_database_schema?",
+      "expected_answer": "I cannot answer this question based on the provided technical documents. No meteorological data is present.",
+      "expected_source": "None",
+      "expected_topics": [
+        "unrelated",
+        "hallucination_trap"
+      ]
+    },
+    {
+      "id": "q_056",
+      "category": "factual",
+      "document_id": "doc_16_playwright_mcp",
+      "question": "What is the primary architectural focus of Playwright Web Automation MCP Integration?",
+      "expected_answer": "The primary focus of Playwright Web Automation MCP Integration is to detail technical specifications, memory budgets, and benchmarking standards for playwright, mcp, automation.",
+      "expected_source": "doc_16_playwright_mcp.docx",
+      "expected_topics": [
+        "playwright",
+        "mcp",
+        "automation"
+      ]
+    },
+    {
+      "id": "q_057",
+      "category": "document_specific",
+      "document_id": "doc_16_playwright_mcp",
+      "question": "Which document format and ID are assigned to 'Playwright Web Automation MCP Integration' in the system manifest?",
+      "expected_answer": "'Playwright Web Automation MCP Integration' is stored under format 'docx' with document ID 'doc_16_playwright_mcp'.",
+      "expected_source": "doc_16_playwright_mcp.docx",
+      "expected_topics": [
+        "doc_16_playwright_mcp",
+        "docx"
+      ]
+    },
+    {
+      "id": "q_058",
+      "category": "multi_hop",
+      "document_id": "doc_16_playwright_mcp",
+      "question": "How do the validation standards in Playwright Web Automation MCP Integration support the overall reliability benchmarks of MCPPRO?",
+      "expected_answer": "The validation standards mandate recording latency percentiles (mean, p50, p90, p95, p99), error rates, and resource usage to ensure enterprise stability.",
+      "expected_source": "doc_16_playwright_mcp.docx",
+      "expected_topics": [
+        "validation",
+        "percentiles",
+        "reliability"
+      ]
+    },
+    {
+      "id": "q_059",
+      "category": "irrelevant_query",
+      "document_id": "doc_16_playwright_mcp",
+      "question": "What is the average rainfall in the Amazon rainforest during January for doc_16_playwright_mcp?",
+      "expected_answer": "I cannot answer this question based on the provided technical documents. No meteorological data is present.",
+      "expected_source": "None",
+      "expected_topics": [
+        "unrelated",
+        "hallucination_trap"
+      ]
+    },
+    {
+      "id": "q_060",
+      "category": "factual",
+      "document_id": "doc_17_frontend_state",
+      "question": "What is the primary architectural focus of Next.js React Hooks and Conversation State Management?",
+      "expected_answer": "The primary focus of Next.js React Hooks and Conversation State Management is to detail technical specifications, memory budgets, and benchmarking standards for frontend, react, hooks.",
+      "expected_source": "doc_17_frontend_state.pdf",
+      "expected_topics": [
+        "frontend",
+        "react",
+        "hooks"
+      ]
+    },
+    {
+      "id": "q_061",
+      "category": "document_specific",
+      "document_id": "doc_17_frontend_state",
+      "question": "Which document format and ID are assigned to 'Next.js React Hooks and Conversation State Management' in the system manifest?",
+      "expected_answer": "'Next.js React Hooks and Conversation State Management' is stored under format 'pdf' with document ID 'doc_17_frontend_state'.",
+      "expected_source": "doc_17_frontend_state.pdf",
+      "expected_topics": [
+        "doc_17_frontend_state",
+        "pdf"
+      ]
+    },
+    {
+      "id": "q_062",
+      "category": "multi_hop",
+      "document_id": "doc_17_frontend_state",
+      "question": "How do the validation standards in Next.js React Hooks and Conversation State Management support the overall reliability benchmarks of MCPPRO?",
+      "expected_answer": "The validation standards mandate recording latency percentiles (mean, p50, p90, p95, p99), error rates, and resource usage to ensure enterprise stability.",
+      "expected_source": "doc_17_frontend_state.pdf",
+      "expected_topics": [
+        "validation",
+        "percentiles",
+        "reliability"
+      ]
+    },
+    {
+      "id": "q_063",
+      "category": "irrelevant_query",
+      "document_id": "doc_17_frontend_state",
+      "question": "What is the average rainfall in the Amazon rainforest during January for doc_17_frontend_state?",
+      "expected_answer": "I cannot answer this question based on the provided technical documents. No meteorological data is present.",
+      "expected_source": "None",
+      "expected_topics": [
+        "unrelated",
+        "hallucination_trap"
+      ]
+    },
+    {
+      "id": "q_064",
+      "category": "factual",
+      "document_id": "doc_18_rate_limiting",
+      "question": "What is the primary architectural focus of API Rate Limiting and Token Bucket Implementation?",
+      "expected_answer": "The primary focus of API Rate Limiting and Token Bucket Implementation is to detail technical specifications, memory budgets, and benchmarking standards for security, rate_limiting, api.",
+      "expected_source": "doc_18_rate_limiting.pdf",
+      "expected_topics": [
+        "security",
+        "rate_limiting",
+        "api"
+      ]
+    },
+    {
+      "id": "q_065",
+      "category": "document_specific",
+      "document_id": "doc_18_rate_limiting",
+      "question": "Which document format and ID are assigned to 'API Rate Limiting and Token Bucket Implementation' in the system manifest?",
+      "expected_answer": "'API Rate Limiting and Token Bucket Implementation' is stored under format 'pdf' with document ID 'doc_18_rate_limiting'.",
+      "expected_source": "doc_18_rate_limiting.pdf",
+      "expected_topics": [
+        "doc_18_rate_limiting",
+        "pdf"
+      ]
+    },
+    {
+      "id": "q_066",
+      "category": "multi_hop",
+      "document_id": "doc_18_rate_limiting",
+      "question": "How do the validation standards in API Rate Limiting and Token Bucket Implementation support the overall reliability benchmarks of MCPPRO?",
+      "expected_answer": "The validation standards mandate recording latency percentiles (mean, p50, p90, p95, p99), error rates, and resource usage to ensure enterprise stability.",
+      "expected_source": "doc_18_rate_limiting.pdf",
+      "expected_topics": [
+        "validation",
+        "percentiles",
+        "reliability"
+      ]
+    },
+    {
+      "id": "q_067",
+      "category": "irrelevant_query",
+      "document_id": "doc_18_rate_limiting",
+      "question": "What is the average rainfall in the Amazon rainforest during January for doc_18_rate_limiting?",
+      "expected_answer": "I cannot answer this question based on the provided technical documents. No meteorological data is present.",
+      "expected_source": "None",
+      "expected_topics": [
+        "unrelated",
+        "hallucination_trap"
+      ]
+    },
+    {
+      "id": "q_068",
+      "category": "factual",
+      "document_id": "doc_19_pptx_loader_deepdive",
+      "question": "What is the primary architectural focus of Custom PowerPoint Parser Architecture and Image Extraction?",
+      "expected_answer": "The primary focus of Custom PowerPoint Parser Architecture and Image Extraction is to detail technical specifications, memory budgets, and benchmarking standards for pptx, loader, ocr.",
+      "expected_source": "doc_19_pptx_loader_deepdive.pptx",
+      "expected_topics": [
+        "pptx",
+        "loader",
+        "ocr"
+      ]
+    },
+    {
+      "id": "q_069",
+      "category": "document_specific",
+      "document_id": "doc_19_pptx_loader_deepdive",
+      "question": "Which document format and ID are assigned to 'Custom PowerPoint Parser Architecture and Image Extraction' in the system manifest?",
+      "expected_answer": "'Custom PowerPoint Parser Architecture and Image Extraction' is stored under format 'pptx' with document ID 'doc_19_pptx_loader_deepdive'.",
+      "expected_source": "doc_19_pptx_loader_deepdive.pptx",
+      "expected_topics": [
+        "doc_19_pptx_loader_deepdive",
+        "pptx"
+      ]
+    },
+    {
+      "id": "q_070",
+      "category": "multi_hop",
+      "document_id": "doc_19_pptx_loader_deepdive",
+      "question": "How do the validation standards in Custom PowerPoint Parser Architecture and Image Extraction support the overall reliability benchmarks of MCPPRO?",
+      "expected_answer": "The validation standards mandate recording latency percentiles (mean, p50, p90, p95, p99), error rates, and resource usage to ensure enterprise stability.",
+      "expected_source": "doc_19_pptx_loader_deepdive.pptx",
+      "expected_topics": [
+        "validation",
+        "percentiles",
+        "reliability"
+      ]
+    },
+    {
+      "id": "q_071",
+      "category": "irrelevant_query",
+      "document_id": "doc_19_pptx_loader_deepdive",
+      "question": "What is the average rainfall in the Amazon rainforest during January for doc_19_pptx_loader_deepdive?",
+      "expected_answer": "I cannot answer this question based on the provided technical documents. No meteorological data is present.",
+      "expected_source": "None",
+      "expected_topics": [
+        "unrelated",
+        "hallucination_trap"
+      ]
+    },
+    {
+      "id": "q_072",
+      "category": "factual",
+      "document_id": "doc_20_spreadsheet_qa",
+      "question": "What is the primary architectural focus of Financial Table Parsing with XlsxLoader?",
+      "expected_answer": "The primary focus of Financial Table Parsing with XlsxLoader is to detail technical specifications, memory budgets, and benchmarking standards for spreadsheet, xlsx, tables.",
+      "expected_source": "doc_20_spreadsheet_qa.xlsx",
+      "expected_topics": [
+        "spreadsheet",
+        "xlsx",
+        "tables"
+      ]
+    },
+    {
+      "id": "q_073",
+      "category": "document_specific",
+      "document_id": "doc_20_spreadsheet_qa",
+      "question": "Which document format and ID are assigned to 'Financial Table Parsing with XlsxLoader' in the system manifest?",
+      "expected_answer": "'Financial Table Parsing with XlsxLoader' is stored under format 'xlsx' with document ID 'doc_20_spreadsheet_qa'.",
+      "expected_source": "doc_20_spreadsheet_qa.xlsx",
+      "expected_topics": [
+        "doc_20_spreadsheet_qa",
+        "xlsx"
+      ]
+    },
+    {
+      "id": "q_074",
+      "category": "multi_hop",
+      "document_id": "doc_20_spreadsheet_qa",
+      "question": "How do the validation standards in Financial Table Parsing with XlsxLoader support the overall reliability benchmarks of MCPPRO?",
+      "expected_answer": "The validation standards mandate recording latency percentiles (mean, p50, p90, p95, p99), error rates, and resource usage to ensure enterprise stability.",
+      "expected_source": "doc_20_spreadsheet_qa.xlsx",
+      "expected_topics": [
+        "validation",
+        "percentiles",
+        "reliability"
+      ]
+    },
+    {
+      "id": "q_075",
+      "category": "irrelevant_query",
+      "document_id": "doc_20_spreadsheet_qa",
+      "question": "What is the average rainfall in the Amazon rainforest during January for doc_20_spreadsheet_qa?",
+      "expected_answer": "I cannot answer this question based on the provided technical documents. No meteorological data is present.",
+      "expected_source": "None",
+      "expected_topics": [
+        "unrelated",
+        "hallucination_trap"
+      ]
+    },
+    {
+      "id": "q_076",
+      "category": "factual",
+      "document_id": "doc_21_multimodal_rag",
+      "question": "What is the primary architectural focus of Multimodal Image and Document Vector Search?",
+      "expected_answer": "The primary focus of Multimodal Image and Document Vector Search is to detail technical specifications, memory budgets, and benchmarking standards for multimodal, rag, vision.",
+      "expected_source": "doc_21_multimodal_rag.pdf",
+      "expected_topics": [
+        "multimodal",
+        "rag",
+        "vision"
+      ]
+    },
+    {
+      "id": "q_077",
+      "category": "document_specific",
+      "document_id": "doc_21_multimodal_rag",
+      "question": "Which document format and ID are assigned to 'Multimodal Image and Document Vector Search' in the system manifest?",
+      "expected_answer": "'Multimodal Image and Document Vector Search' is stored under format 'pdf' with document ID 'doc_21_multimodal_rag'.",
+      "expected_source": "doc_21_multimodal_rag.pdf",
+      "expected_topics": [
+        "doc_21_multimodal_rag",
+        "pdf"
+      ]
+    },
+    {
+      "id": "q_078",
+      "category": "multi_hop",
+      "document_id": "doc_21_multimodal_rag",
+      "question": "How do the validation standards in Multimodal Image and Document Vector Search support the overall reliability benchmarks of MCPPRO?",
+      "expected_answer": "The validation standards mandate recording latency percentiles (mean, p50, p90, p95, p99), error rates, and resource usage to ensure enterprise stability.",
+      "expected_source": "doc_21_multimodal_rag.pdf",
+      "expected_topics": [
+        "validation",
+        "percentiles",
+        "reliability"
+      ]
+    },
+    {
+      "id": "q_079",
+      "category": "irrelevant_query",
+      "document_id": "doc_21_multimodal_rag",
+      "question": "What is the average rainfall in the Amazon rainforest during January for doc_21_multimodal_rag?",
+      "expected_answer": "I cannot answer this question based on the provided technical documents. No meteorological data is present.",
+      "expected_source": "None",
+      "expected_topics": [
+        "unrelated",
+        "hallucination_trap"
+      ]
+    },
+    {
+      "id": "q_080",
+      "category": "factual",
+      "document_id": "doc_22_groq_inference",
+      "question": "What is the primary architectural focus of Groq LPU Acceleration and Sub-Second Inference?",
+      "expected_answer": "The primary focus of Groq LPU Acceleration and Sub-Second Inference is to detail technical specifications, memory budgets, and benchmarking standards for groq, inference, latency.",
+      "expected_source": "doc_22_groq_inference.pdf",
+      "expected_topics": [
+        "groq",
+        "inference",
+        "latency"
+      ]
+    },
+    {
+      "id": "q_081",
+      "category": "document_specific",
+      "document_id": "doc_22_groq_inference",
+      "question": "Which document format and ID are assigned to 'Groq LPU Acceleration and Sub-Second Inference' in the system manifest?",
+      "expected_answer": "'Groq LPU Acceleration and Sub-Second Inference' is stored under format 'pdf' with document ID 'doc_22_groq_inference'.",
+      "expected_source": "doc_22_groq_inference.pdf",
+      "expected_topics": [
+        "doc_22_groq_inference",
+        "pdf"
+      ]
+    },
+    {
+      "id": "q_082",
+      "category": "multi_hop",
+      "document_id": "doc_22_groq_inference",
+      "question": "How do the validation standards in Groq LPU Acceleration and Sub-Second Inference support the overall reliability benchmarks of MCPPRO?",
+      "expected_answer": "The validation standards mandate recording latency percentiles (mean, p50, p90, p95, p99), error rates, and resource usage to ensure enterprise stability.",
+      "expected_source": "doc_22_groq_inference.pdf",
+      "expected_topics": [
+        "validation",
+        "percentiles",
+        "reliability"
+      ]
+    },
+    {
+      "id": "q_083",
+      "category": "irrelevant_query",
+      "document_id": "doc_22_groq_inference",
+      "question": "What is the average rainfall in the Amazon rainforest during January for doc_22_groq_inference?",
+      "expected_answer": "I cannot answer this question based on the provided technical documents. No meteorological data is present.",
+      "expected_source": "None",
+      "expected_topics": [
+        "unrelated",
+        "hallucination_trap"
+      ]
+    },
+    {
+      "id": "q_084",
+      "category": "factual",
+      "document_id": "doc_23_eval_methodology",
+      "question": "What is the primary architectural focus of RAG Evaluation Metrics and Groundedness Scoring?",
+      "expected_answer": "The primary focus of RAG Evaluation Metrics and Groundedness Scoring is to detail technical specifications, memory budgets, and benchmarking standards for evaluation, rag, groundedness.",
+      "expected_source": "doc_23_eval_methodology.pdf",
+      "expected_topics": [
+        "evaluation",
+        "rag",
+        "groundedness"
+      ]
+    },
+    {
+      "id": "q_085",
+      "category": "document_specific",
+      "document_id": "doc_23_eval_methodology",
+      "question": "Which document format and ID are assigned to 'RAG Evaluation Metrics and Groundedness Scoring' in the system manifest?",
+      "expected_answer": "'RAG Evaluation Metrics and Groundedness Scoring' is stored under format 'pdf' with document ID 'doc_23_eval_methodology'.",
+      "expected_source": "doc_23_eval_methodology.pdf",
+      "expected_topics": [
+        "doc_23_eval_methodology",
+        "pdf"
+      ]
+    },
+    {
+      "id": "q_086",
+      "category": "multi_hop",
+      "document_id": "doc_23_eval_methodology",
+      "question": "How do the validation standards in RAG Evaluation Metrics and Groundedness Scoring support the overall reliability benchmarks of MCPPRO?",
+      "expected_answer": "The validation standards mandate recording latency percentiles (mean, p50, p90, p95, p99), error rates, and resource usage to ensure enterprise stability.",
+      "expected_source": "doc_23_eval_methodology.pdf",
+      "expected_topics": [
+        "validation",
+        "percentiles",
+        "reliability"
+      ]
+    },
+    {
+      "id": "q_087",
+      "category": "irrelevant_query",
+      "document_id": "doc_23_eval_methodology",
+      "question": "What is the average rainfall in the Amazon rainforest during January for doc_23_eval_methodology?",
+      "expected_answer": "I cannot answer this question based on the provided technical documents. No meteorological data is present.",
+      "expected_source": "None",
+      "expected_topics": [
+        "unrelated",
+        "hallucination_trap"
+      ]
+    },
+    {
+      "id": "q_088",
+      "category": "factual",
+      "document_id": "doc_24_qdrant_clustering",
+      "question": "What is the primary architectural focus of Qdrant HNSW Index Optimization and Quantization?",
+      "expected_answer": "The primary focus of Qdrant HNSW Index Optimization and Quantization is to detail technical specifications, memory budgets, and benchmarking standards for qdrant, hnsw, quantization.",
+      "expected_source": "doc_24_qdrant_clustering.pdf",
+      "expected_topics": [
+        "qdrant",
+        "hnsw",
+        "quantization"
+      ]
+    },
+    {
+      "id": "q_089",
+      "category": "document_specific",
+      "document_id": "doc_24_qdrant_clustering",
+      "question": "Which document format and ID are assigned to 'Qdrant HNSW Index Optimization and Quantization' in the system manifest?",
+      "expected_answer": "'Qdrant HNSW Index Optimization and Quantization' is stored under format 'pdf' with document ID 'doc_24_qdrant_clustering'.",
+      "expected_source": "doc_24_qdrant_clustering.pdf",
+      "expected_topics": [
+        "doc_24_qdrant_clustering",
+        "pdf"
+      ]
+    },
+    {
+      "id": "q_090",
+      "category": "multi_hop",
+      "document_id": "doc_24_qdrant_clustering",
+      "question": "How do the validation standards in Qdrant HNSW Index Optimization and Quantization support the overall reliability benchmarks of MCPPRO?",
+      "expected_answer": "The validation standards mandate recording latency percentiles (mean, p50, p90, p95, p99), error rates, and resource usage to ensure enterprise stability.",
+      "expected_source": "doc_24_qdrant_clustering.pdf",
+      "expected_topics": [
+        "validation",
+        "percentiles",
+        "reliability"
+      ]
+    },
+    {
+      "id": "q_091",
+      "category": "irrelevant_query",
+      "document_id": "doc_24_qdrant_clustering",
+      "question": "What is the average rainfall in the Amazon rainforest during January for doc_24_qdrant_clustering?",
+      "expected_answer": "I cannot answer this question based on the provided technical documents. No meteorological data is present.",
+      "expected_source": "None",
+      "expected_topics": [
+        "unrelated",
+        "hallucination_trap"
+      ]
+    },
+    {
+      "id": "q_092",
+      "category": "factual",
+      "document_id": "doc_25_langchain_bridges",
+      "question": "What is the primary architectural focus of LangChain Expression Language (LCEL) Wrappers?",
+      "expected_answer": "The primary focus of LangChain Expression Language (LCEL) Wrappers is to detail technical specifications, memory budgets, and benchmarking standards for langchain, lcel, wrapper.",
+      "expected_source": "doc_25_langchain_bridges.txt",
+      "expected_topics": [
+        "langchain",
+        "lcel",
+        "wrapper"
+      ]
+    },
+    {
+      "id": "q_093",
+      "category": "document_specific",
+      "document_id": "doc_25_langchain_bridges",
+      "question": "Which document format and ID are assigned to 'LangChain Expression Language (LCEL) Wrappers' in the system manifest?",
+      "expected_answer": "'LangChain Expression Language (LCEL) Wrappers' is stored under format 'txt' with document ID 'doc_25_langchain_bridges'.",
+      "expected_source": "doc_25_langchain_bridges.txt",
+      "expected_topics": [
+        "doc_25_langchain_bridges",
+        "txt"
+      ]
+    },
+    {
+      "id": "q_094",
+      "category": "multi_hop",
+      "document_id": "doc_25_langchain_bridges",
+      "question": "How do the validation standards in LangChain Expression Language (LCEL) Wrappers support the overall reliability benchmarks of MCPPRO?",
+      "expected_answer": "The validation standards mandate recording latency percentiles (mean, p50, p90, p95, p99), error rates, and resource usage to ensure enterprise stability.",
+      "expected_source": "doc_25_langchain_bridges.txt",
+      "expected_topics": [
+        "validation",
+        "percentiles",
+        "reliability"
+      ]
+    },
+    {
+      "id": "q_095",
+      "category": "irrelevant_query",
+      "document_id": "doc_25_langchain_bridges",
+      "question": "What is the average rainfall in the Amazon rainforest during January for doc_25_langchain_bridges?",
+      "expected_answer": "I cannot answer this question based on the provided technical documents. No meteorological data is present.",
+      "expected_source": "None",
+      "expected_topics": [
+        "unrelated",
+        "hallucination_trap"
+      ]
+    },
+    {
+      "id": "q_096",
+      "category": "factual",
+      "document_id": "doc_26_image_ocr_sample",
+      "question": "What is the primary architectural focus of System Hardware Diagram with Embedded Text Card?",
+      "expected_answer": "The primary focus of System Hardware Diagram with Embedded Text Card is to detail technical specifications, memory budgets, and benchmarking standards for ocr, image, hardware.",
+      "expected_source": "doc_26_image_ocr_sample.png",
+      "expected_topics": [
+        "ocr",
+        "image",
+        "hardware"
+      ]
+    },
+    {
+      "id": "q_097",
+      "category": "document_specific",
+      "document_id": "doc_26_image_ocr_sample",
+      "question": "Which document format and ID are assigned to 'System Hardware Diagram with Embedded Text Card' in the system manifest?",
+      "expected_answer": "'System Hardware Diagram with Embedded Text Card' is stored under format 'png' with document ID 'doc_26_image_ocr_sample'.",
+      "expected_source": "doc_26_image_ocr_sample.png",
+      "expected_topics": [
+        "doc_26_image_ocr_sample",
+        "png"
+      ]
+    },
+    {
+      "id": "q_098",
+      "category": "multi_hop",
+      "document_id": "doc_26_image_ocr_sample",
+      "question": "How do the validation standards in System Hardware Diagram with Embedded Text Card support the overall reliability benchmarks of MCPPRO?",
+      "expected_answer": "The validation standards mandate recording latency percentiles (mean, p50, p90, p95, p99), error rates, and resource usage to ensure enterprise stability.",
+      "expected_source": "doc_26_image_ocr_sample.png",
+      "expected_topics": [
+        "validation",
+        "percentiles",
+        "reliability"
+      ]
+    },
+    {
+      "id": "q_099",
+      "category": "irrelevant_query",
+      "document_id": "doc_26_image_ocr_sample",
+      "question": "What is the average rainfall in the Amazon rainforest during January for doc_26_image_ocr_sample?",
+      "expected_answer": "I cannot answer this question based on the provided technical documents. No meteorological data is present.",
+      "expected_source": "None",
+      "expected_topics": [
+        "unrelated",
+        "hallucination_trap"
+      ]
+    },
+    {
+      "id": "q_100",
+      "category": "factual",
+      "document_id": "doc_27_cerebras_wafer",
+      "question": "What is the primary architectural focus of Cerebras CS-3 Ultra-Fast Generation Specs?",
+      "expected_answer": "The primary focus of Cerebras CS-3 Ultra-Fast Generation Specs is to detail technical specifications, memory budgets, and benchmarking standards for cerebras, fast_llm, tokens.",
+      "expected_source": "doc_27_cerebras_wafer.pdf",
+      "expected_topics": [
+        "cerebras",
+        "fast_llm",
+        "tokens"
+      ]
+    },
+    {
+      "id": "q_101",
+      "category": "document_specific",
+      "document_id": "doc_27_cerebras_wafer",
+      "question": "Which document format and ID are assigned to 'Cerebras CS-3 Ultra-Fast Generation Specs' in the system manifest?",
+      "expected_answer": "'Cerebras CS-3 Ultra-Fast Generation Specs' is stored under format 'pdf' with document ID 'doc_27_cerebras_wafer'.",
+      "expected_source": "doc_27_cerebras_wafer.pdf",
+      "expected_topics": [
+        "doc_27_cerebras_wafer",
+        "pdf"
+      ]
+    },
+    {
+      "id": "q_102",
+      "category": "multi_hop",
+      "document_id": "doc_27_cerebras_wafer",
+      "question": "How do the validation standards in Cerebras CS-3 Ultra-Fast Generation Specs support the overall reliability benchmarks of MCPPRO?",
+      "expected_answer": "The validation standards mandate recording latency percentiles (mean, p50, p90, p95, p99), error rates, and resource usage to ensure enterprise stability.",
+      "expected_source": "doc_27_cerebras_wafer.pdf",
+      "expected_topics": [
+        "validation",
+        "percentiles",
+        "reliability"
+      ]
+    },
+    {
+      "id": "q_103",
+      "category": "irrelevant_query",
+      "document_id": "doc_27_cerebras_wafer",
+      "question": "What is the average rainfall in the Amazon rainforest during January for doc_27_cerebras_wafer?",
+      "expected_answer": "I cannot answer this question based on the provided technical documents. No meteorological data is present.",
+      "expected_source": "None",
+      "expected_topics": [
+        "unrelated",
+        "hallucination_trap"
+      ]
+    },
+    {
+      "id": "q_104",
+      "category": "factual",
+      "document_id": "doc_28_cache_invalidation",
+      "question": "What is the primary architectural focus of Vector Store Cache TTL and Invalidation Protocols?",
+      "expected_answer": "The primary focus of Vector Store Cache TTL and Invalidation Protocols is to detail technical specifications, memory budgets, and benchmarking standards for cache, invalidation, ttl.",
+      "expected_source": "doc_28_cache_invalidation.pdf",
+      "expected_topics": [
+        "cache",
+        "invalidation",
+        "ttl"
+      ]
+    },
+    {
+      "id": "q_105",
+      "category": "document_specific",
+      "document_id": "doc_28_cache_invalidation",
+      "question": "Which document format and ID are assigned to 'Vector Store Cache TTL and Invalidation Protocols' in the system manifest?",
+      "expected_answer": "'Vector Store Cache TTL and Invalidation Protocols' is stored under format 'pdf' with document ID 'doc_28_cache_invalidation'.",
+      "expected_source": "doc_28_cache_invalidation.pdf",
+      "expected_topics": [
+        "doc_28_cache_invalidation",
+        "pdf"
+      ]
+    },
+    {
+      "id": "q_106",
+      "category": "multi_hop",
+      "document_id": "doc_28_cache_invalidation",
+      "question": "How do the validation standards in Vector Store Cache TTL and Invalidation Protocols support the overall reliability benchmarks of MCPPRO?",
+      "expected_answer": "The validation standards mandate recording latency percentiles (mean, p50, p90, p95, p99), error rates, and resource usage to ensure enterprise stability.",
+      "expected_source": "doc_28_cache_invalidation.pdf",
+      "expected_topics": [
+        "validation",
+        "percentiles",
+        "reliability"
+      ]
+    },
+    {
+      "id": "q_107",
+      "category": "irrelevant_query",
+      "document_id": "doc_28_cache_invalidation",
+      "question": "What is the average rainfall in the Amazon rainforest during January for doc_28_cache_invalidation?",
+      "expected_answer": "I cannot answer this question based on the provided technical documents. No meteorological data is present.",
+      "expected_source": "None",
+      "expected_topics": [
+        "unrelated",
+        "hallucination_trap"
+      ]
+    },
+    {
+      "id": "q_108",
+      "category": "factual",
+      "document_id": "doc_29_error_recovery",
+      "question": "What is the primary architectural focus of Fault Isolation and Self-Healing Agent Mechanisms?",
+      "expected_answer": "The primary focus of Fault Isolation and Self-Healing Agent Mechanisms is to detail technical specifications, memory budgets, and benchmarking standards for error, recovery, agent.",
+      "expected_source": "doc_29_error_recovery.docx",
+      "expected_topics": [
+        "error",
+        "recovery",
+        "agent"
+      ]
+    },
+    {
+      "id": "q_109",
+      "category": "document_specific",
+      "document_id": "doc_29_error_recovery",
+      "question": "Which document format and ID are assigned to 'Fault Isolation and Self-Healing Agent Mechanisms' in the system manifest?",
+      "expected_answer": "'Fault Isolation and Self-Healing Agent Mechanisms' is stored under format 'docx' with document ID 'doc_29_error_recovery'.",
+      "expected_source": "doc_29_error_recovery.docx",
+      "expected_topics": [
+        "doc_29_error_recovery",
+        "docx"
+      ]
+    },
+    {
+      "id": "q_110",
+      "category": "multi_hop",
+      "document_id": "doc_29_error_recovery",
+      "question": "How do the validation standards in Fault Isolation and Self-Healing Agent Mechanisms support the overall reliability benchmarks of MCPPRO?",
+      "expected_answer": "The validation standards mandate recording latency percentiles (mean, p50, p90, p95, p99), error rates, and resource usage to ensure enterprise stability.",
+      "expected_source": "doc_29_error_recovery.docx",
+      "expected_topics": [
+        "validation",
+        "percentiles",
+        "reliability"
+      ]
+    },
+    {
+      "id": "q_111",
+      "category": "irrelevant_query",
+      "document_id": "doc_29_error_recovery",
+      "question": "What is the average rainfall in the Amazon rainforest during January for doc_29_error_recovery?",
+      "expected_answer": "I cannot answer this question based on the provided technical documents. No meteorological data is present.",
+      "expected_source": "None",
+      "expected_topics": [
+        "unrelated",
+        "hallucination_trap"
+      ]
+    },
+    {
+      "id": "q_112",
+      "category": "factual",
+      "document_id": "doc_30_cost_modeling",
+      "question": "What is the primary architectural focus of Enterprise TCO Modeling for Self-Hosted vs Cloud RAG?",
+      "expected_answer": "The primary focus of Enterprise TCO Modeling for Self-Hosted vs Cloud RAG is to detail technical specifications, memory budgets, and benchmarking standards for cost, tco, tokens.",
+      "expected_source": "doc_30_cost_modeling.pdf",
+      "expected_topics": [
+        "cost",
+        "tco",
+        "tokens"
+      ]
+    },
+    {
+      "id": "q_113",
+      "category": "document_specific",
+      "document_id": "doc_30_cost_modeling",
+      "question": "Which document format and ID are assigned to 'Enterprise TCO Modeling for Self-Hosted vs Cloud RAG' in the system manifest?",
+      "expected_answer": "'Enterprise TCO Modeling for Self-Hosted vs Cloud RAG' is stored under format 'pdf' with document ID 'doc_30_cost_modeling'.",
+      "expected_source": "doc_30_cost_modeling.pdf",
+      "expected_topics": [
+        "doc_30_cost_modeling",
+        "pdf"
+      ]
+    },
+    {
+      "id": "q_114",
+      "category": "multi_hop",
+      "document_id": "doc_30_cost_modeling",
+      "question": "How do the validation standards in Enterprise TCO Modeling for Self-Hosted vs Cloud RAG support the overall reliability benchmarks of MCPPRO?",
+      "expected_answer": "The validation standards mandate recording latency percentiles (mean, p50, p90, p95, p99), error rates, and resource usage to ensure enterprise stability.",
+      "expected_source": "doc_30_cost_modeling.pdf",
+      "expected_topics": [
+        "validation",
+        "percentiles",
+        "reliability"
+      ]
+    },
+    {
+      "id": "q_115",
+      "category": "irrelevant_query",
+      "document_id": "doc_30_cost_modeling",
+      "question": "What is the average rainfall in the Amazon rainforest during January for doc_30_cost_modeling?",
+      "expected_answer": "I cannot answer this question based on the provided technical documents. No meteorological data is present.",
+      "expected_source": "None",
+      "expected_topics": [
+        "unrelated",
+        "hallucination_trap"
+      ]
+    }
+  ]
+}

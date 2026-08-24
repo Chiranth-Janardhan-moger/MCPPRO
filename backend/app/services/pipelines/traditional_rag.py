@@ -51,25 +51,20 @@ async def traditional_rag(
     raw_response: Dict[str, Any] = {}
     document_processor.file_processor.use_llm_pdf_loader = False
 
+    # NOTE: no global wipe here. The store is shared; per-document isolation
+    # comes from the `document_id` metadata filter used during retrieval.
 
     # ----------------------------------------------------------------------------------
-    # 1. Ensure a clean vector store
+    # 1. Try loading a cached store for the exact document URL + variant
     # ----------------------------------------------------------------------------------
-    if hasattr(vector_store, "adelete_all_documents"):
-        await vector_store.adelete_all_documents()
-    else:
-        vector_store.delete_all_documents()
-
-    # ----------------------------------------------------------------------------------
-    # 2. Try loading a cached store for the exact document URL
-    # ----------------------------------------------------------------------------------
+    cache_key = f"{document_url}::std"
     cache_used = False
     if (
         settings.ENABLE_CACHING
         and vector_store.supports_caching()
-        and vector_store.has_cache(document_url)
+        and vector_store.has_cache(cache_key)
     ):
-        if vector_store.load_from_cache(document_url):
+        if vector_store.load_from_cache(cache_key):
             cache_used = True
             try:
                 cached_chunks = (
@@ -80,8 +75,15 @@ async def traditional_rag(
             except Exception:
                 cached_chunks = -1
 
+            # Recover the real document_id stored in chunk metadata so the
+            # retrieval filter matches even across cache generations.
+            stored_ids = vector_store.get_distinct_metadata_values("document_id")
+            effective_document_id = (
+                stored_ids[0] if len(stored_ids) == 1 else document_id
+            )
+
             document_metadata = {
-                "document_id": document_id,
+                "document_id": effective_document_id,
                 "chunks_processed": cached_chunks,
                 "vector_store": vector_store.store_type,
                 "cache_used": True,
@@ -89,7 +91,7 @@ async def traditional_rag(
             }
 
             query_results = await retrieval_service.process_document_queries(
-                document_id=document_id,
+                document_id=effective_document_id,
                 questions=questions,
                 k=k,
             )
@@ -107,7 +109,7 @@ async def traditional_rag(
             }
 
     # ----------------------------------------------------------------------------------
-    # 3. If no cache, process the document from scratch
+    # 2. If no cache, process the document from scratch
     # ----------------------------------------------------------------------------------
     if not cache_used:
         processing_result = await document_processor.process_document_url(
@@ -150,7 +152,7 @@ async def traditional_rag(
             and vector_store.supports_caching()
             and chunks_count > settings.CACHE_MIN_CHUNKS
         ):
-            vector_store.save_to_cache(document_url)
+            vector_store.save_to_cache(cache_key)
 
     # ----------------------------------------------------------------------------------
     # 4. Done â€“ return consolidated result

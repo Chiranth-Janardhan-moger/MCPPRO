@@ -1,0 +1,61 @@
+{
+  "suite_name": "MCPPRO Autonomous Evaluation Suite",
+  "version": "1.0.0",
+  "dataset": {
+    "manifest_path": "benchmarks/datasets/golden_dataset.json",
+    "documents_directory": "benchmarks/datasets/documents",
+    "total_documents": 30,
+    "total_questions": 115
+  },
+  "benchmarks": {
+    "ingestion": {
+      "enabled": true,
+      "test_formats": [".pdf", ".docx", ".pptx", ".xlsx", ".txt", ".md", ".png"]
+    },
+    "ocr": {
+      "enabled": true,
+      "engines": ["easyocr", "pytesseract"]
+    },
+    "chunking": {
+      "enabled": true,
+      "configurations": [
+        {"chunk_size": 500, "chunk_overlap": 100},
+        {"chunk_size": 1000, "chunk_overlap": 200},
+        {"chunk_size": 1500, "chunk_overlap": 300}
+      ]
+    },
+    "embeddings": {
+      "enabled": true,
+      "batch_sizes": [1, 4, 8, 16, 32, 64]
+    },
+    "vector_stores": {
+      "enabled": true,
+      "corpus_sizes": [100, 1000, 10000],
+      "stores": ["inmemory", "qdrant_memory", "qdrant_disk", "supabase", "pinecone"]
+    },
+    "rag_quality": {
+      "enabled": true,
+      "retrieval_k": 10
+    },
+    "concurrency": {
+      "enabled": true,
+      "concurrency_levels": [1, 5, 10, 25]
+    },
+    "caching": {
+      "enabled": true,
+      "cache_directory": "vector_store_cache"
+    },
+    "mcp": {
+      "enabled": true,
+      "transports": ["streamable-http", "stdio"]
+    }
+  },
+  "output_paths": {
+    "raw_directory": "benchmarks/results/raw",
+    "processed_directory": "benchmarks/results/processed",
+    "latest_directory": "benchmarks/results/latest",
+    "report_path": "benchmarks/results/benchmark_report.md",
+    "catalog_path": "benchmarks/results/METRIC_CATALOG.md",
+    "environment_path": "benchmarks/results/environment.json"
+  }
+}

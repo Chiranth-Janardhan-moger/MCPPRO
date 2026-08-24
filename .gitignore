@@ -101,3 +101,7 @@ Thumbs.db
 # VoltAgent / Project specific tools
 .voltagent/
 .kiro/
+.opencode/
+vector_store_cache/
+frontend/test-results/
+benchmarks/results/temp_qdrant/

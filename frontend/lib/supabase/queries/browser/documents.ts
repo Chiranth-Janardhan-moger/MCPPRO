@@ -1,10 +1,18 @@
 import { createSupabaseBrowser } from "@/lib/supabase/client";
 
-export async function getDocuments(userId: string) {
+export interface UserDocument {
+  id: string;
+  file_name: string;
+  status: string;
+  chunk_count?: number;
+  created_at: string;
+}
+
+export async function getUserDocuments(userId: string): Promise<UserDocument[]> {
   const supabase = createSupabaseBrowser();
   const { data, error } = await supabase
-    .from("documents")
-    .select("id, file_name, created_at")
+    .from("user_documents")
+    .select("id, file_name, status, chunk_count, created_at")
     .eq("user_id", userId)
     .order("created_at", { ascending: false });
 
@@ -13,5 +21,5 @@ export async function getDocuments(userId: string) {
     return [];
   }
 
-  return data;
+  return (data ?? []) as UserDocument[];
 }

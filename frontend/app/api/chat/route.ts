@@ -1,6 +1,8 @@
 import { createDataStreamResponse } from "ai";
 import { getUser } from '@/app/chat/hooks/get-user';
 import { agent } from '@/voltagent';
+import { runWithRequestContext } from '@/lib/request-context';
+import { getModelInfo, isProviderConfigured } from '@/lib/ai/models';
 
 export const maxDuration = 300;
 
@@ -15,14 +17,34 @@ export async function POST(req: Request) {
       });
     }
 
-    const { messages, selectedModel } = await req.json();
+    const body = await req.json();
+    const messages = Array.isArray(body?.messages) ? body.messages : null;
+    if (!messages || messages.length === 0) {
+      return new Response(JSON.stringify({ error: 'messages array is required' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
 
-    process.env.SELECTED_MODEL = selectedModel;
+    const selectedModel: string | undefined =
+      typeof body?.selectedModel === 'string' ? body.selectedModel : undefined;
+    const modelInfo = selectedModel ? getModelInfo(selectedModel) : undefined;
+    if (selectedModel && modelInfo && !isProviderConfigured(modelInfo.provider)) {
+      return new Response(
+        JSON.stringify({
+          error: `Provider '${modelInfo.provider}' is not configured. Add its API key on the server.`,
+        }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
 
-    return createDataStreamResponse({
-      async execute(dataStream) {
-        try {
-          const result = await agent.streamText(messages);
+    return runWithRequestContext(
+      { userId: user.id, selectedModel },
+      () =>
+        createDataStreamResponse({
+          async execute(dataStream) {
+            try {
+              const result = await agent.streamText(messages);
 
           if (result.provider?.mergeIntoDataStream) {
             result.provider.mergeIntoDataStream(dataStream);
@@ -74,7 +96,8 @@ export async function POST(req: Request) {
       },
       onError: (error) =>
         `VoltAgent stream error: ${error instanceof Error ? error.message : String(error)}`,
-    });
+      })
+    );
   } catch (error) {
     console.error("API route error:", error);
     return new Response(JSON.stringify({ error: "Internal server error" }), {

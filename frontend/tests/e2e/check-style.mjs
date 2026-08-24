@@ -1,0 +1,11 @@
+import { chromium } from 'playwright';
+const browser = await chromium.launch();
+const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
+await page.goto('http://127.0.0.1:3000/signin', { waitUntil: 'networkidle' });
+await page.waitForTimeout(2000);
+const bg = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
+const font = await page.evaluate(() => getComputedStyle(document.body).fontFamily);
+console.log('body background:', bg);
+console.log('body font:', font.slice(0, 60));
+await page.screenshot({ path: 'test-results/signin-styled.png', fullPage: false });
+await browser.close();

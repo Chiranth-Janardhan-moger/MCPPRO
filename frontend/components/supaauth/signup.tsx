@@ -349,7 +349,7 @@ export default function SignUp({ redirectTo }: { redirectTo: string }) {
               onClick={async () => {
                 if (!isSendAgain) {
                   startSendAgain(async () => {
-                    if (!form.getValues("password")) {
+                    if (form.getValues("password")) {
                       const json = await postEmail({
                         email: form.getValues("email"),
                         password: form.getValues("password"),

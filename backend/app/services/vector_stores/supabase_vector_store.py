@@ -1,9 +1,9 @@
 from langchain_community.vectorstores import SupabaseVectorStore
-from langchain_openai import OpenAIEmbeddings
+from app.embedders.embedding_factory import EmbeddingFactory
 from supabase import create_client, Client
 from app.services.vector_stores.base_vector_store import BaseVectorStore
 from typing import List, Dict, Optional, Any
-from langchain.schema import Document
+from langchain_core.documents import Document
 from app.config.settings import settings
 import uuid
 import time
@@ -20,9 +20,6 @@ class SupabaseVectorStoreService(BaseVectorStore):
         query_name: str = "match_documents"
     ):
     
-        if not settings.OPENAI_API_KEY:
-            raise ValueError("OPENAI_API_KEY environment variable is required for OpenAI embeddings")
-        
         self.supabase_url = supabase_url
         self.supabase_key = supabase_key
         self.embedding_model = embedding_model
@@ -31,12 +28,18 @@ class SupabaseVectorStoreService(BaseVectorStore):
         
         self.supabase_client: Client = create_client(supabase_url, supabase_key)
         
-
-        self.embeddings = OpenAIEmbeddings(
-            model=embedding_model,
-            openai_api_key=settings.OPENAI_API_KEY,
-            dimensions=1536 
-        )
+        # pgvector schema ships as VECTOR(1536); pin OpenAI dims when using
+        # OpenAI embeddings so rows always fit the column.
+        if settings.OPENAI_API_KEY:
+            embeddings = EmbeddingFactory.create_embedding_model(settings, embedding_model)
+            try:
+                embeddings.dimensions = 1536  # type: ignore[attr-defined]
+            except Exception:
+                pass
+            self.embeddings = embeddings
+        else:
+            # Gemini (or other) embedder — requires matching column dims.
+            self.embeddings = EmbeddingFactory.create_embedding_model(settings)
         
         self.vector_store = SupabaseVectorStore(
             client=self.supabase_client,
@@ -178,3 +181,4 @@ class SupabaseVectorStoreService(BaseVectorStore):
         except Exception as e:
             print(f"âŒ Error deleting all documents from Supabase: {e}")
             return False
+

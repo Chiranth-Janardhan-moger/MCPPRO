@@ -76,30 +76,24 @@ class TraditionalRAGTool(BaseTool):
                 return ToolResult(success=False, error="'document_url' and 'questions' are required")
 
             # Assume vector store is already populated by `process_document`.
-            cached_used = True
-
             try:
                 if not document_id:
-                    raise ValueError("'document_id' missing â€“ call process_document first and pass its id.")
+                    raise ValueError("'document_id' missing – call process_document first and pass its id.")
                 retrieval_res = await self.retrieval_service.process_document_queries(
                     document_id=document_id, questions=questions, k=k
                 )
                 answers = retrieval_res["answers"]
                 debug_info = retrieval_res["debug_info"]
             except Exception as exc:
-                answers = [str(exc)]
-                debug_info = []
+                return ToolResult(success=False, error=str(exc))
 
             return ToolResult(
                 success=True,
                 result={
                     "answers": answers,
                     "debug_info": debug_info,
-                    "cached_used": cached_used,
+                    "cached_used": True,
                 },
             )
         except Exception as exc:
-            return ToolResult(
-                success=True,
-                result={"answers": [str(exc)], "debug_info": [], "cached_used": False},
-            )
+            return ToolResult(success=False, error=str(exc))

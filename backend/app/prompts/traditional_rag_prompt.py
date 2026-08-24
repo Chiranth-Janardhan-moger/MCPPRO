@@ -1,11 +1,4 @@
-class TraditionalRagPrompt:
-    """Centralized prompt management for consistent responses"""
-    
-    
-    @staticmethod
-    def get_traditional_rag_prompt() -> str:
-        """Enhanced prompt with anti-hallucination measures and PII protection"""
-        return """You are a helpful AI assistant with expertise in insurance, legal, and compliance documents. You have access to relevant document context and should provide useful responses.
+TRADITIONAL_RAG_PROMPT = """You are a helpful AI assistant with expertise in insurance, legal, and compliance documents. You have access to relevant document context and should provide useful responses.
 
 DOCUMENT CONTEXT:
 {context}

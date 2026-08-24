@@ -13,12 +13,14 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Loader2, AlertCircle } from 'lucide-react';
+import { createSupabaseBrowser } from '@/lib/supabase/client';
 
 interface Document {
   id: string;
   file_name: string;
   status: string;
   updated_at: string;
+  chunk_count?: number | null;
 }
 
 interface DocumentManagerDialogProps {
@@ -60,12 +62,29 @@ export function DocumentManagerDialog({ isOpen, onOpenChange }: DocumentManagerD
 
   const fetchDocuments = async () => {
     try {
-      const response = await fetch('/api/rag/status');
-      if (!response.ok) {
-        throw new Error('Failed to fetch document statuses.');
-      }
-      const data = await response.json();
-      setDocuments(data);
+      // Read the user's own upload records (RLS-scoped, survives backend
+      // restarts — unlike the in-memory vector store).
+      const supabase = createSupabaseBrowser();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not signed in.');
+
+      const { data, error: dbError } = await supabase
+        .from('user_documents')
+        .select('id, file_name, status, chunk_count, created_at, updated_at')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (dbError) throw new Error(dbError.message);
+      setDocuments(
+        (data ?? []).map((d: any) => ({
+          id: d.id,
+          file_name: d.file_name,
+          status: d.status,
+          updated_at: d.updated_at ?? d.created_at,
+          chunk_count: d.chunk_count,
+        }))
+      );
+      setError(null);
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -76,7 +95,7 @@ export function DocumentManagerDialog({ isOpen, onOpenChange }: DocumentManagerD
   useEffect(() => {
     if (isOpen) {
       fetchDocuments();
-      const interval = setInterval(fetchDocuments, 60*60*60*1000); // Poll every 60 seconds
+      const interval = setInterval(fetchDocuments, 60 * 1000); // Poll every 60 seconds
       return () => clearInterval(interval);
     }
   }, [isOpen]);
@@ -120,6 +139,9 @@ export function DocumentManagerDialog({ isOpen, onOpenChange }: DocumentManagerD
                       </CardHeader>
                       <CardContent>
                         <p className="text-xs text-muted-foreground">
+                          {typeof doc.chunk_count === 'number' && doc.chunk_count > 0
+                            ? `${doc.chunk_count} chunks · `
+                            : ''}
                           Last updated: {new Date(doc.updated_at).toLocaleString()}
                         </p>
                       </CardContent>

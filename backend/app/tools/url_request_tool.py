@@ -1,7 +1,45 @@
 import aiohttp
 import asyncio
+import ipaddress
+import socket
+from urllib.parse import urlparse
 from typing import Any, Dict, Optional, ClassVar
 from app.tools.base import BaseTool, ToolResult
+from app.config.settings import settings
+
+
+def is_safe_url(url: str) -> tuple[bool, str]:
+    """Validate a URL against SSRF targets.
+
+    Resolves the hostname and rejects private / loopback / link-local /
+    reserved addresses. In development (ENVIRONMENT != production) local
+    addresses are allowed so the agent can talk to localhost services.
+    """
+    try:
+        parsed = urlparse(url)
+        if parsed.scheme not in ("http", "https"):
+            return False, f"Unsupported scheme: {parsed.scheme or '(none)'}"
+        hostname = parsed.hostname
+        if not hostname:
+            return False, "URL has no hostname"
+
+        # Block obvious metadata endpoints by name before resolution.
+        if hostname.endswith(".internal") or hostname == "metadata.google.internal":
+            if settings.ENVIRONMENT.lower() == "production":
+                return False, "Internal host blocked"
+
+        infos = socket.getaddrinfo(hostname, None)
+        for info in infos:
+            ip = ipaddress.ip_address(info[4][0])
+            is_local = ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_reserved
+            if is_local and settings.ENVIRONMENT.lower() == "production":
+                return False, f"Access to internal address {ip} is blocked"
+        return True, ""
+    except socket.gaierror:
+        return False, f"Cannot resolve hostname: {hostname}"
+    except Exception as e:
+        return False, f"URL validation failed: {e}"
+
 
 class URLRequestTool(BaseTool):
     """
@@ -87,7 +125,14 @@ class URLRequestTool(BaseTool):
                     success=False,
                     error="url parameter is required"
                 )
-            
+
+            safe, reason = is_safe_url(url)
+            if not safe:
+                return ToolResult(
+                    success=False,
+                    error=f"Blocked URL: {reason}"
+                )
+
             session = await self._get_session()
             
             async with session.get(url) as response:

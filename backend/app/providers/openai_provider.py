@@ -1,5 +1,5 @@
 from app.providers.base import BaseLLMProvider
-from app.prompts.traditional_rag_prompt import TraditionalRagPrompt
+from app.providers.tool_calling import openai_tool_schema
 from langchain_openai import ChatOpenAI
 from typing import Dict, Any, List
 import json
@@ -16,42 +16,8 @@ class OpenAIProvider(BaseLLMProvider):
         )
         self.client = openai.AsyncOpenAI(api_key=api_key)
     
-    async def generate_answer(self, context: str, question: str) -> str:
-        prompt_template = TraditionalRagPrompt.get_traditional_rag_prompt()
-        prompt = prompt_template.format(context=context, question=question)
-        
-        try:
-            response = await self.llm.ainvoke(prompt)
-            return response.content
-        except Exception as e:
-            return f"Error generating answer: {str(e)}"
-    
-    async def extract_structured_query(self, query: str) -> Dict:
-        prompt = f"""
-        Extract structured information from this query: "{query}"
-        
-        Return a JSON object with:
-        - intent: main intent (search, information, comparison, etc.)
-        - entities: key entities mentioned
-        - keywords: important keywords for search
-        - question_type: type of question (factual, conditional, temporal, etc.)
-        
-        Query: {query}
-        
-        JSON:
-        """
-        
-        try:
-            response = await self.llm.ainvoke(prompt)
-            return json.loads(response.content)
-        except:
-            return {
-                "intent": "search",
-                "entities": [],
-                "keywords": [query],
-                "question_type": "factual"
-            }
-    
+
+
     def get_langchain_llm(self) -> Any:
         return self.llm
     
@@ -77,17 +43,8 @@ class OpenAIProvider(BaseLLMProvider):
             OpenAI response object
         """
         try:
-            functions = []
-            for tool in tools:
-                functions.append({
-                    "type": "function",
-                    "function": {
-                        "name": tool["name"],
-                        "description": tool["description"],
-                        "parameters": tool["parameters"]
-                    }
-                })
-            
+            functions = [openai_tool_schema(t) for t in tools]
+
             response = await self.client.chat.completions.create(
                 model=self.model,
                 messages=messages,

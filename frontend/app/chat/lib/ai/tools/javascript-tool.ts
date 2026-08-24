@@ -22,6 +22,15 @@ async function executeJavaScriptCode(code: string, filename?: string): Promise<J
     }
     
     const fileName = filename || `mcppro_agent_${Date.now()}_${Math.random().toString(36).substring(2, 11)}.js`;
+    // Path traversal guard: only bare filenames are allowed inside the
+    // dedicated execution directory.
+    if (path.basename(fileName) !== fileName || fileName.includes('..')) {
+      return {
+        success: false,
+        error: 'Invalid filename: must be a plain file name',
+        executionTime: (Date.now() - startTime) / 1000
+      };
+    }
     const filePath = path.join(executionDir, fileName);
     
     fs.writeFileSync(filePath, code, 'utf8');

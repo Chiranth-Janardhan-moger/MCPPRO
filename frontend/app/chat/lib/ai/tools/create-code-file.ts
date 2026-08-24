@@ -64,8 +64,27 @@ async function createFileAndExecuteCli(
   cliCommands: string[]
 ): Promise<ExecuteCliResult> {
   try {
+    // Path traversal guards: targetFolder must stay under rootDir and
+    // filename must be a bare file name.
+    if (
+      !targetFolder ||
+      path.basename(filename) !== filename ||
+      filename.includes('..') ||
+      targetFolder.includes('..')
+    ) {
+      return {
+        success: false,
+        error: 'Invalid filename or targetFolder'
+      };
+    }
     const rootDir = path.resolve(process.cwd(), '..');
-    const fullFolderPath = path.join(rootDir, targetFolder);
+    const fullFolderPath = path.resolve(rootDir, targetFolder);
+    if (!fullFolderPath.startsWith(rootDir + path.sep)) {
+      return {
+        success: false,
+        error: 'targetFolder escapes the allowed directory'
+      };
+    }
     
     if (!fs.existsSync(fullFolderPath)) {
       fs.mkdirSync(fullFolderPath, { recursive: true });

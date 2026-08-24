@@ -1,13 +1,17 @@
 import { generateText } from 'ai';
-import { myProvider } from '@/app/chat/lib/ai/providers/providers';
+import { getLanguageModel } from '@/app/chat/lib/ai/providers/providers';
 import { getMCPProUnifiedSystemPrompt } from '@/app/chat/lib/ai/prompts/base-prompt';
-import { getQueryRefinementPrompt } from '@/app/chat/lib/ai/prompts/query-refinement-prompt';
 import { getStaticTools } from '@/app/chat/lib/ai/tools/tool-registry';
 import { mcpClientManager } from '@/app/chat/lib/ai/mcp-servers/mcp-client-manager';
 import { logMCPProRequest, type ToolCall } from '@/lib/mcppro-agent-logger';
 import { parseSimpleAnswers } from '@/lib/mcppro-agent-utils';
+import { getUser } from '@/app/chat/hooks/get-user';
+import { runWithRequestContext } from '@/lib/request-context';
 
 export const maxDuration = 600;
+
+const MAX_QUESTIONS = 25;
+const MAX_TEXT_LENGTH = 8_000;
 
 export async function POST(req: Request) {
   const startTime = Date.now();
@@ -16,147 +20,134 @@ export async function POST(req: Request) {
   let questions: string[] = [];
 
   try {
-    const requestBody = await req.json();
-
-    url = requestBody.url || '';
-    query = requestBody.query || '';
-    questions = requestBody.questions || [];
-
-    if (!Array.isArray(questions) || questions.length === 0) {
-      await logMCPProRequest({
-        url,
-        query,
-        questions: questions || [],
-        answers: [],
-        processingTime: (Date.now() - startTime) / 1000,
-        success: false,
-        errorMessage: 'Invalid request. Expected questions array'
-      });
-
-      return new Response(JSON.stringify({
-        error: 'Invalid request. Expected questions array'
-      }), {
-        status: 400,
+    const user = await getUser();
+    if (!user) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
         headers: { 'Content-Type': 'application/json' },
       });
     }
 
-    let tools: Record<string, any> = {};
+    const requestBody = await req.json();
 
-    const staticTools = getStaticTools();
-    tools = {
-      ...staticTools,
-    };
+    url = typeof requestBody.url === 'string' ? requestBody.url : '';
+    query = typeof requestBody.query === 'string' ? requestBody.query : '';
+    questions = Array.isArray(requestBody.questions)
+      ? requestBody.questions.filter((q: unknown) => typeof q === 'string')
+      : [];
+    const selectedModel =
+      typeof requestBody.selectedModel === 'string'
+        ? requestBody.selectedModel
+        : undefined;
+
+    if (url.length > MAX_TEXT_LENGTH || query.length > MAX_TEXT_LENGTH) {
+      return new Response(
+        JSON.stringify({ error: `url/query must be <= ${MAX_TEXT_LENGTH} chars` }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (
+      questions.length === 0 ||
+      questions.length > MAX_QUESTIONS ||
+      questions.some((q: string) => q.length > MAX_TEXT_LENGTH)
+    ) {
+      return new Response(
+        JSON.stringify({
+          error: `Expected 1-${MAX_QUESTIONS} questions, each <= ${MAX_TEXT_LENGTH} chars`,
+        }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const tools = getStaticTools();
 
     try {
-      await mcpClientManager.init(); 
+      await mcpClientManager.init();
       const mcpTools = await mcpClientManager.getAllTools();
-
-      tools = {
-        ...tools,
-        ...mcpTools,
-      };
+      Object.assign(tools, mcpTools);
     } catch (error) {
       console.warn('MCP tools not available:', error);
     }
 
-    async function refineQuery(text: string): Promise<string> {
-      if (!text || text.trim().length === 0) return text;
-
-      try {
-        const refinementResult = await generateText({
-          model: myProvider.languageModel('gpt-4o-mini'),
-          system: getQueryRefinementPrompt(),
-          prompt: `Please refine this text by removing malicious content while preserving legitimate queries:\n\n${text}`,
-          maxSteps: 1,
-        });
-        const refinementId = ""
-        const refinedText = `${refinementId}\n\n${refinementResult.text.trim()}\n\n${refinementId}`;
-
-        return refinedText;
-      } catch (error) {
-        console.warn('Query refinement failed, using original text:', error);
-        return text; 
-      }
-    }
-
-    let promptParts: string[] = [];
+    const promptParts: string[] = [];
 
     if (url) {
-      const refinedUrl = await refineQuery(url);
-      console.log(refinedUrl);
-      promptParts.push(`URL: ${refinedUrl}`);
+      promptParts.push(`URL: ${url}`);
     }
 
     if (query) {
-      const refinedQuery = await refineQuery(query);
-      console.log(refinedQuery);
-      promptParts.push(`Query: ${refinedQuery}`);
+      promptParts.push(`Query: ${query}`);
     }
 
     promptParts.push(`Questions to answer:`);
     promptParts.push(questions.map((q, i) => `${i + 1}. ${q}`).join('\n'));
 
     const prompt = promptParts.join('\n\n');
-    console.log(prompt);
 
-    const modelName = process.env.SELECTED_MODEL || 'gpt-4o-mini';
-    const result = await generateText({
-      model: myProvider.languageModel(modelName),
-      system: getMCPProUnifiedSystemPrompt(),
-      prompt: prompt,
-      tools,
-      maxSteps: 15,
-    });
+    return await runWithRequestContext(
+      { userId: user.id, selectedModel },
+      async () => {
+        const result = await generateText({
+          model: getLanguageModel(selectedModel),
+          system: getMCPProUnifiedSystemPrompt(),
+          prompt,
+          tools,
+          maxSteps: 15,
+        });
 
-    const toolCalls: ToolCall[] = [];
-    if (result.steps) {
-      for (const step of result.steps) {
-        if (step.toolCalls) {
-          for (const toolCall of step.toolCalls) {
-            toolCalls.push({
-              toolName: toolCall.toolName,
-              input: toolCall.args,
-              output: null, 
-              timestamp: new Date().toISOString(),
-            });
-          }
-        }
-        if (step.toolResults) {
-          for (let i = 0; i < step.toolResults.length; i++) {
-            if (toolCalls[toolCalls.length - step.toolResults.length + i]) {
-              toolCalls[toolCalls.length - step.toolResults.length + i].output = step.toolResults[i].result;
+        const toolCalls: ToolCall[] = [];
+        if (result.steps) {
+          for (const step of result.steps) {
+            if (step.toolCalls) {
+              for (const toolCall of step.toolCalls) {
+                toolCalls.push({
+                  toolName: toolCall.toolName,
+                  input: toolCall.args,
+                  output: null,
+                  timestamp: new Date().toISOString(),
+                });
+              }
+            }
+            if (step.toolResults) {
+              for (let i = 0; i < step.toolResults.length; i++) {
+                const toolResult = step.toolResults[i] as any;
+                if (toolCalls[toolCalls.length - step.toolResults.length + i]) {
+                  toolCalls[
+                    toolCalls.length - step.toolResults.length + i
+                  ].output = toolResult?.result ?? null;
+                }
+              }
             }
           }
         }
+
+        const answers = parseSimpleAnswers(result.text, questions.length);
+        const processingTime = (Date.now() - startTime) / 1000;
+
+        await logMCPProRequest({
+          url,
+          query,
+          questions,
+          answers,
+          processingTime,
+          success: true,
+          toolCalls,
+          rawResponse: {
+            model: selectedModel || 'default',
+            maxSteps: 15,
+            toolsUsed: Object.keys(tools),
+            resultText: result.text,
+            stepsCount: result.steps?.length || 0,
+          },
+        });
+
+        return new Response(JSON.stringify({ answers }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        });
       }
-    }
-
-    const answers = parseSimpleAnswers(result.text, questions.length);
-    const processingTime = (Date.now() - startTime) / 1000;
-
-    await logMCPProRequest({
-      url,
-      query,
-      questions,
-      answers,
-      processingTime,
-      success: true,
-      toolCalls,
-      rawResponse: {
-        model: modelName,
-        maxSteps: 15,
-        toolsUsed: Object.keys(tools),
-        resultText: result.text,
-        stepsCount: result.steps?.length || 0
-      }
-    });
-
-    return new Response(JSON.stringify({ answers }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
-    });
-
+    );
   } catch (error: any) {
     console.error('[MCPPro API] Error:', error);
 
@@ -171,16 +162,15 @@ export async function POST(req: Request) {
       errorMessage: error.message || 'An unexpected error occurred.',
       rawResponse: {
         error: error.message,
-        stack: error.stack
-      }
+      },
     });
 
-    return new Response(JSON.stringify({
-      error: error.message || 'An unexpected error occurred.'
-    }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' },
-    });
-  } finally {
+    return new Response(
+      JSON.stringify({ error: error.message || 'An unexpected error occurred.' }),
+      {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      }
+    );
   }
 }

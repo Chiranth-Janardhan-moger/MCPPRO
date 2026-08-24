@@ -3,7 +3,7 @@
 import { ChevronUp } from "lucide-react";
 import Image from "next/image";
 import { User } from "@supabase/supabase-js";
-import { useTheme } from "next-themes";
+import { useTheme } from "@/components/global/theme-provider";
 import { createSupabaseBrowser } from "@/lib/supabase/client";
 import {
   DropdownMenu,

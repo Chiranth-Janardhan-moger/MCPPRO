@@ -1,0 +1,62 @@
+{
+  "total_documents_evaluated": 10,
+  "cold_request_cache_miss_rate_percent": 100.0,
+  "warm_request_cache_hit_rate_percent": 100.0,
+  "cold_latency_stats_s": {
+    "count": 10,
+    "min": 0.02487,
+    "max": 0.05312,
+    "mean": 0.0356,
+    "median": 0.0321,
+    "std_dev": 0.00936,
+    "p90": 0.05312,
+    "p95": 0.05312,
+    "p99": 0.05312
+  },
+  "warm_latency_stats_s": {
+    "count": 10,
+    "min": 0.0294,
+    "max": 0.04857,
+    "mean": 0.03432,
+    "median": 0.03349,
+    "std_dev": 0.00567,
+    "p90": 0.04857,
+    "p95": 0.04857,
+    "p99": 0.04857
+  },
+  "speedup_stats": {
+    "count": 10,
+    "min": 0.51,
+    "max": 1.7,
+    "mean": 1.073,
+    "median": 1.01,
+    "std_dev": 0.3555,
+    "p90": 1.7,
+    "p95": 1.7,
+    "p99": 1.7
+  },
+  "latency_reduction_stats_percent": {
+    "count": 10,
+    "min": -95.28,
+    "max": 41.08,
+    "mean": -3.975,
+    "median": 0.835,
+    "std_dev": 39.14821,
+    "p90": 41.08,
+    "p95": 41.08,
+    "p99": 41.08
+  },
+  "cache_lookup_latency_stats_ms": {
+    "count": 10,
+    "min": 0.2147,
+    "max": 0.7268,
+    "mean": 0.37011,
+    "median": 0.343,
+    "std_dev": 0.14053,
+    "p90": 0.7268,
+    "p95": 0.7268,
+    "p99": 0.7268
+  },
+  "mean_speedup_factor": 1.07,
+  "mean_latency_reduction_percent": -3.98
+}

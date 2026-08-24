@@ -29,6 +29,31 @@ Make sure you have the following installed on your machine:
 - **Docker & Docker Compose**: For containerized setup
 - **Tesseract OCR**: For image-based document parsing (optional)
 
+### 🗄️ Database Setup (one time)
+
+Run [`backend/schemas/supabase_full_setup.sql`](backend/schemas/supabase_full_setup.sql) in your Supabase SQL Editor. It creates the chat tables (`conversations`, `messages`), the Document Manager table (`user_documents`), request logging (`mcppro_requests`), the pgvector store, and row-level-security policies — all idempotent.
+
+### ✅ Verification Commands
+
+```bash
+# Backend tests (31 tests, fully offline)
+cd backend && .\venv\Scripts\python.exe -m pytest tests -q
+
+# Frontend unit tests (21 tests)
+cd frontend && npm test
+
+# Frontend type-check + lint + production build
+cd frontend && npm run typecheck && npm run lint && npm run build
+
+# Browser E2E suite (9 tests; starts its own dev server)
+cd frontend && npx playwright test
+
+# Start the stack locally
+cd backend && python main.py        # FastAPI on :8000
+cd backend && python run_mcp.py     # MCP server on :8001
+cd frontend && npm run dev          # Next.js on :3000
+```
+
 ---
 
 ### 1. Unified Local Execution (Docker Compose)

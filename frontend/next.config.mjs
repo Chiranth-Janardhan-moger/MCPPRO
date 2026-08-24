@@ -1,21 +1,19 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
-      remotePatterns: [
-          {
-              hostname: '*',
-              protocol: 'https',
-          },
-
-      ],
+    remotePatterns: [
+      {
+        hostname: '*',
+        protocol: 'https',
+      },
+    ],
   },
+  serverExternalPackages: ['@voltagent/*'],
   experimental: {
     serverActions: {
       bodySizeLimit: '5mb',
     },
-    serverComponentsExternalPackages: ["@voltagent/*", "npm-check-updates"],
   },
-  
 };
 
 export default nextConfig;

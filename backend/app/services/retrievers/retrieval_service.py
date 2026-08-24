@@ -1,6 +1,7 @@
 from app.services.vector_stores.base_vector_store import BaseVectorStore
 from app.providers.base import BaseLLMProvider
-from app.prompts.traditional_rag_prompt import TraditionalRagPrompt
+from app.providers.tool_calling import content_to_text as _content_to_text
+from app.prompts.traditional_rag_prompt import TRADITIONAL_RAG_PROMPT
 from typing import List, Dict, Optional
 import asyncio
 import time
@@ -51,15 +52,16 @@ class RetrievalService:
                     return result
                 
                 llm = self.llm_provider.get_langchain_llm()
-                traditional_rag_prompt = TraditionalRagPrompt.get_traditional_rag_prompt()
+                traditional_rag_prompt = TRADITIONAL_RAG_PROMPT
 
                 context = "\n\n".join([doc.page_content for doc, _ in docs_with_scores])
 
                 prompt = traditional_rag_prompt.format(context=context)
 
-                answer = await asyncio.to_thread(
-                    lambda: llm.invoke([{"role": "system", "content": prompt}, {"role": "user", "content": question}]).content
+                response = await llm.ainvoke(
+                    [{"role": "system", "content": prompt}, {"role": "user", "content": question}]
                 )
+                answer = _content_to_text(response.content)
                 
                 context_with_scores = []
                 for doc, score in docs_with_scores:

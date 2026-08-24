@@ -90,81 +90,16 @@ class DocumentProcessor:
                     "document_id": document_id
                 }
             
-            document_path = download_result["file_path"]
-            detected_type = download_result["detected_type"]
-            
-            load_result = self.file_processor.load_document(document_path, detected_type)
-            if not load_result["success"]:
-                self.file_processor.cleanup_file(document_path)
-                return {
-                    "success": False,
-                    "error": load_result["error"],
-                    "document_id": document_id
-                }
-            
-            documents = load_result["documents"]
-            
-            chunk_result = self.file_processor.process_to_chunks(documents, detected_type)
-            if not chunk_result["success"]:
-                self.file_processor.cleanup_file(document_path)
-                return {
-                    "success": False,
-                    "error": chunk_result["error"],
-                    "document_id": document_id
-                }
-            
-            chunks = chunk_result["chunks"]
-            
-            texts = [chunk.page_content for chunk in chunks]
-            metadatas = []
-            
-            for i, chunk in enumerate(chunks):
-                metadata = {
-                    "document_id": document_id,
-                    "page": chunk.metadata.get("page", 0),
-                    "source": document_url,
-                    "chunk_index": i,
-                    "total_chunks": len(chunks),
-                    "content_cleaned": self.file_processor.clean_content
-                }
-                
-                # if chunk.metadata.get('extraction_method'):
-                #     metadata['extraction_method'] = chunk.metadata['extraction_method']
-                
-                if self.vector_store.store_type == "pinecone" and namespace:
-                    metadata["namespace"] = namespace
-                    
-                metadatas.append(metadata)
-            
-            print(f"Storing {len(chunks)} chunks in vector database...")
-            
-            ids = await self._store_chunks_in_batches(texts, metadatas, self.batch_size)
-            
-            # print(f"Final verification: Testing document retrieval...")
-            # try:
-            #     verification_results = self.vector_store.similarity_search(
-            #         query=texts[0][:100] if texts else "test",
-            #         k=2,
-            #         filter={"document_id": document_id}
-            #     )
-            #     if verification_results:
-            #         print(f"Final verification successful: {len(verification_results)} documents retrievable")
-            #     else:
-            #         print("Final verification warning: No documents found in verification search")
-            # except Exception as e:
-            #     print(f"Final verification error: {e}")
-            
-            self.file_processor.cleanup_file(document_path)
-            
-            return {
-                "success": True,
-                "document_id": document_id,
-                "chunks_processed": len(chunks),
-                "vector_ids": ids,
-                "vector_store": self.vector_store.store_type,
-                "extraction_method": chunk_result.get("extraction_method"),
-                "patterns_detected": chunk_result.get("patterns_detected", 0)
-            }
+            result = await self._index_local_file(
+                file_path=download_result["file_path"],
+                detected_type=download_result["detected_type"],
+                document_id=document_id,
+                source=document_url,
+                namespace=namespace,
+            )
+            # download_and_validate_file materialises a temp copy; clean it up.
+            self.file_processor.cleanup_file(download_result["file_path"])
+            return result
             
         except Exception as e:
             return {
@@ -172,3 +107,90 @@ class DocumentProcessor:
                 "error": str(e),
                 "document_id": document_id
             }
+
+    async def process_document_file(
+        self,
+        file_path: str,
+        detected_type: str,
+        document_id: Optional[str] = None,
+        source: str = "upload",
+        namespace: Optional[str] = None,
+    ) -> Dict:
+        """Index an already-downloaded local file (used by /documents/upload)."""
+        if not document_id:
+            document_id = str(uuid.uuid4())
+        try:
+            return await self._index_local_file(
+                file_path=file_path,
+                detected_type=detected_type,
+                document_id=document_id,
+                source=source,
+                namespace=namespace,
+            )
+        except Exception as e:
+            return {
+                "success": False,
+                "error": str(e),
+                "document_id": document_id,
+            }
+
+    async def _index_local_file(
+        self,
+        file_path: str,
+        detected_type: str,
+        document_id: str,
+        source: str,
+        namespace: Optional[str] = None,
+    ) -> Dict:
+        """Shared pipeline: load -> chunk -> embed -> store."""
+        load_result = self.file_processor.load_document(file_path, detected_type)
+        if not load_result["success"]:
+            return {
+                "success": False,
+                "error": load_result["error"],
+                "document_id": document_id
+            }
+        
+        documents = load_result["documents"]
+        
+        chunk_result = self.file_processor.process_to_chunks(documents, detected_type)
+        if not chunk_result["success"]:
+            return {
+                "success": False,
+                "error": chunk_result["error"],
+                "document_id": document_id
+            }
+        
+        chunks = chunk_result["chunks"]
+        
+        texts = [chunk.page_content for chunk in chunks]
+        metadatas = []
+        
+        for i, chunk in enumerate(chunks):
+            metadata = {
+                "document_id": document_id,
+                "page": chunk.metadata.get("page", 0),
+                "source": source,
+                "chunk_index": i,
+                "total_chunks": len(chunks),
+                "content_cleaned": self.file_processor.clean_content
+            }
+            
+            if self.vector_store.store_type == "pinecone" and namespace:
+                metadata["namespace"] = namespace
+                
+            metadatas.append(metadata)
+        
+        print(f"Storing {len(chunks)} chunks in vector database...")
+        
+        ids = await self._store_chunks_in_batches(texts, metadatas, self.batch_size)
+        
+        return {
+            "success": True,
+            "document_id": document_id,
+            "chunks_processed": len(chunks),
+            "vector_ids": ids,
+            "vector_store": self.vector_store.store_type,
+            "extraction_method": chunk_result.get("extraction_method"),
+            "patterns_detected": chunk_result.get("patterns_detected", 0)
+        }

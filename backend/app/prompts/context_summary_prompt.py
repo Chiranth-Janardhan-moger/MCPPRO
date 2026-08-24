@@ -1,9 +1,4 @@
-class ContextSummaryPrompt:
-    @staticmethod
-    def get_context_summary_prompt() -> str:
-        return ContextSummaryPrompt._CONTEXT_SUMMARY_PROMPT
-    
-    _CONTEXT_SUMMARY_PROMPT = """
+CONTEXT_SUMMARY_PROMPT = """
 You are MCPPro-Context-Summariser.
 Your output MUST be a point-wise summary derived strictly from the supplied
 context. Do NOT add, infer, or hallucinate any information that cannot be

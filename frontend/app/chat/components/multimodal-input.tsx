@@ -7,7 +7,6 @@ import { ArrowUp, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SuggestedActions } from "./suggested-actions";
 
-import { models } from "@/app/chat/lib/ai/providers/providers";
 import { ModelSelector } from "./model-selector";
 import { Message } from "ai";
 
@@ -19,6 +18,7 @@ interface MultimodalInputProps {
   onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
   handleSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
   isLoading: boolean;
+  models: { value: string; label: string }[];
   modelState: {
     selectedModel: string;
     setSelectedModel: (model: string) => void;
@@ -33,6 +33,7 @@ export function MultimodalInput({
   onChange,
   handleSubmit,
   isLoading,
+  models,
   modelState,
 }: MultimodalInputProps) {
   const formRef = useRef<HTMLFormElement>(null);

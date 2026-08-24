@@ -31,8 +31,8 @@ export function AppSidebar({ user }: AppSidebarProps) {
   const router = useRouter();
   const { setOpenMobile } = useSidebar();
   const { createConversation } = useConversationsContext();
-  const appName = process.env.NEXT_PUBLIC_APP_NAME!;
-  const appIcon = process.env.NEXT_PUBLIC_APP_ICON!;
+  const appName = process.env.NEXT_PUBLIC_APP_NAME || "MCPPro";
+  const appIcon = process.env.NEXT_PUBLIC_APP_ICON || "";
   return (
     <Sidebar className="group-data-[side=left]:border-r-0">
       <SidebarHeader>
@@ -45,13 +45,19 @@ export function AppSidebar({ user }: AppSidebarProps) {
               }}
               className="flex flex-row gap-3 items-center"
             >
-              <Image
-                src={appIcon}
-                alt={appName}
-                width={40}
-                height={40}
-                className="h-10 w-10 rounded-xl"
-                />
+              {appIcon ? (
+                <Image
+                  src={appIcon}
+                  alt={appName}
+                  width={40}
+                  height={40}
+                  className="h-10 w-10 rounded-xl"
+                  />
+              ) : (
+                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground text-lg font-bold">
+                  {appName.charAt(0)}
+                </span>
+              )}
               <span className="text-lg font-semibold px-2 hover:bg-muted rounded-md cursor-pointer">
                 {appName}
               </span>

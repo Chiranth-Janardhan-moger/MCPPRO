@@ -1,0 +1,86 @@
+{
+  "timestamp": "2026-08-17 16:45:21 UTC",
+  "engine_summaries": {
+    "pytesseract": {
+      "status": "NOT MEASURABLE",
+      "reason": "pytesseract engine could not be executed on current environment."
+    },
+    "easyocr": {
+      "status": "MEASURED",
+      "test_count": 5,
+      "mean_latency_s": 2.14096,
+      "median_latency_s": 2.13353,
+      "mean_cer": 0.2014,
+      "mean_wer": 0.8121,
+      "mean_throughput_chars_per_s": 30.44,
+      "pages_per_second": 0.47
+    }
+  },
+  "raw_measurements": [
+    {
+      "engine": "pytesseract",
+      "status": "NOT MEASURABLE",
+      "reason": "Tesseract OCR binary (tesseract.exe) is not installed in local PATH on this Windows host."
+    },
+    {
+      "test_id": "ocr_card_01_standard",
+      "engine": "easyocr",
+      "success": true,
+      "latency_s": 2.02562,
+      "ground_truth": "The quick brown fox jumps over the lazy dog 1234567890",
+      "extracted_text": "The quick brown fox jumpsover the lazydog 1234567890",
+      "chars_extracted": 52,
+      "throughput_chars_per_s": 25.67,
+      "cer": 0.037,
+      "wer": 0.4
+    },
+    {
+      "test_id": "ocr_card_02_technical",
+      "engine": "easyocr",
+      "success": true,
+      "latency_s": 1.9114,
+      "ground_truth": "MCPPRO Agent Orchestration Framework and RAG Vector Retrieval System",
+      "extracted_text": "MCPPRO Agent Orchestration Framework and RAG Retrie System Vecol",
+      "chars_extracted": 64,
+      "throughput_chars_per_s": 33.48,
+      "cer": 0.2353,
+      "wer": 0.3333
+    },
+    {
+      "test_id": "ocr_card_03_financial",
+      "engine": "easyocr",
+      "success": true,
+      "latency_s": 2.13353,
+      "ground_truth": "Total Q3 Revenue: $17.2M with Operating Income of $4.8M (Growth +38.7%)",
+      "extracted_text": "TotalO3 Pevenue: $17.2Mwith Operating ncome of $48M (Growth 38.7901",
+      "chars_extracted": 67,
+      "throughput_chars_per_s": 31.4,
+      "cer": 0.1408,
+      "wer": 0.7273
+    },
+    {
+      "test_id": "ocr_card_04_dense_params",
+      "engine": "easyocr",
+      "success": true,
+      "latency_s": 2.22311,
+      "ground_truth": "Parameters: CHUNK_SIZE=1000 CHUNK_OVERLAP=200 DIMENSIONS=1536 PORT=8001",
+      "extracted_text": "Parameters CHUNK_SIZE- IOOO CHUNK ERLAP= DIMENSIONS= 1536 FORT-8001",
+      "chars_extracted": 67,
+      "throughput_chars_per_s": 30.14,
+      "cer": 0.2254,
+      "wer": 1.6
+    },
+    {
+      "test_id": "ocr_card_05_multiline",
+      "engine": "easyocr",
+      "success": true,
+      "latency_s": 2.41114,
+      "ground_truth": "FastAPI uvicorn LangChain Qdrant InMemoryVectorStore FastMCP streamable-http",
+      "extracted_text": "FastAPI uvicorn LangChain Odrant InMemory acm FastMCPstrea http Sple IMabla_",
+      "chars_extracted": 76,
+      "throughput_chars_per_s": 31.52,
+      "cer": 0.3684,
+      "wer": 1.0
+    }
+  ]
+}

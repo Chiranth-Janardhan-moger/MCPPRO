@@ -1,0 +1,29 @@
+{
+  "timestamp": "2026-08-17 16:45:41 UTC",
+  "tested_models": {
+    "text-embedding-3-small": {
+      "status": "NOT MEASURABLE",
+      "model_name": "text-embedding-3-small",
+      "dimension": 1536,
+      "reason": "Model execution failed: Error code: 401 - {'error': {'message': 'Incorrect API key provided: sk-eval-***************-key. You can find your API key at https://platform.openai.com/account/api-keys.', 'type': 'invalid_request_error', 'code': 'invalid_api_key', 'param': None}, 'status': 401}"
+    },
+    "text-embedding-3-large": {
+      "status": "NOT MEASURABLE",
+      "model_name": "text-embedding-3-large",
+      "dimension": 3072,
+      "reason": "Model execution failed: Error code: 401 - {'error': {'message': 'Incorrect API key provided: sk-eval-***************-key. You can find your API key at https://platform.openai.com/account/api-keys.', 'type': 'invalid_request_error', 'code': 'invalid_api_key', 'param': None}, 'status': 401}"
+    },
+    "text-embedding-ada-002": {
+      "status": "NOT MEASURABLE",
+      "model_name": "text-embedding-ada-002",
+      "dimension": 1536,
+      "reason": "Model execution failed: Error code: 401 - {'error': {'message': 'Incorrect API key provided: sk-eval-***************-key. You can find your API key at https://platform.openai.com/account/api-keys.', 'type': 'invalid_request_error', 'code': 'invalid_api_key', 'param': None}, 'status': 401}"
+    },
+    "bge-m3": {
+      "status": "NOT MEASURABLE",
+      "model_name": "bge-m3",
+      "dimension": 1024,
+      "reason": "Model execution failed: FlagEmbedding is required for BGE-M3 embeddings. Install it with: pip install -U FlagEmbedding"
+    }
+  }
+}

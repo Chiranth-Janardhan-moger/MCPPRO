@@ -8,15 +8,18 @@ from app.services.utils.file_processor.custom_pptx_loader import CustomPptxLoade
 import uuid
 import os
 import tempfile
-import requests
 import mimetypes
+import logging
 from typing import Dict, Optional, List
 from urllib.parse import urlparse
+import httpx
 import pytesseract
 from PIL import Image
 
+logger = logging.getLogger(__name__)
+
 class FileProcessor:
-    DEFAULT_ERROR_MSG = "Sorry, I cannot answer this question. If you have any other queries, feel free to ask."
+    DEFAULT_ERROR_MSG = "Document could not be processed"
     def __init__(self, chunk_size: int = 1000, chunk_overlap: int = 200, 
                  clean_content: bool = True, min_chunk_length: int = 100,
                  use_pptx_ocr: bool = True,
@@ -29,6 +32,9 @@ class FileProcessor:
             '.ppt': 'application/vnd.ms-powerpoint',
             '.xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
             '.xls': 'application/vnd.ms-excel',
+            '.txt': 'text/plain',
+            '.md': 'text/markdown',
+            '.markdown': 'text/markdown',
             '.jpg': 'image/jpeg',
             '.jpeg': 'image/jpeg',
             '.png': 'image/png'
@@ -52,32 +58,31 @@ class FileProcessor:
     def validate_file_url(self, url: str) -> Dict:
         """Validate file URL and check if file type is supported"""
         try:
-            response = requests.head(url, allow_redirects=True, timeout=10)
-            response.raise_for_status()
+            with httpx.Client(follow_redirects=True, timeout=10.0) as client:
+                response = client.head(url)
+                response.raise_for_status()
+                
+                content_length = response.headers.get('content-length')
+                
+                if content_length and int(content_length) > self.max_file_size:
+                    return self._invalid()
+                
+                parsed_url = urlparse(url)
+                filename = os.path.basename(parsed_url.path.split('?')[0])
+                file_extension = os.path.splitext(filename)[1].lower()
+                
+                if not file_extension or file_extension not in self.supported_extensions:
+                    return self._invalid()
+                
+                return {
+                    "valid": True,
+                    "file_extension": file_extension,
+                    "filename": filename
+                }
             
-            content_length = response.headers.get('content-length')
-            
-            if content_length and int(content_length) > self.max_file_size:
-                return self._invalid()
-            
-            parsed_url = urlparse(url)
-            filename = os.path.basename(parsed_url.path.split('?')[0])
-            file_extension = os.path.splitext(filename)[1].lower()
-            
-            if not file_extension or file_extension not in self.supported_extensions:
-                return self._invalid()
-            
-            return {
-                "valid": True,
-                "file_extension": file_extension,
-                "filename": filename
-            }
-            
-        except requests.RequestException as e:
-            parsed_url = urlparse(url)
-            filename = os.path.basename(parsed_url.path.split('?') [0])
-            file_extension = os.path.splitext(filename)[1].lower()
-            
+        except httpx.HTTPError:
+            return self._invalid()
+        except Exception:
             return self._invalid()
 
     def _bytes_to_tempfile(self, content: bytes, suffix: str = '.tmp') -> str:
@@ -96,9 +101,10 @@ class FileProcessor:
         """Download file and perform validation with in-memory buffer."""
         try:
             # Download content to memory first
-            response = requests.get(url, timeout=30)
-            response.raise_for_status()
-            content = response.content
+            with httpx.Client(follow_redirects=True, timeout=30.0) as client:
+                response = client.get(url)
+                response.raise_for_status()
+                content = response.content
             
             if len(content) > self.max_file_size:
                 return self._fail()
@@ -208,13 +214,16 @@ class FileProcessor:
                 loader = XlsxLoader(file_path)
             elif 'image' in detected_type or file_extension in ['.jpg', '.jpeg', '.png']:
                 return self._extract_text_from_image(file_path)
+            elif file_extension in ['.txt', '.md', '.markdown'] or detected_type in ('txt', 'text', 'md'):
+                from langchain_community.document_loaders import TextLoader
+                loader = TextLoader(file_path, encoding='utf-8')
             else:
-                return self._fail()
+                return self._fail(f"Unsupported document type: {detected_type or file_extension}")
             
             documents = loader.load()
             
             if not documents or not any(doc.page_content.strip() for doc in documents):
-                return self._fail()
+                return self._fail("Document loaded but contained no extractable text")
             
             return {
                 "success": True,
@@ -222,12 +231,14 @@ class FileProcessor:
             }
             
         except Exception as e:
-            return self._fail()
+            # Surface the real error; never mask infra failures behind a
+            # user-facing answer string.
+            return self._fail(f"Failed to load document: {e}")
     
     def process_to_chunks(self, documents: List, detected_type: str) -> Dict:
         """Process documents into cleaned chunks"""
         try:
-            print(f"ðŸ“– Processing {len(documents)} pages into chunks...")
+            logger.info("Processing %d pages into chunks...", len(documents))
             
             is_ocr_content = any(doc.metadata.get('extraction_method') == 'OCR' for doc in documents)
             extraction_method = 'OCR' if is_ocr_content else None

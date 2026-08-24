@@ -34,7 +34,7 @@ interface HighlightedPreProps extends React.HTMLAttributes<HTMLPreElement> {
 
 const HighlightedPre = memo(
   ({ children, className, language, ...props }: HighlightedPreProps) => {
-    const [highlightedCode, setHighlightedCode] = useState<JSX.Element | null>(null);
+    const [highlightedCode, setHighlightedCode] = useState<React.JSX.Element | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {

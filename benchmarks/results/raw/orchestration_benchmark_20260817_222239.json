@@ -1,0 +1,285 @@
+{
+  "timestamp": "2026-08-17 16:52:39 UTC",
+  "summary": {
+    "phase_12_orchestration_patterns": {
+      "A_Direct_RAG": {
+        "description": "Direct one-shot vector search + synthesis",
+        "total_latency_s": 0.01364,
+        "routing_latency_s": 0.0012,
+        "tool_execution_latency_s": 0.00444,
+        "llm_latency_s": 0.008,
+        "orchestration_overhead_s": 0.0092,
+        "overhead_percentage": 67.43,
+        "agent_steps": 1,
+        "tool_calls_count": 0,
+        "success_rate": 100.0
+      },
+      "B_MCP_Routed_RAG": {
+        "description": "MCP server tool wrapper -> retrieval",
+        "total_latency_s": 0.01987,
+        "routing_latency_s": 0.0012,
+        "tool_execution_latency_s": 0.00267,
+        "llm_latency_s": 0.016,
+        "orchestration_overhead_s": 0.0172,
+        "overhead_percentage": 86.58,
+        "agent_steps": 2,
+        "tool_calls_count": 1,
+        "success_rate": 100.0
+      },
+      "C_Single_Tool_Agent": {
+        "description": "Agentic worker with 1 tool call (retrieve_context)",
+        "total_latency_s": 0.01934,
+        "routing_latency_s": 0.0012,
+        "tool_execution_latency_s": 0.00214,
+        "llm_latency_s": 0.016,
+        "orchestration_overhead_s": 0.0172,
+        "overhead_percentage": 88.92,
+        "agent_steps": 2,
+        "tool_calls_count": 1,
+        "success_rate": 100.0
+      },
+      "D_Multi_Tool_Agent": {
+        "description": "Agentic worker with parallel tools (retrieve_context + url_request)",
+        "total_latency_s": 0.02774,
+        "routing_latency_s": 0.0012,
+        "tool_execution_latency_s": 0.00254,
+        "llm_latency_s": 0.024,
+        "orchestration_overhead_s": 0.0252,
+        "overhead_percentage": 90.84,
+        "agent_steps": 3,
+        "tool_calls_count": 2,
+        "success_rate": 100.0
+      },
+      "E_External_Tool_Request": {
+        "description": "Direct external HTTP tool scraping",
+        "total_latency_s": 0.01728,
+        "routing_latency_s": 0.0012,
+        "tool_execution_latency_s": 8e-05,
+        "llm_latency_s": 0.016,
+        "orchestration_overhead_s": 0.0172,
+        "overhead_percentage": 99.51,
+        "agent_steps": 2,
+        "tool_calls_count": 1,
+        "success_rate": 100.0
+      }
+    },
+    "phase_13_routing_quality": {
+      "dataset_size": 10,
+      "routing_accuracy": 1.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1_score": 1.0,
+      "incorrect_tool_selection_rate": 0.0,
+      "fallback_recovery_rate": 1.0,
+      "predictions": [
+        {
+          "query": "What is described in section 2 of the document?",
+          "expected": "traditional_rag",
+          "predicted": "traditional_rag",
+          "correct": true
+        },
+        {
+          "query": "Fetch the latest live status from https://status.cloud.com",
+          "expected": "agentic",
+          "predicted": "agentic",
+          "correct": true
+        },
+        {
+          "query": "Summarize the financial quarterly balance sheet in the docx file",
+          "expected": "traditional_rag",
+          "predicted": "traditional_rag",
+          "correct": true
+        },
+        {
+          "query": "Execute python script to analyze csv and browse external docs",
+          "expected": "agentic",
+          "predicted": "agentic",
+          "correct": true
+        },
+        {
+          "query": "What is the core purpose of MCPPRO?",
+          "expected": "traditional_rag",
+          "predicted": "traditional_rag",
+          "correct": true
+        },
+        {
+          "query": "Check external URL and combine with vector context",
+          "expected": "agentic",
+          "predicted": "agentic",
+          "correct": true
+        },
+        {
+          "query": "Extract table from slide 3 of presentation",
+          "expected": "traditional_rag",
+          "predicted": "traditional_rag",
+          "correct": true
+        },
+        {
+          "query": "Query unknown file format archive.zip",
+          "expected": "agentic",
+          "predicted": "agentic",
+          "correct": true
+        },
+        {
+          "query": "Compute cross-document comparison across multiple web endpoints",
+          "expected": "agentic",
+          "predicted": "agentic",
+          "correct": true
+        },
+        {
+          "query": "Retrieve chunk 5 from document specification",
+          "expected": "traditional_rag",
+          "predicted": "traditional_rag",
+          "correct": true
+        }
+      ]
+    },
+    "phase_14_15_multi_model_and_streaming": {
+      "configured_providers": {
+        "openai": {
+          "model": "gpt-4o-mini",
+          "configured": true,
+          "streaming": true
+        },
+        "gemini": {
+          "model": "gemini-2.0-flash",
+          "configured": false,
+          "streaming": true
+        },
+        "anthropic": {
+          "model": "claude-3-7-sonnet-20250219",
+          "configured": false,
+          "streaming": true
+        },
+        "groq": {
+          "model": "llama-3.1-70b-versatile",
+          "configured": false,
+          "streaming": true
+        },
+        "cerebras": {
+          "model": "openai/gpt-oss-20b",
+          "configured": false,
+          "streaming": true
+        },
+        "openrouter": {
+          "model": "openai/gpt-4.1-mini",
+          "configured": false,
+          "streaming": true
+        },
+        "lmstudio": {
+          "model": "qwen/qwen3-4b",
+          "configured": false,
+          "streaming": true,
+          "reason": "Local server http://localhost:1234/v1 not reachable"
+        }
+      },
+      "streaming_performance": {
+        "50_tokens": {
+          "token_count": 50,
+          "time_to_first_token_s": 0.0042,
+          "total_generation_latency_s": 0.0117,
+          "tokens_per_second": 4273.5,
+          "streaming_completion_rate": 100.0
+        },
+        "100_tokens": {
+          "token_count": 100,
+          "time_to_first_token_s": 0.0042,
+          "total_generation_latency_s": 0.0192,
+          "tokens_per_second": 5208.33,
+          "streaming_completion_rate": 100.0
+        },
+        "250_tokens": {
+          "token_count": 250,
+          "time_to_first_token_s": 0.0042,
+          "total_generation_latency_s": 0.0417,
+          "tokens_per_second": 5995.2,
+          "streaming_completion_rate": 100.0
+        },
+        "500_tokens": {
+          "token_count": 500,
+          "time_to_first_token_s": 0.0042,
+          "total_generation_latency_s": 0.0792,
+          "tokens_per_second": 6313.13,
+          "streaming_completion_rate": 100.0
+        }
+      }
+    },
+    "phase_16_end_to_end_breakdown": {
+      "total_e2e_latency_s": 0.065,
+      "stages": {
+        "1_request_routing_and_auth": {
+          "latency_s": 0.0015,
+          "description": "Token verification & endpoint routing",
+          "percentage_of_total": 2.31
+        },
+        "2_document_preprocessing": {
+          "latency_s": 0.015,
+          "description": "File header sniffing & text extraction",
+          "percentage_of_total": 23.08
+        },
+        "3_document_chunking": {
+          "latency_s": 0.0025,
+          "description": "Recursive text splitting & noise cleaning",
+          "percentage_of_total": 3.85
+        },
+        "4_vector_embedding": {
+          "latency_s": 0.012,
+          "description": "1536-dimensional vector embedding",
+          "percentage_of_total": 18.46
+        },
+        "5_vector_db_insertion": {
+          "latency_s": 0.0035,
+          "description": "InMemory / Qdrant vector index insertion",
+          "percentage_of_total": 5.38
+        },
+        "6_similarity_search_retrieval": {
+          "latency_s": 0.004,
+          "description": "Cosine similarity Top-K search",
+          "percentage_of_total": 6.15
+        },
+        "7_context_synthesis_generation": {
+          "latency_s": 0.025,
+          "description": "Prompt formatting & response generation",
+          "percentage_of_total": 38.46
+        },
+        "8_response_formatting_and_logging": {
+          "latency_s": 0.0015,
+          "description": "Output schema validation & async trace queue",
+          "percentage_of_total": 2.31
+        }
+      }
+    },
+    "phase_17_baseline_comparison": {
+      "retrieval_recall_at_10": {
+        "baseline": 0.965,
+        "mcppro": 0.985,
+        "absolute_difference": 0.02,
+        "percentage_difference": 2.07
+      },
+      "mean_query_latency_s": {
+        "baseline": 0.0485,
+        "mcppro": 0.038,
+        "absolute_difference": -0.0105,
+        "percentage_difference": -21.65
+      },
+      "throughput_qps": {
+        "baseline": 20.6,
+        "mcppro": 26.3,
+        "absolute_difference": 5.7,
+        "percentage_difference": 27.67
+      },
+      "warm_indexing_latency_s": {
+        "baseline": 0.098,
+        "mcppro": 0.0078,
+        "absolute_difference": -0.0902,
+        "percentage_difference": -92.04
+      },
+      "success_rate_percent": {
+        "baseline": 98.0,
+        "mcppro": 99.5,
+        "absolute_difference": 1.5,
+        "percentage_difference": 1.53
+      }
+    }
+  }
+}

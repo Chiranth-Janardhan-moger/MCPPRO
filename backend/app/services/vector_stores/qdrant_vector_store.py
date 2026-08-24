@@ -1,10 +1,10 @@
 from langchain_qdrant import QdrantVectorStore
-from langchain_openai import OpenAIEmbeddings
+from app.embedders.embedding_factory import EmbeddingFactory
 from qdrant_client import QdrantClient
 from qdrant_client.http.models import Distance, VectorParams
 from app.services.vector_stores.base_vector_store import BaseVectorStore
 from typing import List, Dict, Optional, Any
-from langchain.schema import Document
+from langchain_core.documents import Document
 from app.config.settings import settings
 import uuid
 import time
@@ -38,14 +38,9 @@ class QdrantVectorStoreService(BaseVectorStore):
         self.path = path
         self.prefer_grpc = prefer_grpc
         
-        # Set OpenAI API key for embeddings
-        if not settings.OPENAI_API_KEY:
-            raise ValueError("OPENAI_API_KEY environment variable is required for OpenAI embeddings")
-        
-        # Initialize OpenAI embeddings
-        self.embeddings = OpenAIEmbeddings(
-            model=embedding_model,
-            openai_api_key=settings.OPENAI_API_KEY
+        # Provider-aware embeddings (OpenAI or Gemini depending on env)
+        self.embeddings = EmbeddingFactory.create_embedding_model(
+            settings, embedding_model
         )
         
         # Initialize Qdrant client based on configuration
@@ -175,10 +170,16 @@ class QdrantVectorStoreService(BaseVectorStore):
         filter: Optional[Dict] = None,
         namespace: Optional[str] = None
     ) -> List[tuple]:
-        """Search with relevance scores"""
+        """Search with relevance scores, honouring metadata filters."""
         try:
-            # Simple search with scores, no filters
-            results = self.vector_store.similarity_search_with_score(query, k=k)
+            # LangChain's Qdrant vector store accepts either a Qdrant Filter
+            # model or a plain dict of metadata equality conditions.
+            if filter:
+                results = self.vector_store.similarity_search_with_score(
+                    query, k=k, filter=filter
+                )
+            else:
+                results = self.vector_store.similarity_search_with_score(query, k=k)
             return results
             
         except Exception as e:
@@ -235,3 +236,4 @@ class QdrantVectorStoreService(BaseVectorStore):
         except Exception as e:
             print(f"âŒ Error deleting all documents: {e}")
             return False
+

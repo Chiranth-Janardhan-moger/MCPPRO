@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import List, Dict, Optional, Any
-from langchain.schema import Document
+from langchain_core.documents import Document
 
 class BaseVectorStore(ABC):
     """Abstract base class for vector store implementations"""
@@ -49,6 +49,22 @@ class BaseVectorStore(ABC):
     def delete_all_documents(self, namespace: Optional[str] = None) -> bool:
         """Delete all documents from vector store"""
         pass
+
+    def get_distinct_metadata_values(self, key: str) -> List[str]:
+        """Return distinct values of a metadata key across stored documents.
+
+        Used to recover e.g. the real ``document_id`` of chunks loaded from a
+        cache dump. Stores that cannot enumerate documents return [].
+        """
+        return []
+
+    def get_document_summaries(self) -> List[Dict]:
+        """Summarise indexed documents (id, file_name, status, chunk_count).
+
+        Stores that cannot enumerate documents return [].
+        """
+        return []
+
     
     # Optional caching methods (can be overridden by implementations that support caching)
     def supports_caching(self) -> bool:
@@ -70,3 +86,4 @@ class BaseVectorStore(ABC):
     def clear_cache(self, document_url: Optional[str] = None) -> bool:
         """Clear cache for specific URL or all cache"""
         return False
+

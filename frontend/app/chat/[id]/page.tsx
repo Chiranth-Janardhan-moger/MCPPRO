@@ -28,8 +28,8 @@ async function renameConversationWithFirstMessage(supabase: any, conversationId:
   }
 }
 
-export default async function ChatPage({ params }: { params: Params }) {
-  const { id } = params;
+export default async function ChatPage({ params }: { params: Promise<Params> }) {
+  const { id } = await params;
   const supabase = await createSupabaseServer();
   const user = await getUser();
 

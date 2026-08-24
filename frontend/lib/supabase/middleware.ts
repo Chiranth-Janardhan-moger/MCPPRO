@@ -9,9 +9,24 @@ export async function updateSession(request: NextRequest) {
 		},
 	});
 
+	const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+	const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+	// Without Supabase credentials the app runs in "local demo" mode:
+	// session refresh is skipped and protected pages redirect to /signin.
+	if (!supabaseUrl || !supabaseAnonKey) {
+		const url = new URL(request.url);
+		if (protectedPaths.includes(url.pathname)) {
+			return NextResponse.redirect(
+				new URL("/signin?next=" + (url.searchParams.get("next") || url.pathname), request.url)
+			);
+		}
+		return response;
+	}
+
 	const supabase = createServerClient(
-		process.env.NEXT_PUBLIC_SUPABASE_URL!,
-		process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+		supabaseUrl,
+		supabaseAnonKey,
 		{
 			cookies: {
 				get(name: string) {

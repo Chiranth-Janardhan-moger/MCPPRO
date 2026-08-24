@@ -3,7 +3,6 @@ import openai
 from typing import Dict, List, Any
 from langchain_openai import ChatOpenAI
 from app.providers.base import BaseLLMProvider
-from app.prompts.traditional_rag_prompt import TraditionalRagPrompt
 
 
 class LMStudioProvider(BaseLLMProvider):
@@ -22,41 +21,7 @@ class LMStudioProvider(BaseLLMProvider):
             base_url=base_url
         )
 
-    async def generate_answer(self, context: str, question: str) -> str:
-        prompt_template = TraditionalRagPrompt.get_traditional_rag_prompt()
-        prompt = prompt_template.format(context=context, question=question)
-        
-        try:
-            response = await self.llm.ainvoke(prompt)
-            return response.content
-        except Exception as e:
-            return f"Error generating answer: {str(e)}"
 
-    async def extract_structured_query(self, query: str) -> Dict:
-        prompt = f"""
-        Extract structured information from this query: "{query}"
-        
-        Return a JSON object with:
-        - intent: main intent (search, information, comparison, etc.)
-        - entities: key entities mentioned
-        - keywords: important keywords for search
-        - question_type: type of question (factual, conditional, temporal, etc.)
-        
-        Query: {query}
-        
-        JSON:
-        """
-        
-        try:
-            response = await self.llm.ainvoke(prompt)
-            return json.loads(response.content)
-        except:
-            return {
-                "intent": "search",
-                "entities": [],
-                "keywords": [query],
-                "question_type": "factual"
-            }
 
     def get_langchain_llm(self) -> Any:
         return self.llm

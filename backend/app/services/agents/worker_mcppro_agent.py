@@ -1,13 +1,16 @@
 import json
 import asyncio
-import uuid
+import logging
 from typing import List, Dict, Any
 
 from app.tools.registry import tool_registry
 from app.providers.factory import LLMProviderFactory
+from app.providers.tool_calling import content_to_text
 from app.config.settings import settings
-from app.prompts.worker_agent_prompt import WorkerAgentPrompt   
-from app.prompts.output_parser_prompt import OutputParserPrompt
+from app.prompts.worker_agent_prompt import WORKER_AGENT_PROMPT
+from app.prompts.output_parser_prompt import OUTPUT_PARSER_PROMPT
+
+logger = logging.getLogger(__name__)
 
 
 class WorkerMCPPro:
@@ -15,7 +18,18 @@ class WorkerMCPPro:
         self.llm_provider = LLMProviderFactory.create_provider(
             settings.DEFAULT_LLM_PROVIDER, settings
         )
-        self.max_iterations = 15
+        self.max_iterations = settings.AGENT_MAX_ITERATIONS
+
+    @staticmethod
+    def _safe_json_loads(raw: str) -> Dict[str, Any]:
+        """Parse tool-call arguments defensively; malformed JSON yields {}."""
+        if not raw:
+            return {}
+        try:
+            parsed = json.loads(raw)
+            return parsed if isinstance(parsed, dict) else {"value": parsed}
+        except Exception:
+            return {}
 
     async def _parse_output(self, question: str, draft_answer: str) -> str:
         """Post-process the raw LLM answer so that it strictly follows the
@@ -23,9 +37,9 @@ class WorkerMCPPro:
         """
         try:
             llm = self.llm_provider.get_langchain_llm()
-            parser_prompt = OutputParserPrompt.get_output_parser_prompt()
+            parser_prompt = OUTPUT_PARSER_PROMPT
             prompt = parser_prompt.format(question=question, draft_answer=draft_answer)
-            cleaned = await asyncio.to_thread(lambda: llm.invoke(prompt).content)
+            cleaned = await asyncio.to_thread(lambda: content_to_text(llm.invoke(prompt).content))
             return cleaned.strip()
         except Exception:
             return draft_answer.strip()
@@ -34,14 +48,13 @@ class WorkerMCPPro:
         self,
         question: str,
         k: int = 10,
+        document_id: str = "",
     ) -> tuple[str, List[Dict[str, Any]]]:
         """Answer a single question.
 
         Returns tuple of (answer, tool_call_log)."""
 
-        system_prompt = WorkerAgentPrompt.get_worker_agent_prompt()
-        question_id = uuid.uuid4().hex[:8]
-        system_prompt = f"{question_id}\n\n{system_prompt}"
+        system_prompt = WORKER_AGENT_PROMPT
 
         conversation: List[Dict[str, Any]] = [
             {"role": "system", "content": system_prompt},
@@ -53,14 +66,14 @@ class WorkerMCPPro:
         tool_call_log: List[Dict[str, Any]] = []
 
         for iteration in range(self.max_iterations):
-            temp = 0.1 + (int(question_id, 16) % 100) / 1000.0
+            temp = settings.AGENT_TEMPERATURE
 
-            print(f"\nðŸ§  [Iteration {iteration+1}] Sending conversation with {len(conversation)} messages to LLMâ€¦")
+            logger.info("Iteration %d: Sending conversation to LLM...", iteration + 1)
             response = await self.llm_provider.chat_completion_with_tools(
                 messages=conversation, tools=available_tools, temperature=temp
             )
             msg = response.choices[0].message
-            print(f"ðŸ¤– LLM response received. Tool calls: {len(msg.tool_calls) if msg.tool_calls else 0}")
+            logger.info("LLM response received. Tool calls: %d", len(msg.tool_calls) if msg.tool_calls else 0)
 
             if msg.tool_calls:
                 assistant_entry = {
@@ -80,23 +93,22 @@ class WorkerMCPPro:
                 }
                 conversation.append(assistant_entry)
 
-                print(f"ðŸ”§ Executing {len(msg.tool_calls)} tools in parallel...")
+                logger.info("Executing %d tools in parallel...", len(msg.tool_calls))
                 
                 tool_tasks = []
                 tool_call_ids = []
                 
                 for tc in msg.tool_calls:
                     tool_name = tc.function.name
-                    tool_args = {}
-                    try:
-                        tool_args = json.loads(tc.function.arguments)
-                    except Exception:
-                        pass
+                    tool_args = self._safe_json_loads(tc.function.arguments)
 
                     if tool_name == "retrieve_context":
                         tool_args.setdefault("k", k)
+                        if document_id:
+                            # Server-side scoping: the LLM never supplies this.
+                            tool_args["document_id"] = document_id
 
-                    print(f"ðŸ”§ Preparing tool '{tool_name}' with args: {tool_args}")
+                    logger.debug("Preparing tool '%s' with args: %s", tool_name, tool_args)
                     
                     task = tool_registry.execute_tool(tool_name, **tool_args)
                     tool_tasks.append(task)
@@ -108,18 +120,18 @@ class WorkerMCPPro:
                     tool_name = tc.function.name
                     
                     if isinstance(tool_result, Exception):
-                        print(f"âŒ Tool '{tool_name}' failed: {tool_result}")
+                        logger.warning("Tool '%s' failed: %s", tool_name, tool_result)
                         tool_call_log.append({
                             "tool": tool_name,
-                            "arguments": json.loads(tc.function.arguments) if tc.function.arguments else {},
+                            "arguments": self._safe_json_loads(tc.function.arguments),
                             "result": {"success": False, "error": str(tool_result)}
                         })
                         tool_content = f"Tool '{tool_name}' error: {str(tool_result)}"
                     else:
-                        print(f"âœ… Tool '{tool_name}' success={tool_result.success}")
+                        logger.debug("Tool '%s' success=%s", tool_name, tool_result.success)
                         tool_call_log.append({
                             "tool": tool_name,
-                            "arguments": json.loads(tc.function.arguments) if tc.function.arguments else {},
+                            "arguments": self._safe_json_loads(tc.function.arguments),
                             "result": tool_result.model_dump(),
                         })
                         tool_content = (
@@ -128,19 +140,18 @@ class WorkerMCPPro:
                             else f"Tool '{tool_name}' error: {tool_result.error}"
                         )
                     
-                    print(f"ðŸ“¥ Appending tool response for id {tc.id}")
                     conversation.append({
                         "role": "tool",
                         "content": tool_content,
                         "tool_call_id": tc.id,
                     })
                 
-                print(f"âœ… Completed {len(msg.tool_calls)} tools in parallel")
+                logger.info("Completed %d tools in parallel", len(msg.tool_calls))
                 continue
             else:
-                print("âœ… Final answer received from LLM without further tool calls")
-                cleaned_answer = await self._parse_output(question, msg.content or "")
+                logger.info("Final answer received from LLM")
+                cleaned_answer = await self._parse_output(question, content_to_text(msg.content) or "")
                 return cleaned_answer or "No answer", tool_call_log
 
-        print("âš ï¸ Max iterations reached without final answer")
+        logger.warning("Max iterations reached without final answer")
         return "Max iterations reached", tool_call_log

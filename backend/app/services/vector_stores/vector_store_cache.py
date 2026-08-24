@@ -2,6 +2,7 @@ import os
 import hashlib
 import json
 import shutil
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional, Dict, Any
 from app.config.settings import settings
@@ -90,7 +91,7 @@ class VectorStoreCache:
                 self.metadata[cache_key] = {
                     "document_url": document_url,
                     "cache_path": str(cache_path),
-                    "created_at": json.dumps({"timestamp": "now"}),  
+                    "created_at": datetime.now(timezone.utc).isoformat(),  
                 }
                 
                 self._save_metadata()

@@ -1,0 +1,79 @@
+{
+  "timestamp": "2026-08-17 16:52:40 UTC",
+  "summary": {
+    "phase_19_reliability": {
+      "request_success_rate_percent": 99.5,
+      "document_processing_success_rate_percent": 89.36,
+      "retrieval_success_rate_percent": 98.26,
+      "tool_execution_success_rate_percent": 100.0,
+      "agent_completion_rate_percent": 100.0,
+      "system_error_rate_percent": 0.5,
+      "system_timeout_rate_percent": 0.0,
+      "graceful_failure_rate_percent": 100.0,
+      "fallback_recovery_success_rate_percent": 100.0
+    },
+    "phase_20_resource_usage": {
+      "cpu_utilization_percent": 43.7,
+      "ram_total_gb": 15.65,
+      "ram_used_gb": 10.92,
+      "ram_utilization_percent": 69.8,
+      "process_rss_memory_mb": 1511.97,
+      "peak_indexing_memory_delta_mb": 4.5,
+      "peak_query_memory_delta_mb": 0.8
+    },
+    "phase_21_cicd": {
+      "python_syntax_validation_latency_s": 0.1999,
+      "python_syntax_validation_success": true,
+      "ci_workflow_path": ".github/workflows/ci-cd.yml",
+      "ci_jobs_configured": [
+        "backend-ci",
+        "frontend-ci"
+      ],
+      "docker_build_target": "mcppro-backend:latest"
+    },
+    "phase_22_security_robustness": {
+      "graceful_failure_rate_percent": 100.0,
+      "test_cases": [
+        {
+          "test_case": "unsupported_file_extension",
+          "category": "unsupported_format",
+          "handled_gracefully": true,
+          "error_returned": "Sorry, I cannot answer this question. If you have any other queries, feel free to ask.",
+          "latency_s": 4e-05
+        },
+        {
+          "test_case": "corrupted_pdf_header",
+          "category": "malformed_document",
+          "handled_gracefully": true,
+          "error_returned": "Sorry, I cannot answer this question. If you have any other queries, feel free to ask.",
+          "latency_s": 0.03188
+        },
+        {
+          "test_case": "oversized_zero_byte_file",
+          "category": "empty_document",
+          "handled_gracefully": true,
+          "error_returned": "Sorry, I cannot answer this question. If you have any other queries, feel free to ask.",
+          "latency_s": 0.09768
+        },
+        {
+          "test_case": "malformed_image_bytes",
+          "category": "corrupted_image",
+          "handled_gracefully": true,
+          "error_returned": "Sorry, I cannot answer this question. If you have any other queries, feel free to ask.",
+          "latency_s": 0.02
+        }
+      ]
+    },
+    "phase_23_cost_metrics": {
+      "pricing_model_reference": "OpenAI Official Tier (gpt-4o-mini + text-embedding-3-small)",
+      "label": "ESTIMATED",
+      "average_input_tokens_per_query": 850,
+      "average_output_tokens_per_query": 120,
+      "average_embedding_tokens_per_doc": 3200,
+      "estimated_cost_per_query_usd": 0.000199,
+      "estimated_cost_per_document_index_usd": 6.4e-05,
+      "estimated_cost_per_1000_queries_usd": 0.2059,
+      "caching_cost_reduction_estimated_percent": 90.0
+    }
+  }
+}

@@ -1,9 +1,4 @@
-class WorkerAgentPrompt:
-    @staticmethod
-    def get_worker_agent_prompt() -> str:
-        return WorkerAgentPrompt._WORKER_AGENT_PROMPT
-
-    _WORKER_AGENT_PROMPT = """
+WORKER_AGENT_PROMPT = """
 You are MCPPro, an autonomous assistant that can answer questions about a document and related web resources.
 
 TOOLS

@@ -1,10 +1,11 @@
-from supabase import create_client, Client
-from app.config.settings import settings
-from typing import List, Dict, Optional, Any
-import uuid
-from datetime import datetime
+import asyncio
+from datetime import datetime, timezone
 import json
 import logging
+import uuid
+from typing import Any, Dict, List, Optional
+from supabase import Client, create_client
+from app.config.settings import settings
 
 logger = logging.getLogger(__name__)
 
@@ -95,7 +96,7 @@ class SupabaseLogger:
             
             log_entry = {
                 "id": request_id,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
                 "document_url": document_url,
                 "questions": questions,  # JSON array
                 "answers": answers,  # JSONB array
@@ -109,7 +110,7 @@ class SupabaseLogger:
                 "vector_store": document_metadata.get("vector_store", "unknown")
             }
             
-            result = self.client.table("mcppro_requests").insert(log_entry).execute()
+            result = await asyncio.to_thread(lambda: self.client.table("mcppro_requests").insert(log_entry).execute())
             
             if result.data:
                 logger.info(f"Logged MCPPro request: {request_id}")

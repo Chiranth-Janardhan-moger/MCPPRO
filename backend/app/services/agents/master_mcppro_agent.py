@@ -4,8 +4,9 @@ import os
 from urllib.parse import urlparse
 
 from app.tools.registry import tool_registry
-from app.prompts.master_agent_prompt import MasterAgentPrompt
+from app.prompts.master_agent_prompt import MASTER_AGENT_PROMPT
 from app.providers.factory import LLMProviderFactory
+from app.providers.tool_calling import content_to_text
 from app.config.settings import settings
 from app.services.agents.worker_mcppro_agent import WorkerMCPPro
 from app.services.vector_stores.vector_store_factory import VectorStoreFactory
@@ -42,11 +43,14 @@ class MasterMCPPro:
         is_supported_file = ext in SUPPORTED_FILE_EXT
         unsupported_extension = bool(ext) and (not is_supported_file)
 
-        VectorStoreFactory.create_vector_store(settings).delete_all_documents()
+        # NOTE: the vector store is shared and long-lived. Per-document
+        # isolation is achieved via `document_id` metadata filters, NOT by
+        # wiping the store (which destroyed concurrent requests' data).
 
         chunks_processed = None
         context_snippet: str = ""
         document_id: str = ""
+        first_pass_vector_ids: list = []
         
         # Early return for unsupported file types
         if unsupported_extension:
@@ -70,11 +74,13 @@ class MasterMCPPro:
                 }
             chunks_processed = proc_res.result.get("chunks_processed") if proc_res.success else None
             document_id = proc_res.result.get("document_id") if proc_res.success else None
+            first_pass_vector_ids = proc_res.result.get("vector_ids") or []
             try:
                 rc_res = await tool_registry.execute_tool(
                     "retrieve_context",
                     questions=questions[:1],
                     k=5,
+                    document_id=document_id,
                 )
                 context_snippet = rc_res.result.get("summary") if rc_res.success else ""
             except Exception:
@@ -90,14 +96,21 @@ class MasterMCPPro:
             f"chunks: {chunks_processed}, questions: {len(questions)}\n"
             f"context: {context_snippet[:500]}"
         )
-        selector_prompt = MasterAgentPrompt.get_master_agent_prompt().format(info=info_blob)
+        selector_prompt = MASTER_AGENT_PROMPT.format(info=info_blob)
         
         # unsupported extensions should use agentic mode
         if not is_supported_file:
             mode_token = "agentic"
         else:
             try:
-                mode_token = await asyncio.to_thread(lambda: llm.invoke(selector_prompt).content.strip().lower())
+                raw_mode = await asyncio.to_thread(
+                    lambda: content_to_text(llm.invoke(selector_prompt).content).strip().lower()
+                )
+                # Tolerant parsing: LLMs may emit "mode: traditional.",
+                # markdown, or extra words — match on the token itself.
+                mode_token = (
+                    "traditional" if "traditional" in raw_mode else "agentic"
+                )
             except Exception:
                 mode_token = "agentic"
 
@@ -119,8 +132,16 @@ class MasterMCPPro:
                 # Fall back to agentic if traditional fails
                 pass
 
-        # If agentic path is chosen ensure we have a llm-friendly cache (PyMuPDF4LLM)
+        # If agentic path is chosen ensure we have a llm-friendly cache (PyMuPDF4LLM).
+        # The first-pass (std) chunks are removed before re-ingestion so the
+        # store never holds duplicate chunks for the same document.
         if mode_token == "agentic" and is_supported_file:
+            services_vector_store = VectorStoreFactory.create_vector_store(settings)
+            if first_pass_vector_ids:
+                try:
+                    await services_vector_store.adelete_documents(first_pass_vector_ids)
+                except Exception:
+                    pass
             await tool_registry.execute_tool(
                 "process_document", document_url=document_url, use_cache=True, llm_friendly=True
             )
@@ -134,7 +155,8 @@ class MasterMCPPro:
                 prepared_questions.append(f"{q}\nSource URL: {document_url}")
 
         tasks = [
-            self.worker_agent.answer_question(pq, k=k) for pq in prepared_questions
+            self.worker_agent.answer_question(pq, k=k, document_id=document_id)
+            for pq in prepared_questions
         ]
         results = await asyncio.gather(*tasks, return_exceptions=True)
 

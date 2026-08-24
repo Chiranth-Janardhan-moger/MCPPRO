@@ -10,6 +10,10 @@ export interface MCPServerConfig {
   transport: 'stdio' | 'http';
   enabled: boolean;
   env?: Record<string, string>;
+  /** Milliseconds to wait for connect + tool listing before giving up. */
+  timeoutMs?: number;
+  /** Allow re-initialization after a failure instead of caching the error. */
+  reconnect?: boolean;
 }
 
 export interface MCPClientManager {
@@ -22,6 +26,8 @@ export interface MCPClientManager {
   addServerConfig(config: MCPServerConfig): void;
   removeServerConfig(serverName: string): void;
   getServerConfig(serverName: string): MCPServerConfig | undefined;
+  /** Close every client connection and reset state. */
+  shutdown(): Promise<void>;
 }
 
 interface ClientState {
@@ -31,13 +37,40 @@ interface ClientState {
   initPromise: Promise<void> | null;
 }
 
-function createMCPClientManager(): MCPClientManager {
-  const clients: Map<string, ClientState> = new Map();
-  let globalInitPromise: Promise<void> | null = null;
-  const isCIEnvironment = process.env.CI === 'true';
+const DEFAULT_TIMEOUT_MS = 15_000;
 
-  const serverConfigs: Record<string, MCPServerConfig> = {
-    playwright: {
+const isBuildPhase =
+  process.env.CI === 'true' ||
+  process.env.NEXT_PHASE === 'phase-production-build';
+
+/**
+ * Default servers. Secrets are read from the environment only — servers whose
+ * credentials are missing are disabled rather than misconfigured.
+ * Override/extend the whole set with MCP_SERVERS_CONFIG (JSON array).
+ */
+function defaultServerConfigs(): Record<string, MCPServerConfig> {
+  const configs: Record<string, MCPServerConfig> = {
+    computer: {
+      name: 'computer',
+      url: process.env.MCP_COMPUTER_URL || 'http://127.0.0.1:8002/mcp',
+      transport: 'http',
+      enabled: !isBuildPhase && process.env.MCP_ENABLE_COMPUTER === 'true',
+      timeoutMs: DEFAULT_TIMEOUT_MS,
+      reconnect: true,
+    },
+    rag: {
+      name: 'rag',
+      url: process.env.MCP_RAG_URL || 'http://127.0.0.1:8001/mcp',
+      transport: 'http',
+      enabled:
+        !isBuildPhase && (process.env.MCP_ENABLE_RAG ?? 'true') === 'true',
+      timeoutMs: DEFAULT_TIMEOUT_MS,
+      reconnect: true,
+    },
+  };
+
+  if (process.env.SMITHERY_API_KEY) {
+    configs.playwright = {
       name: 'playwright',
       command: 'cmd',
       args: [
@@ -48,70 +81,79 @@ function createMCPClientManager(): MCPClientManager {
         'run',
         '@microsoft/playwright-mcp',
         '--key',
-        'c7eefd65-fbfe-405c-b071-f54ad4165201'
+        process.env.SMITHERY_API_KEY,
       ],
       transport: 'stdio',
-      enabled: !isCIEnvironment
-    },
+      enabled: !isBuildPhase && process.env.MCP_ENABLE_PLAYWRIGHT !== 'false',
+      timeoutMs: DEFAULT_TIMEOUT_MS,
+      reconnect: true,
+    };
+  }
 
-    computer: {
-      name: 'computer',
-      url: 'http://127.0.0.1:8002/mcp',
-      transport: 'http',
-      enabled: !isCIEnvironment
-    },
-
-    rag: {
-      name: 'rag',
-      url: 'http://127.0.0.1:8001/mcp',
-      transport: 'http',
-      enabled: !isCIEnvironment
-    },
-
-    v0: {
+  if (process.env.V0_BEARER_TOKEN) {
+    configs.v0 = {
       name: 'v0',
-      command: "npx",
+      command: 'npx',
       args: [
-        "-y",
-        "mcp-remote",
-        "https://mcp.v0.dev",
-        "--header",
-        `Authorization: Bearer ${process.env.V0_BEARER_TOKEN || 'v1:d26X3nJ7mNh9UZPFeeC5Cy0T:FbeW8NZLX8zugE58Bf7TopCJ'}`
+        '-y',
+        'mcp-remote',
+        'https://mcp.v0.dev',
+        '--header',
+        `Authorization: Bearer ${process.env.V0_BEARER_TOKEN}`,
       ],
       transport: 'stdio',
-      enabled: !isCIEnvironment
-    }
-  
-    
-    /*
-    github: {
-      name: 'github',
-      command: 'docker',
-      args: [
-        'run',
-        '-i',
-        '--rm',
-        '-e',
-        'GITHUB_PERSONAL_ACCESS_TOKEN',
-        'ghcr.io/github/github-mcp-server'
-      ],
-      transport: 'stdio',
-      enabled: !!process.env.GITHUB_PERSONAL_ACCESS_TOKEN,
-      env: {
-        GITHUB_PERSONAL_ACCESS_TOKEN: process.env.GITHUB_PERSONAL_ACCESS_TOKEN || ''
+      enabled: !isBuildPhase && process.env.MCP_ENABLE_V0 !== 'false',
+      timeoutMs: DEFAULT_TIMEOUT_MS,
+      reconnect: true,
+    };
+  }
+
+  return configs;
+}
+
+/** Optional full override via env: JSON array of MCPServerConfig. */
+function loadEnvOverride(
+  configs: Record<string, MCPServerConfig>
+): Record<string, MCPServerConfig> {
+  const raw = process.env.MCP_SERVERS_CONFIG;
+  if (!raw) return configs;
+  try {
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) throw new Error('expected a JSON array');
+    for (const entry of parsed) {
+      if (entry && typeof entry.name === 'string') {
+        configs[entry.name] = { ...entry, timeoutMs: entry.timeoutMs ?? DEFAULT_TIMEOUT_MS };
       }
     }
-    */
-    
-    // Example of how to add more MCP servers:
-    // filesystem: {
-    //   name: 'filesystem',
-    //   command: 'npx',
-    //   args: ['-y', '@modelcontextprotocol/server-filesystem', '/path/to/directory'],
-    //   transport: 'stdio',
-    //   enabled: false
-    // }
-  };
+  } catch (err) {
+    console.warn('Ignoring invalid MCP_SERVERS_CONFIG:', err);
+  }
+  return configs;
+}
+
+function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(
+      () => reject(new Error(`${label} timed out after ${ms}ms`)),
+      ms
+    );
+    promise.then(
+      (value) => {
+        clearTimeout(timer);
+        resolve(value);
+      },
+      (err) => {
+        clearTimeout(timer);
+        reject(err);
+      }
+    );
+  });
+}
+
+function createMCPClientManager(): MCPClientManager {
+  const clients: Map<string, ClientState> = new Map();
+  let globalInitPromise: Promise<void> | null = null;
+  const serverConfigs = loadEnvOverride(defaultServerConfigs());
 
   function getClientState(serverName: string): ClientState {
     if (!clients.has(serverName)) {
@@ -119,7 +161,7 @@ function createMCPClientManager(): MCPClientManager {
         client: null,
         tools: {},
         initialized: false,
-        initPromise: null
+        initPromise: null,
       });
     }
     return clients.get(serverName)!;
@@ -134,12 +176,13 @@ function createMCPClientManager(): MCPClientManager {
     const state = getClientState(serverName);
 
     try {
-      console.log(`Initializing MCP client for ${serverName} using ${config.transport} transport...`);
+      console.log(
+        `[MCP] Initializing ${serverName} via ${config.transport} transport...`
+      );
 
       let transport;
 
       if (config.transport === 'http') {
-        // HTTP transport for Python MCP server
         if (!config.url) {
           throw new Error(`HTTP MCP server '${serverName}' requires a URL`);
         }
@@ -148,146 +191,132 @@ function createMCPClientManager(): MCPClientManager {
         if (!config.command || !config.args) {
           throw new Error(`Stdio MCP server '${serverName}' requires command and args`);
         }
-
         const transportOptions: any = {
           command: config.command,
-          args: config.args
+          args: config.args,
         };
-
         if (config.env) {
-          transportOptions.env = {
-            ...process.env,
-            ...config.env
-          };
+          transportOptions.env = { ...process.env, ...config.env };
         }
-
         transport = new StdioClientTransport(transportOptions);
       }
 
-      state.client = await experimental_createMCPClient({
-        transport,
-      });
+      const client = await withTimeout(
+        experimental_createMCPClient({ transport }),
+        config.timeoutMs ?? DEFAULT_TIMEOUT_MS,
+        `MCP connect (${serverName})`
+      );
 
-      state.tools = await state.client.tools();
+      const tools = await withTimeout(
+        client.tools(),
+        config.timeoutMs ?? DEFAULT_TIMEOUT_MS,
+        `MCP tool listing (${serverName})`
+      );
+
+      state.client = client;
+      state.tools = tools;
       state.initialized = true;
-      console.log(`MCP client for ${serverName} (${config.transport}) initialized successfully`);
+      console.log(`[MCP] ${serverName} ready (${Object.keys(tools).length} tools)`);
     } catch (error) {
-      console.error(`Failed to initialize MCP client for ${serverName}:`, error);
+      console.error(`[MCP] Failed to initialize ${serverName}:`, error);
       state.client = null;
       state.tools = {};
       state.initialized = false;
-      if (process.env.CI === 'true') {
-        console.warn(`Ignoring MCP client initialization error for ${serverName} due to CI environment`);
-      } else {
+      // Never crash callers in build/CI; at runtime failures surface as
+      // "server unavailable" through getAllTools() unless reconnect retries.
+      if (isBuildPhase) {
+        console.warn(`[MCP] Ignoring ${serverName} failure during build/CI`);
+      } else if (!config.reconnect) {
         throw error;
       }
     }
   }
 
+  async function ensureClient(serverName: string): Promise<any> {
+    const config = serverConfigs[serverName];
+    if (!config || !config.enabled) {
+      throw new Error(`MCP server '${serverName}' is not configured or disabled`);
+    }
+    const state = getClientState(serverName);
+
+    if (state.initialized && state.client) return state.client;
+
+    if (state.initPromise) {
+      await state.initPromise;
+    } else {
+      state.initPromise = initializeClient(serverName);
+      try {
+        await state.initPromise;
+      } finally {
+        state.initPromise = null;
+      }
+    }
+
+    if (!state.initialized || !state.client) {
+      throw new Error(`MCP server '${serverName}' is unavailable`);
+    }
+    return state.client;
+  }
+
   return {
     async init(): Promise<void> {
-      if (globalInitPromise) {
-        return await globalInitPromise;
-      }
+      if (globalInitPromise) return globalInitPromise;
 
       const enabledServers = Object.keys(serverConfigs).filter(
-        name => serverConfigs[name].enabled
+        (name) => serverConfigs[name].enabled
       );
+      if (enabledServers.length === 0) return;
 
-      const allInitialized = enabledServers.every(serverName => {
-        const state = clients.get(serverName);
+      const allInitialized = enabledServers.every((name) => {
+        const state = clients.get(name);
         return state && state.initialized && state.client;
       });
-
-      if (allInitialized) {
-        return;
-      }
+      if (allInitialized) return;
 
       globalInitPromise = Promise.allSettled(
-        enabledServers.map(async (serverName) => {
-          const state = getClientState(serverName);
-
-          if (state.initialized && state.client) {
-            return;
-          }
-
-          if (state.initPromise) {
-            return await state.initPromise;
-          }
-
-          state.initPromise = initializeClient(serverName);
-          try {
-            await state.initPromise;
-          } finally {
-            state.initPromise = null;
-          }
-        })
+        enabledServers.map((name) => ensureClient(name))
       ).then(() => {
-        console.log('All MCP servers initialized');
         globalInitPromise = null;
       });
 
       await globalInitPromise;
     },
 
-    async getClient(serverName: string = 'playwright'): Promise<any> {
-      const state = getClientState(serverName);
-      
-      if (!state.initialized || !state.client) {
-        if (state.initPromise) {
-          await state.initPromise;
-        } else {
-          state.initPromise = initializeClient(serverName);
-          try {
-            await state.initPromise;
-          } finally {
-            state.initPromise = null;
-          }
-        }
-      }
-      
-      return state.client;
+    async getClient(serverName: string = 'rag'): Promise<any> {
+      return ensureClient(serverName);
     },
 
-    async getTools(serverName: string = 'playwright'): Promise<Record<string, any>> {
-      const state = getClientState(serverName);
-      
-      if (!state.initialized || !state.client) {
-        await this.getClient(serverName);
-      }
-      
-      return state.tools;
+    async getTools(serverName: string = 'rag'): Promise<Record<string, any>> {
+      await this.getClient(serverName);
+      return getClientState(serverName).tools;
     },
 
     async getAllTools(): Promise<Record<string, any>> {
       const allTools: Record<string, any> = {};
-      
       const enabledServers = Object.keys(serverConfigs).filter(
-        name => serverConfigs[name].enabled
+        (name) => serverConfigs[name].enabled
       );
 
       for (const serverName of enabledServers) {
         try {
           const tools = await this.getTools(serverName);
-          Object.keys(tools).forEach(toolName => {
-            const prefixedName = `${serverName}_${toolName}`;
-            allTools[prefixedName] = tools[toolName];
-          });
+          for (const [toolName, toolDef] of Object.entries(tools)) {
+            allTools[`${serverName}_${toolName}`] = toolDef;
+          }
         } catch (error) {
-          console.warn(`Failed to get tools from ${serverName}:`, error);
+          console.warn(`[MCP] Tools unavailable from ${serverName}:`, (error as Error).message);
         }
       }
-      
       return allTools;
     },
 
-    isInitialized(serverName: string = 'playwright'): boolean {
+    isInitialized(serverName: string = 'rag'): boolean {
       const state = clients.get(serverName);
       return state ? state.initialized && state.client !== null : false;
     },
 
     getAvailableServers(): string[] {
-      return Object.keys(serverConfigs).filter(name => serverConfigs[name].enabled);
+      return Object.keys(serverConfigs).filter((name) => serverConfigs[name].enabled);
     },
 
     addServerConfig(config: MCPServerConfig): void {
@@ -300,7 +329,23 @@ function createMCPClientManager(): MCPClientManager {
 
     getServerConfig(serverName: string): MCPServerConfig | undefined {
       return serverConfigs[serverName];
-    }
+    },
+
+    async shutdown(): Promise<void> {
+      for (const [, state] of clients) {
+        try {
+          await state.client?.close?.();
+        } catch {
+          // best-effort close
+        }
+        state.client = null;
+        state.tools = {};
+        state.initialized = false;
+        state.initPromise = null;
+      }
+      clients.clear();
+      globalInitPromise = null;
+    },
   };
 }
 

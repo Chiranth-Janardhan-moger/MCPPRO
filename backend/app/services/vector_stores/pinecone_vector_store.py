@@ -1,9 +1,9 @@
 from langchain_pinecone import PineconeVectorStore
-from langchain_openai import OpenAIEmbeddings
+from app.embedders.embedding_factory import EmbeddingFactory
 from pinecone import Pinecone, ServerlessSpec
 from app.services.vector_stores.base_vector_store import BaseVectorStore
 from typing import List, Dict, Optional, Any
-from langchain.schema import Document
+from langchain_core.documents import Document
 from app.config.settings import settings
 import uuid
 import time
@@ -24,26 +24,10 @@ class PineconeVectorStoreService(BaseVectorStore):
         self.index_name = index_name
         self.embedding_model = embedding_model
         
-
-        
-        # Use OpenAI embeddings for OpenAI models, otherwise use Pinecone embeddings
-        if embedding_model.startswith("text-embedding"):
-            openai_api_key = os.getenv("OPENAI_API_KEY")
-
-            # Use OpenAI embeddings for OpenAI models
-            if not openai_api_key:
-                raise ValueError("OPENAI_API_KEY environment variable is required for OpenAI embedding models")
-            
-            self.embeddings = OpenAIEmbeddings(
-                model=embedding_model,
-                openai_api_key=openai_api_key
-            )
-        else:
-            # Use Pinecone embeddings for other models
-            from langchain_pinecone import PineconeEmbeddings
-            self.embeddings = PineconeEmbeddings(
-                model=embedding_model
-            )
+        # Provider-aware embeddings (OpenAI or Gemini depending on env)
+        self.embeddings = EmbeddingFactory.create_embedding_model(
+            settings, embedding_model if embedding_model.startswith("text-embedding") else None
+        )
         
         # Create or get index with proper error handling
         self.index = self._get_or_create_index()
@@ -292,3 +276,4 @@ class PineconeVectorStoreService(BaseVectorStore):
         except Exception as e:
             print(f"âŒ Error deleting documents: {e}")
             return False
+

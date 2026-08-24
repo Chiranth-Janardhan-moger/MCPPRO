@@ -6,6 +6,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { toast } from 'sonner';
 import { DocumentManagerDialog } from './document-manager-dialog';
 import { UploadIcon } from '../icons';
+import { createSupabaseBrowser } from '@/lib/supabase/client';
 
 export function FileUpload() {
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
@@ -30,20 +31,40 @@ export function FileUpload() {
       });
 
       if (!response.ok) {
-        throw new Error('Upload failed');
+        const detail = await response.json().catch(() => null);
+        throw new Error(detail?.error || 'Upload failed');
+      }
+
+      const result = await response.json().catch(() => null);
+
+      // Record the upload for the Document Manager (RLS-scoped to this user).
+      const supabase = createSupabaseBrowser();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase.from('user_documents').insert({
+          user_id: user.id,
+          file_name: file.name,
+          status: result?.success ? 'ready' : 'failed',
+          document_ref: result?.document_id ?? null,
+          chunk_count: result?.chunks_processed ?? null,
+        });
       }
 
       toast.success('Success!', {
         id: uploadToast,
-        description: 'File uploaded successfully.',
+        description: `${file.name} indexed (${result?.chunks_processed ?? '?'} chunks).`,
       });
     } catch (error) {
       toast.error('Error',
         {
           id: uploadToast,
-          description: 'Could not upload file.',
+          description: error instanceof Error ? error.message : 'Could not upload file.',
         }
       );
+    } finally {
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     }
   };
 

@@ -1,4 +1,4 @@
-from langchain.text_splitter import RecursiveCharacterTextSplitter, MarkdownTextSplitter
+from langchain_text_splitters import RecursiveCharacterTextSplitter, MarkdownTextSplitter
 from typing import List, Dict
 
 class DocumentSplitter:
@@ -28,3 +28,4 @@ class DocumentSplitter:
                 chunk.metadata.update(preserve_metadata)
         
         return chunks
+

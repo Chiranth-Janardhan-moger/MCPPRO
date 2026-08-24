@@ -4,16 +4,6 @@ from typing import Dict, Any, List
 class BaseLLMProvider(ABC):
     
     @abstractmethod
-    async def generate_answer(self, context: str, question: str) -> str:
-        """Generate answer based on context and question"""
-        pass
-    
-    @abstractmethod
-    async def extract_structured_query(self, query: str) -> Dict:
-        """Extract structured information from natural language query"""
-        pass
-    
-    @abstractmethod
     def get_langchain_llm(self) -> Any:
         """Get LangChain compatible LLM instance"""
         pass

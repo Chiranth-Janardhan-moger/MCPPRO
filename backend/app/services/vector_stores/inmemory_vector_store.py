@@ -1,9 +1,9 @@
 from langchain_core.vectorstores import InMemoryVectorStore
-from langchain_openai import OpenAIEmbeddings
+from app.embedders.embedding_factory import EmbeddingFactory
 from app.services.vector_stores.base_vector_store import BaseVectorStore
 from app.services.vector_stores.vector_store_cache import VectorStoreCache
 from typing import List, Dict, Optional, Any
-from langchain.schema import Document
+from langchain_core.documents import Document
 from app.config.settings import settings
 from pathlib import Path
 import uuid
@@ -19,17 +19,11 @@ class InMemoryVectorStoreService(BaseVectorStore):
         Initialize InMemory vector store service
         
         Args:
-            embedding_model: OpenAI embedding model to use
+            embedding_model: Embedding model identifier (provider-aware)
         """
         self.embedding_model = embedding_model
         
-        if not settings.OPENAI_API_KEY:
-            raise ValueError("OPENAI_API_KEY environment variable is required for OpenAI embeddings")
-        
-        self.embeddings = OpenAIEmbeddings(
-            model=embedding_model,
-            openai_api_key=settings.OPENAI_API_KEY,
-        )
+        self.embeddings = EmbeddingFactory.create_embedding_model(settings, embedding_model)
         
         self.vector_store = InMemoryVectorStore(embedding=self.embeddings)
         
@@ -114,6 +108,58 @@ class InMemoryVectorStoreService(BaseVectorStore):
         except Exception as e:
             print(f"Error getting document count: {e}")
             return 0
+
+    def _iter_stored(self):
+        """Yield (metadata, text) for every stored entry.
+
+        langchain's InMemoryVectorStore keeps serialized dicts
+        (``{"id", "vector", "text", "metadata"}``) in ``.store``; older
+        versions kept Document objects. Handle both.
+        """
+        for value in self.vector_store.store.values():
+            if isinstance(value, dict):
+                yield value.get("metadata") or {}, value.get("text", "")
+            else:
+                yield getattr(value, "metadata", None) or {}, getattr(value, "page_content", "")
+
+    def get_distinct_metadata_values(self, key: str) -> List[str]:
+        """Return distinct values of a metadata key across stored documents."""
+        try:
+            values = set()
+            for metadata, _text in self._iter_stored():
+                value = metadata.get(key)
+                if value is not None:
+                    values.add(str(value))
+            return sorted(values)
+        except Exception as e:
+            print(f"Error reading metadata values for key '{key}': {e}")
+            return []
+
+    def get_document_summaries(self) -> List[Dict]:
+        """Group stored chunks by document_id into document summaries."""
+        try:
+            grouped: Dict[str, Dict] = {}
+            for metadata, _text in self._iter_stored():
+                doc_id = str(metadata.get("document_id", ""))
+                if not doc_id:
+                    continue
+                entry = grouped.setdefault(
+                    doc_id,
+                    {
+                        "id": doc_id,
+                        "file_name": str(metadata.get("source", doc_id)),
+                        "chunk_count": 0,
+                    },
+                )
+                entry["chunk_count"] += 1
+            summaries = list(grouped.values())
+            for s in summaries:
+                s["status"] = "ready"
+                s["updated_at"] = ""
+            return summaries
+        except Exception as e:
+            print(f"Error building document summaries: {e}")
+            return []
     
     def delete_all_documents(self, namespace: Optional[str] = None) -> bool:
         """Delete all documents from vector store (sync)"""
@@ -263,13 +309,7 @@ class InMemoryVectorStoreService(BaseVectorStore):
     def load_from_file(cls, file_path: str, embedding_model: str = "text-embedding-3-small") -> 'InMemoryVectorStoreService':
         """Load vector store from file"""
         try:
-            if not settings.OPENAI_API_KEY:
-                raise ValueError("OPENAI_API_KEY environment variable is required for OpenAI embeddings")
-            
-            embeddings = OpenAIEmbeddings(
-                model=embedding_model,
-                openai_api_key=settings.OPENAI_API_KEY
-            )
+            embeddings = EmbeddingFactory.create_embedding_model(settings, embedding_model)
             
             vector_store = InMemoryVectorStore.load(file_path, embedding=embeddings)
             
@@ -299,15 +339,28 @@ class InMemoryVectorStoreService(BaseVectorStore):
         return True
     
     def load_from_cache(self, document_url: str) -> bool:
-        """Load cached vector store for document URL. Returns True if successful."""
+        """Load cached chunks into the shared store WITHOUT replacing it.
+
+        The cached dump is loaded into a temporary store and its entries are
+        merged into the live one. Swapping ``self.vector_store`` in-place
+        (the old behaviour) let a concurrent cache-load wipe another
+        request's index mid-flight.
+        """
         try:
             cached_path = self.cache_manager.get_cache_path(document_url)
             if cached_path:
                 print(f"Loading cached vector store for: {document_url[:50]}...")
-                
-                self.vector_store = InMemoryVectorStore.load(cached_path, embedding=self.embeddings)
-                
-                print("Successfully loaded cached vector store")
+
+                cached_store = InMemoryVectorStore.load(
+                    cached_path, embedding=self.embeddings
+                )
+                # Merge cached entries into the live store (skip ids that
+                # already exist to keep the operation idempotent).
+                for key, value in cached_store.store.items():
+                    if key not in self.vector_store.store:
+                        self.vector_store.store[key] = value
+
+                print("Successfully merged cached vector store")
                 return True
             return False
         except Exception as e:
@@ -315,15 +368,30 @@ class InMemoryVectorStoreService(BaseVectorStore):
             return False
     
     def save_to_cache(self, document_url: str) -> bool:
-        """Save current vector store to cache for document URL. Returns True if successful."""
+        """Save current document chunks to cache for document URL. Returns True if successful."""
         try:
             temp_path = self.get_temp_dump_path()
-            if self.dump_to_file(temp_path):
-                success = self.cache_manager.cache_vector_store(document_url, temp_path)
-                if success:
-                    print("Successfully cached vector store for future use")
-                return success
-            return False
+            doc_id = str(uuid.uuid5(uuid.NAMESPACE_URL, document_url))
+
+            # Isolate entries belonging to this document_url/doc_id to prevent cross-document cache bleed
+            filtered_store = InMemoryVectorStore(embedding=self.embeddings)
+            for key, value in self.vector_store.store.items():
+                if isinstance(value, dict):
+                    meta = value.get("metadata") or {}
+                else:
+                    meta = getattr(value, "metadata", None) or {}
+                
+                if meta.get("document_id") == doc_id or meta.get("source") == document_url:
+                    filtered_store.store[key] = value
+
+            # If specific chunks were matched, dump only them; otherwise dump all as fallback
+            target_store = filtered_store if filtered_store.store else self.vector_store
+            target_store.dump(temp_path)
+
+            success = self.cache_manager.cache_vector_store(document_url, temp_path)
+            if success:
+                print("Successfully cached vector store for future use")
+            return success
         except Exception as e:
             print(f"Failed to cache vector store: {e}")
             return False
@@ -348,3 +416,4 @@ class InMemoryVectorStoreService(BaseVectorStore):
     def list_cached_urls(self) -> List[str]:
         """List all cached document URLs"""
         return self.cache_manager.list_cached_urls()
+

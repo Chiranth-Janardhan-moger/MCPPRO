@@ -8,44 +8,49 @@ from app.tools.traditional_rag_tool import TraditionalRAGTool
 
 class ToolRegistry:
     """
-    Registry for managing all available tools
+    Registry for managing all available tools.
+
+    Tools are constructed lazily on first use: several tools build vector
+    stores that require credentials, and eager construction at import time
+    made the whole API unbootable without a full environment configured.
     """
-    
+
     def __init__(self):
         self._tools: Dict[str, BaseTool] = {}
-        self._initialize_tools()
-    
-    def _initialize_tools(self):
-        """Initialize all available tools"""
+        self._initialized = False
+
+    def _ensure_initialized(self):
+        if self._initialized:
+            return
         tools = [
             URLRequestTool(),
             ProcessDocumentTool(),
             RetrieveContextTool(),
             TraditionalRAGTool(),
         ]
-        
         for tool in tools:
             self.register_tool(tool)
-    
+        self._initialized = True
+
     def register_tool(self, tool: BaseTool):
         """Register a new tool"""
         self._tools[tool.name] = tool
         print(f"Registered tool: {tool.name}")
-    
+
     def get_tool(self, name: str) -> BaseTool:
-        """Get a tool by name"""
+        self._ensure_initialized()
         if name not in self._tools:
             raise ValueError(f"Tool '{name}' not found. Available tools: {list(self._tools.keys())}")
         return self._tools[name]
-    
+
     def list_tools(self) -> List[str]:
-        """Get list of all available tool names"""
+        self._ensure_initialized()
         return list(self._tools.keys())
-    
+
     def get_tools_for_llm(self) -> List[Dict[str, Any]]:
-        """Get all tools formatted for LLM function calling"""
+        self._ensure_initialized()
         return [tool.to_function_definition() for tool in self._tools.values()]
-    
+
     async def execute_tool(self, tool_name: str, **kwargs) -> Any:
         """Execute a tool by name with given parameters"""
         tool = self.get_tool(tool_name)

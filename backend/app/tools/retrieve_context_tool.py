@@ -4,7 +4,8 @@ from app.tools.base import BaseTool, ToolResult
 from app.services.vector_stores.vector_store_factory import VectorStoreFactory
 from app.config.settings import settings
 from app.providers.factory import LLMProviderFactory
-from app.prompts.context_summary_prompt import ContextSummaryPrompt
+from app.providers.tool_calling import content_to_text
+from app.prompts.context_summary_prompt import CONTEXT_SUMMARY_PROMPT
 import asyncio
 
 
@@ -43,6 +44,19 @@ class RetrieveContextTool(BaseTool):
             "required": ["questions"],
         }
 
+    async def _search(self, query: str, k: int, document_id: str):
+        metadata_filter = {"document_id": document_id} if document_id else None
+        if hasattr(self.vector_store, "asimilarity_search_with_score"):
+            return await self.vector_store.asimilarity_search_with_score(
+                query=query, k=k, filter=metadata_filter
+            )
+        return await asyncio.to_thread(
+            self.vector_store.similarity_search_with_score,
+            query=query,
+            k=k,
+            filter=metadata_filter,
+        )
+
     async def execute(self, **kwargs):  # type: ignore[override]
         try:
             queries = kwargs.get("questions")
@@ -51,40 +65,22 @@ class RetrieveContextTool(BaseTool):
             if not queries:
                 return ToolResult(success=False, error="'questions' (array of strings) is required")
             k: int = kwargs.get("k", 10)
+            document_id: str = kwargs.get("document_id", "")
 
             docs_with_scores = []
-            
-            if hasattr(self.vector_store, "asimilarity_search_with_score"):
-                print(f"Executing {len(queries)} vector searches in parallel...")
-                search_tasks = [
-                    self.vector_store.asimilarity_search_with_score(query=q, k=k)
-                    for q in queries
-                ]
-                
-                search_results = await asyncio.gather(*search_tasks, return_exceptions=True)
-                
-                for i, result in enumerate(search_results):
-                    if isinstance(result, Exception):
-                        print(f"Search failed for query '{queries[i]}': {result}")
-                        continue
-                    docs_with_scores.extend(result)
-                    
-            else:
-                print(f"Executing {len(queries)} vector searches in parallel (sync fallback)...")
-                search_tasks = [
-                    asyncio.to_thread(
-                        self.vector_store.similarity_search_with_score,
-                        query=q, k=k
-                    ) for q in queries
-                ]
-                
-                search_results = await asyncio.gather(*search_tasks, return_exceptions=True)
-                
-                for i, result in enumerate(search_results):
-                    if isinstance(result, Exception):
-                        print(f"Search failed for query '{queries[i]}': {result}")
-                        continue
-                    docs_with_scores.extend(result)
+
+            print(f"Executing {len(queries)} vector searches in parallel...")
+            search_tasks = [
+                self._search(q, k, document_id) for q in queries
+            ]
+
+            search_results = await asyncio.gather(*search_tasks, return_exceptions=True)
+
+            for i, result in enumerate(search_results):
+                if isinstance(result, Exception):
+                    print(f"Search failed for query '{queries[i]}': {result}")
+                    continue
+                docs_with_scores.extend(result)
 
             chunks = [
                 {"content": doc.page_content, "similarity_score": float(score)}
@@ -93,18 +89,18 @@ class RetrieveContextTool(BaseTool):
 
             try:
                 context_text = "\n\n".join([c["content"] for c in chunks])
-                summary_prompt = ContextSummaryPrompt.get_context_summary_prompt().format(
+                summary_prompt = CONTEXT_SUMMARY_PROMPT.format(
                     question=" | ".join(queries), context=context_text
                 )
 
                 llm = self.llm_provider.get_langchain_llm()
-                
+
                 if hasattr(llm, 'ainvoke'):
                     summary_response = await llm.ainvoke(summary_prompt)
-                    summary = summary_response.content if hasattr(summary_response, 'content') else str(summary_response)
+                    summary = content_to_text(summary_response.content)
                 else:
-                    summary = await asyncio.to_thread(lambda: llm.invoke(summary_prompt).content)
-                    
+                    summary = content_to_text(llm.invoke(summary_prompt).content)
+
             except Exception as e:
                 print(f"Summary generation failed: {e}")
                 summary = ""

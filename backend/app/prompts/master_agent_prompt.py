@@ -1,9 +1,4 @@
-class MasterAgentPrompt:
-    @staticmethod
-    def get_master_agent_prompt() -> str:
-        return MasterAgentPrompt._MASTER_AGENT_PROMPT
-    
-    _MASTER_AGENT_PROMPT = """
+MASTER_AGENT_PROMPT = """
 You are MCPPro-Mode-Selector.
 Given a summary of the document (file type, length, high-level description) decide which processing mode will answer the userâ€™s questions **faster and more accurately**.
 Return EXACTLY one token:

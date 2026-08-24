@@ -60,12 +60,14 @@ class ProcessDocumentTool(BaseTool):
             if not document_url:
                 return ToolResult(success=False, error="'document_url' is required")
 
-            document_id = str(uuid.uuid4())
+            # Deterministic id so cached chunks and fresh processing agree.
+            document_id = str(uuid.uuid5(uuid.NAMESPACE_URL, document_url))
 
             # Ensure processor uses the requested loader type
             self.document_processor.file_processor.use_llm_pdf_loader = llm_friendly
 
-            # Compose a cache key that differentiates between loader variants
+            # Unified cache key format shared with the traditional pipeline:
+            # "{url}::{variant}" where variant is std|llm.
             cache_key = f"{document_url}::{'llm' if llm_friendly else 'std'}"
 
             # If requested, attempt to load existing cache for this URL (variant-sensitive)

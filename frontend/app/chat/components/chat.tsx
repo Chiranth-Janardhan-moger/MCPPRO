@@ -6,16 +6,67 @@ import { MultimodalInput } from "./multimodal-input";
 import { ChatHeader } from "./chat-header";
 import { Message } from "ai";
 import { saveMessages } from "../actions";
-import { useState } from "react";
-import { models } from "@/app/chat/lib/ai/providers/providers";
+import { useState, useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { catalogModels } from "@/app/chat/lib/ai/providers/providers";
 
 interface ChatProps {
   id: string;
   initialMessages?: Message[];
 }
 
+interface ApiModelsResponse {
+  defaultModel: string | null;
+  models: {
+    id: string;
+    label: string;
+    provider?: string;
+    freeTier?: boolean;
+    inputPricePerMTok?: number;
+    outputPricePerMTok?: number;
+  }[];
+}
+
+/** Static fallback derived from the curated catalog (client-safe). */
+function staticUiModels() {
+  return catalogModels().map((m) => ({
+    value: m.id,
+    label: m.label,
+    provider: m.provider,
+    freeTier: m.freeTier,
+    inputPricePerMTok: m.inputPricePerMTok,
+    outputPricePerMTok: m.outputPricePerMTok,
+  }));
+}
+
 export function Chat({ id, initialMessages = [] }: ChatProps) {
-  const [selectedModel, setSelectedModel] = useState(models[0].value);
+  const { data: modelsData } = useQuery<ApiModelsResponse>({
+    queryKey: ['models'],
+    queryFn: async () => {
+      const res = await fetch('/api/models');
+      if (!res.ok) throw new Error('failed to load models');
+      return res.json();
+    },
+    staleTime: 5 * 60 * 1000,
+    retry: 1,
+  });
+
+  const uiModels = useMemo(
+    () =>
+      modelsData?.models?.length
+        ? modelsData.models.map((m) => ({
+            value: m.id,
+            label: m.label,
+            provider: (m as { provider?: string }).provider,
+            freeTier: m.freeTier,
+            inputPricePerMTok: m.inputPricePerMTok,
+            outputPricePerMTok: m.outputPricePerMTok,
+          }))
+        : staticUiModels(),
+    [modelsData]
+  );
+
+  const [selectedModel, setSelectedModel] = useState<string>('');
   const { messages, input, setInput, handleInputChange, handleSubmit, status, data, append } = useChat({
     initialMessages,
     api: '/api/chat',
@@ -31,7 +82,7 @@ export function Chat({ id, initialMessages = [] }: ChatProps) {
     experimental_prepareRequestBody: (body) => {
       return {
         ...body,
-        selectedModel,
+        selectedModel: selectedModel || modelsData?.defaultModel || undefined,
       };
     },
   });
@@ -77,8 +128,13 @@ export function Chat({ id, initialMessages = [] }: ChatProps) {
             onChange={handleInputChange}
             handleSubmit={customHandleSubmit}
             isLoading={status === 'submitted'}
+            models={uiModels}
             modelState={{
-              selectedModel,
+              selectedModel:
+                selectedModel ||
+                modelsData?.defaultModel ||
+                uiModels[0]?.value ||
+                '',
               setSelectedModel,
             }}
           />

@@ -1,9 +1,4 @@
-class OutputParserPrompt:
-    @staticmethod
-    def get_output_parser_prompt() -> str:
-        return OutputParserPrompt._OUTPUT_PARSER_PROMPT
-
-    _OUTPUT_PARSER_PROMPT = """
+OUTPUT_PARSER_PROMPT = """
 You are MCPPro-Output-Parser.
 Your task is to transform a draft answer so that it fully complies with the
 formatting and privacy requirements below. The output maybe in any language.
