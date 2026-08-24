@@ -10,10 +10,12 @@ import {
 } from '@/components/ui/dialog';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Loader2, AlertCircle } from 'lucide-react';
+import { Loader2, AlertCircle, Trash2 } from 'lucide-react';
 import { createSupabaseBrowser } from '@/lib/supabase/client';
+import { toast } from 'sonner';
 
 interface Document {
   id: string;
@@ -40,7 +42,7 @@ const getStatusColorClass = (status: string) => {
     case 'ready':
       return 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300 border-green-200/50 dark:border-green-800/50';
     case 'failed':
-      return ''; // Uses destructive variant
+      return '';
     case 'pending':
     case 'partitioning':
     case 'partitioned':
@@ -58,12 +60,11 @@ const getStatusColorClass = (status: string) => {
 export function DocumentManagerDialog({ isOpen, onOpenChange }: DocumentManagerDialogProps) {
   const [documents, setDocuments] = useState<Document[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const fetchDocuments = async () => {
     try {
-      // Read the user's own upload records (RLS-scoped, survives backend
-      // restarts — unlike the in-memory vector store).
       const supabase = createSupabaseBrowser();
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not signed in.');
@@ -92,10 +93,35 @@ export function DocumentManagerDialog({ isOpen, onOpenChange }: DocumentManagerD
     }
   };
 
+  const handleDelete = async (docId: string, fileName: string) => {
+    setDeletingId(docId);
+    try {
+      const supabase = createSupabaseBrowser();
+      const { error: deleteErr } = await supabase
+        .from('user_documents')
+        .delete()
+        .eq('id', docId);
+
+      if (deleteErr) throw deleteErr;
+
+      setDocuments((prev) => prev.filter((d) => d.id !== docId));
+      toast.success('Document deleted successfully', {
+        description: `${fileName} was removed from your index.`,
+      });
+    } catch (err: any) {
+      console.error('Failed to delete document:', err);
+      toast.error('Failed to delete document', {
+        description: err?.message || 'Please try again.',
+      });
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
   useEffect(() => {
     if (isOpen) {
       fetchDocuments();
-      const interval = setInterval(fetchDocuments, 60 * 1000); // Poll every 60 seconds
+      const interval = setInterval(fetchDocuments, 60 * 1000);
       return () => clearInterval(interval);
     }
   }, [isOpen]);
@@ -106,7 +132,7 @@ export function DocumentManagerDialog({ isOpen, onOpenChange }: DocumentManagerD
         <DialogHeader>
           <DialogTitle>Document Manager</DialogTitle>
           <DialogDescription>
-            View the status of your uploaded documents. Statuses refresh automatically.
+            View and manage your indexed documents for RAG.
           </DialogDescription>
         </DialogHeader>
         <div className="py-4">
@@ -115,27 +141,43 @@ export function DocumentManagerDialog({ isOpen, onOpenChange }: DocumentManagerD
               <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
             </div>
           ) : error ? (
-             <Alert variant="destructive">
+            <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
               <AlertTitle>Error</AlertTitle>
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           ) : (
             <ScrollArea className="h-[400px] pr-4">
-              <div className="grid gap-4">
+              <div className="grid gap-3">
                 {documents.length > 0 ? (
                   documents.map((doc) => (
-                    <Card key={doc.id}>
+                    <Card key={doc.id} className="border-border/60 hover:border-border transition-colors">
                       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium truncate pr-2">
+                        <CardTitle className="text-sm font-medium truncate pr-2 max-w-[280px]">
                           {doc.file_name}
                         </CardTitle>
-                        <Badge
-                          variant={getStatusVariant(doc.status)}
-                          className={`capitalize ${getStatusColorClass(doc.status)}`}
-                        >
-                          {doc.status.replace(/_/g, ' ')}
-                        </Badge>
+                        <div className="flex items-center gap-2">
+                          <Badge
+                            variant={getStatusVariant(doc.status)}
+                            className={`capitalize ${getStatusColorClass(doc.status)}`}
+                          >
+                            {doc.status.replace(/_/g, ' ')}
+                          </Badge>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-muted-foreground hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
+                            onClick={() => handleDelete(doc.id, doc.file_name)}
+                            disabled={deletingId === doc.id}
+                            title="Delete document"
+                          >
+                            {deletingId === doc.id ? (
+                              <Loader2 className="h-4 w-4 animate-spin text-red-500" />
+                            ) : (
+                              <Trash2 className="h-4 w-4" />
+                            )}
+                          </Button>
+                        </div>
                       </CardHeader>
                       <CardContent>
                         <p className="text-xs text-muted-foreground">
