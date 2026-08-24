@@ -18,7 +18,7 @@ export interface HeaderConfig {
 export const headerConfig: HeaderConfig = {
   brand: {
     title: "MCPPro",
-    icon: "/logos/mcppro-logo.png"
+    icon: "/logo.svg"
   },
   navigationLinks: [
     { 

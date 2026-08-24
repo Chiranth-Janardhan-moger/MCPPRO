@@ -166,7 +166,7 @@ export default function SignUp({ redirectTo }: { redirectTo: string }) {
                 </FormLabel>
                 <FormControl>
                   <Input
-                    className="h-10 sm:h-11 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border-zinc-200 dark:border-zinc-700/50 focus:ring-2 focus:ring-indigo-500/20 transition-all duration-300"
+                    className="h-10 sm:h-11 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border-zinc-200 dark:border-zinc-700/50 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-300"
                     placeholder="example@gmail.com"
                     type="email"
                     {...field}
@@ -187,7 +187,7 @@ export default function SignUp({ redirectTo }: { redirectTo: string }) {
                 <FormControl>
                   <div className="relative group">
                     <Input
-                      className="h-10 sm:h-11 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border-zinc-200 dark:border-zinc-700/50 focus:ring-2 focus:ring-indigo-500/20 transition-all duration-300 pr-10"
+                      className="h-10 sm:h-11 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border-zinc-200 dark:border-zinc-700/50 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-300 pr-10"
                       type={passwordReveal ? "text" : "password"}
                       {...field}
                     />
@@ -218,7 +218,7 @@ export default function SignUp({ redirectTo }: { redirectTo: string }) {
                 <FormControl>
                   <div className="relative group">
                     <Input
-                      className="h-10 sm:h-11 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border-zinc-200 dark:border-zinc-700/50 focus:ring-2 focus:ring-indigo-500/20 transition-all duration-300 pr-10"
+                      className="h-10 sm:h-11 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border-zinc-200 dark:border-zinc-700/50 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-300 pr-10"
                       type={passwordReveal ? "text" : "password"}
                       {...field}
                     />
@@ -240,7 +240,7 @@ export default function SignUp({ redirectTo }: { redirectTo: string }) {
           />
           <Button
             type="submit"
-            className="w-full h-10 sm:h-11 bg-gradient-to-r from-indigo-500 to-violet-500 hover:from-indigo-600 hover:to-violet-600 text-white rounded-xl font-medium transition-all duration-300 flex items-center justify-center gap-2 shadow-lg shadow-indigo-500/20"
+            className="w-full h-10 sm:h-11 bg-gradient-to-r from-blue-600 via-sky-500 to-cyan-500 hover:from-blue-700 hover:via-sky-600 hover:to-cyan-600 text-white rounded-xl font-medium transition-all duration-300 flex items-center justify-center gap-2 shadow-lg shadow-blue-500/25 cursor-pointer"
           >
             <AiOutlineLoading3Quarters
               className={cn("w-4 h-4", !isPending ? "hidden" : "animate-spin")}
@@ -253,7 +253,7 @@ export default function SignUp({ redirectTo }: { redirectTo: string }) {
               Already have account?{" "}
               <Link
                 href={redirectTo ? `/signin?next=${redirectTo}` : "/signin"}
-                className="text-indigo-500 hover:text-indigo-600 font-medium transition-colors"
+                className="text-blue-600 hover:text-blue-700 dark:text-sky-400 dark:hover:text-sky-300 font-medium transition-colors"
               >
                 Sign in
               </Link>
@@ -270,12 +270,12 @@ export default function SignUp({ redirectTo }: { redirectTo: string }) {
         )}
       >
         <div className="flex min-h-[400px] items-center justify-center flex-col space-y-6 p-4 sm:p-8">
-          <div className="bg-indigo-500/10 dark:bg-indigo-500/5 p-4 rounded-full">
-            <SiMinutemailer className="w-6 h-6 sm:w-8 sm:h-8 text-indigo-500" />
+          <div className="bg-blue-500/10 dark:bg-blue-500/5 p-4 rounded-full">
+            <SiMinutemailer className="w-6 h-6 sm:w-8 sm:h-8 text-blue-500" />
           </div>
 
           <div className="text-center space-y-2">
-            <h1 className="text-xl sm:text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-500 to-violet-500">
+            <h1 className="text-xl sm:text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 via-sky-500 to-cyan-500">
               Verify Email
             </h1>
             <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 max-w-sm">
@@ -361,7 +361,7 @@ export default function SignUp({ redirectTo }: { redirectTo: string }) {
           <div className="text-xs sm:text-sm flex gap-2 items-center text-zinc-600 dark:text-zinc-400">
             <p>Didn't work?</p>
             <span
-              className="text-indigo-500 hover:text-indigo-600 cursor-pointer hover:underline transition-colors flex items-center gap-2"
+              className="text-blue-600 hover:text-blue-700 dark:text-sky-400 dark:hover:text-sky-300 cursor-pointer hover:underline transition-colors flex items-center gap-2"
               onClick={async () => {
                 if (!isSendAgain) {
                   startSendAgain(async () => {
@@ -394,7 +394,7 @@ export default function SignUp({ redirectTo }: { redirectTo: string }) {
 
           <Button
             type="button"
-            className="w-full h-10 sm:h-11 bg-gradient-to-r from-indigo-500 to-violet-500 hover:from-indigo-600 hover:to-violet-600 text-white rounded-xl font-medium transition-all duration-300 flex items-center justify-center gap-2 shadow-lg shadow-indigo-500/20"
+            className="w-full h-10 sm:h-11 bg-gradient-to-r from-blue-600 via-sky-500 to-cyan-500 hover:from-blue-700 hover:via-sky-600 hover:to-cyan-600 text-white rounded-xl font-medium transition-all duration-300 flex items-center justify-center gap-2 shadow-lg shadow-blue-500/25 cursor-pointer"
             onClick={() => setIsConfirmed(false)}
           >
             <RiArrowDropLeftFill className="w-5 h-5 sm:w-6 sm:h-6" />

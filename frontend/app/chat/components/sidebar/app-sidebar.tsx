@@ -32,7 +32,7 @@ export function AppSidebar({ user }: AppSidebarProps) {
   const { setOpenMobile } = useSidebar();
   const { createConversation } = useConversationsContext();
   const appName = process.env.NEXT_PUBLIC_APP_NAME || "MCPPro";
-  const appIcon = process.env.NEXT_PUBLIC_APP_ICON || "";
+  const appIcon = process.env.NEXT_PUBLIC_APP_ICON || "/logo.svg";
   return (
     <Sidebar className="group-data-[side=left]:border-r-0">
       <SidebarHeader>
