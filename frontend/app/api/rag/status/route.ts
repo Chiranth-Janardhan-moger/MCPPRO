@@ -14,7 +14,7 @@ export async function GET() {
 
   try {
     const headers: Record<string, string> = {};
-    const token = process.env.BACKEND_BEARER_TOKEN;
+    const token = process.env.BACKEND_BEARER_TOKEN || process.env.BEARER_TOKEN;
     if (token) headers.Authorization = `Bearer ${token}`;
 
     const upstream = await fetch(`${BACKEND_URL}/documents`, {
