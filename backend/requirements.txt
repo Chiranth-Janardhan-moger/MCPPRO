@@ -30,6 +30,7 @@ langchain-pymupdf4llm
 pgvector
 qdrant-client
 langchain-qdrant
+fastembed
 
 # HTTP client
 aiohttp
