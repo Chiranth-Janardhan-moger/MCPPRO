@@ -19,46 +19,46 @@ export interface FooterConfig {
 
 export const footerConfig: FooterConfig = {
   brand: {
-    title: "NextJS Template",
-    description: "NextJS Template"
+    title: "MCPPRO",
+    description: "Enterprise Multi-Agent Model Context Protocol & AI Orchestration Platform. Deploy autonomous agents, connect vector databases, and execute tools in real time."
   },
   sections: [
     {
-      title: "Product",
+      title: "Platform",
       links: [
-        { href: "#", label: "Browser Extension" },
-        { href: "#", label: "Admin Dashboard" },
-        { href: "#", label: "AI Detection" },
-        { href: "#", label: "Pricing Plans" }
+        { href: "/chat", label: "Chat Studio" },
+        { href: "/dashboard", label: "Dashboard" },
+        { href: "/api/models", label: "Model Catalog" },
+        { href: "#", label: "MCP Tools" }
       ]
     },
     {
-      title: "Solutions",
+      title: "Models",
       links: [
-        { href: "#", label: "Universities" },
-        { href: "#", label: "Schools" },
-        { href: "#", label: "Training Centers" },
-        { href: "#", label: "Enterprises" }
+        { href: "/chat", label: "Anthropic Claude 3.7" },
+        { href: "/chat", label: "OpenAI GPT-4o & o3" },
+        { href: "/chat", label: "Google Gemini 2.0" },
+        { href: "/chat", label: "DeepSeek R1 / V3" }
       ]
     },
     {
-      title: "Resources",
+      title: "Architecture",
       links: [
-        { href: "#", label: "Documentation" },
-        { href: "#", label: "API Reference" },
-        { href: "#", label: "Help Center" },
-        { href: "#", label: "Security" }
+        { href: "#", label: "Model Context Protocol" },
+        { href: "#", label: "Qdrant Vector Store" },
+        { href: "#", label: "Agentic Streaming" },
+        { href: "#", label: "BYOK Vault" }
       ]
     },
     {
-      title: "Legal",
+      title: "Legal & Open Source",
       links: [
+        { href: "https://github.com/Chiranth-Janardhan-moger/MCPPRO", label: "GitHub Repository" },
         { href: "#", label: "Privacy Policy" },
         { href: "#", label: "Terms of Service" },
-        { href: "#", label: "Cookie Policy" },
-        { href: "#", label: "GDPR" }
+        { href: "#", label: "Documentation" }
       ]
     }
   ],
-  copyright: `Â© ${new Date().getFullYear()} NextJS Template. All rights reserved.`
+  copyright: `© ${new Date().getFullYear()} MCPPRO. All rights reserved.`
 }

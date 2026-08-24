@@ -157,3 +157,4 @@ export {
   SelectScrollUpButton,
   SelectScrollDownButton,
 }
+export { Selector, MultiSelector } from "@astryxdesign/core"

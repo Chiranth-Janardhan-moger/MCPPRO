@@ -151,3 +151,4 @@ export {
   CommandShortcut,
   CommandSeparator,
 }
+export { CommandPalette } from "@astryxdesign/core"

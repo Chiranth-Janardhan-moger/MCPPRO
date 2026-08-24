@@ -28,18 +28,28 @@ export async function POST(req: Request) {
 
     const selectedModel: string | undefined =
       typeof body?.selectedModel === 'string' ? body.selectedModel : undefined;
+    const customApiKeys: Record<string, string> =
+      typeof body?.customApiKeys === 'object' && body.customApiKeys !== null
+        ? body.customApiKeys
+        : {};
     const modelInfo = selectedModel ? getModelInfo(selectedModel) : undefined;
-    if (selectedModel && modelInfo && !isProviderConfigured(modelInfo.provider)) {
+    
+    const hasKey =
+      !modelInfo ||
+      isProviderConfigured(modelInfo.provider) ||
+      Boolean(customApiKeys[modelInfo.provider]?.trim());
+
+    if (selectedModel && modelInfo && !hasKey) {
       return new Response(
         JSON.stringify({
-          error: `Provider '${modelInfo.provider}' is not configured. Add its API key on the server.`,
+          error: `Provider '${modelInfo.provider}' is not configured. Click the Settings icon to add your ${modelInfo.provider.toUpperCase()} API key.`,
         }),
         { status: 400, headers: { 'Content-Type': 'application/json' } }
       );
     }
 
     return runWithRequestContext(
-      { userId: user.id, selectedModel },
+      { userId: user.id, selectedModel, customApiKeys },
       () =>
         createDataStreamResponse({
           async execute(dataStream) {

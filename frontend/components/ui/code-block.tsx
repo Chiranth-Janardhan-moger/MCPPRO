@@ -92,3 +92,4 @@ function CodeBlockGroup({
 }
 
 export { CodeBlockGroup, CodeBlockCode, CodeBlock }
+export { CodeBlock as AstryxCodeBlock } from "@astryxdesign/core"

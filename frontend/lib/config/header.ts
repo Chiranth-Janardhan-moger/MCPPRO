@@ -22,12 +22,16 @@ export const headerConfig: HeaderConfig = {
   },
   navigationLinks: [
     { 
-    href: "/", 
-    label: "Home" 
-  },
-  { 
-    href: "/chat", 
-    label: "Chat" 
-  }
+      href: "/", 
+      label: "Home" 
+    },
+    { 
+      href: "/chat", 
+      label: "Chat" 
+    },
+    {
+      href: "/dashboard",
+      label: "Dashboard"
+    }
   ]
 }

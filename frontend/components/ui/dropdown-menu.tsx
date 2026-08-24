@@ -199,3 +199,4 @@ export {
   DropdownMenuSubTrigger,
   DropdownMenuRadioGroup,
 }
+export { DropdownMenu as AstryxDropdownMenu } from "@astryxdesign/core"

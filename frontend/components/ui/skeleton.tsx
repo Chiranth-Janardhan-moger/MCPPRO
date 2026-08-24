@@ -1,12 +1,23 @@
+import * as React from "react"
+import { Skeleton as AstryxSkeleton } from "@astryxdesign/core"
 import { cn } from "@/lib/utils"
+
+export interface SkeletonProps extends React.HTMLAttributes<HTMLDivElement> {
+  width?: number | string
+  height?: number | string
+}
 
 function Skeleton({
   className,
+  width,
+  height,
   ...props
-}: React.HTMLAttributes<HTMLDivElement>) {
+}: SkeletonProps) {
   return (
-    <div
-      className={cn("animate-pulse rounded-md bg-primary/10", className)}
+    <AstryxSkeleton
+      width={width}
+      height={height}
+      className={cn("rounded-md", className)}
       {...props}
     />
   )

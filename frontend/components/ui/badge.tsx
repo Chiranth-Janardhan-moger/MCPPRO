@@ -1,4 +1,5 @@
 import * as React from "react"
+import { Badge as AstryxBadge } from "@astryxdesign/core"
 import { cva, type VariantProps } from "class-variance-authority"
 
 import { cn } from "@/lib/utils"
@@ -24,12 +25,18 @@ const badgeVariants = cva(
 )
 
 export interface BadgeProps
-  extends React.HTMLAttributes<HTMLDivElement>,
-    VariantProps<typeof badgeVariants> {}
+  extends React.HTMLAttributes<HTMLSpanElement>,
+    VariantProps<typeof badgeVariants> {
+  label?: React.ReactNode
+}
 
-function Badge({ className, variant, ...props }: BadgeProps) {
+function Badge({ className, variant, children, label, ...props }: BadgeProps) {
   return (
-    <div className={cn(badgeVariants({ variant }), className)} {...props} />
+    <AstryxBadge
+      label={label ?? children ?? ""}
+      className={cn(badgeVariants({ variant }), className)}
+      {...props}
+    />
   )
 }
 

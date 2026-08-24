@@ -2,10 +2,13 @@ import os
 import hashlib
 import json
 import shutil
+import logging
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional, Dict, Any
 from app.config.settings import settings
+
+logger = logging.getLogger(__name__)
 
 class VectorStoreCache:
     """Manages caching of vector stores based on document URLs"""
@@ -95,14 +98,14 @@ class VectorStoreCache:
                 }
                 
                 self._save_metadata()
-                print(f"Cached vector store for URL: {document_url[:50]}...")
+                logger.info("Cached vector store for URL: %s...", document_url[:50])
                 return True
             else:
-                print(f"Vector store file not found: {vector_store_path}")
+                logger.warning("Vector store file not found: %s", vector_store_path)
                 return False
                 
         except Exception as e:
-            print(f"Error caching vector store: {e}")
+            logger.error("Error caching vector store: %s", e)
             return False
     
     def get_cache_info(self, document_url: str) -> Optional[Dict[str, Any]]:
@@ -127,18 +130,18 @@ class VectorStoreCache:
                 if cache_key in self.metadata:
                     del self.metadata[cache_key]
                     
-                print(f"Cleared cache for URL: {document_url[:50]}...")
+                logger.info("Cleared cache for URL: %s...", document_url[:50])
             else:
                 for cache_file in self.cache_dir.glob("*.vs"):
                     cache_file.unlink()
                 
                 self.metadata.clear()
-                print("Cleared all vector store cache")
+                logger.info("Cleared all vector store cache")
             
             self._save_metadata()
             
         except Exception as e:
-            print(f"Error clearing cache: {e}")
+            logger.error("Error clearing cache: %s", e)
     
     def list_cached_urls(self) -> list:
         """List all cached document URLs"""

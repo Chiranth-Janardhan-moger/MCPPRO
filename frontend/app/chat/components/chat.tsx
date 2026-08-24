@@ -8,7 +8,8 @@ import { Message } from "ai";
 import { saveMessages } from "../actions";
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { catalogModels } from "@/app/chat/lib/ai/providers/providers";
+import { MODEL_CATALOG } from "@/lib/ai/models";
+import { getUserApiKeys } from "@/components/global/api-keys-dialog";
 
 interface ChatProps {
   id: string;
@@ -29,7 +30,7 @@ interface ApiModelsResponse {
 
 /** Static fallback derived from the curated catalog (client-safe). */
 function staticUiModels() {
-  return catalogModels().map((m) => ({
+  return MODEL_CATALOG.map((m) => ({
     value: m.id,
     label: m.label,
     provider: m.provider,
@@ -80,9 +81,11 @@ export function Chat({ id, initialMessages = [] }: ChatProps) {
       console.error("Error fetching response:", error);
     },
     experimental_prepareRequestBody: (body) => {
+      const customApiKeys = typeof window !== 'undefined' ? getUserApiKeys() : {};
       return {
         ...body,
         selectedModel: selectedModel || modelsData?.defaultModel || undefined,
+        customApiKeys,
       };
     },
   });

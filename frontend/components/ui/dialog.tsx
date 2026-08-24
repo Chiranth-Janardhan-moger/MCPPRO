@@ -120,3 +120,4 @@ export {
   DialogTitle,
   DialogDescription,
 }
+export { Dialog as AstryxDialog } from "@astryxdesign/core"

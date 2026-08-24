@@ -35,7 +35,6 @@ class ToolRegistry:
     def register_tool(self, tool: BaseTool):
         """Register a new tool"""
         self._tools[tool.name] = tool
-        print(f"Registered tool: {tool.name}")
 
     def get_tool(self, name: str) -> BaseTool:
         self._ensure_initialized()

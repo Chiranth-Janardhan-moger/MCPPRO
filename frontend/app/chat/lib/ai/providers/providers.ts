@@ -14,45 +14,52 @@ import {
   type ProviderId,
 } from '@/lib/ai/models';
 
-const openai = createOpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-  compatibility: 'strict',
-});
+import { getRequestContext } from '@/lib/request-context';
 
-const google = createGoogleGenerativeAI({
-  apiKey:
-    process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.GEMINI_API_KEY,
-});
-
-const xai = createXai({ apiKey: process.env.XAI_API_KEY });
-
-const groq = createGroq({ apiKey: process.env.GROQ_API_KEY });
-
-const anthropic = createAnthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-
-const openrouter = createOpenRouter({
-  apiKey: process.env.OPENROUTER_API_KEY,
-});
-
-function instantiate(info: ModelInfo): LanguageModelV1 {
-  switch (info.provider) {
+function getClientForProvider(provider: ProviderId, customKey?: string) {
+  switch (provider) {
     case 'openai':
-      return openai(info.id);
+      return createOpenAI({
+        apiKey: customKey || process.env.OPENAI_API_KEY,
+        compatibility: 'strict',
+      });
     case 'google':
-      return google(info.id);
+      return createGoogleGenerativeAI({
+        apiKey:
+          customKey ||
+          process.env.GOOGLE_GENERATIVE_AI_API_KEY ||
+          process.env.GEMINI_API_KEY,
+      });
     case 'anthropic':
-      return anthropic(info.id);
+      return createAnthropic({
+        apiKey: customKey || process.env.ANTHROPIC_API_KEY,
+      });
     case 'groq':
-      return groq(info.id);
+      return createGroq({
+        apiKey: customKey || process.env.GROQ_API_KEY,
+      });
     case 'xai':
-      return xai(info.id);
+      return createXai({
+        apiKey: customKey || process.env.XAI_API_KEY,
+      });
     case 'openrouter':
-      return openrouter.chat(info.id) as unknown as LanguageModelV1;
+      return createOpenRouter({
+        apiKey: customKey || process.env.OPENROUTER_API_KEY,
+      });
     default: {
-      const never: never = info.provider;
+      const never: never = provider;
       throw new Error(`Unknown provider: ${never}`);
     }
   }
+}
+
+function instantiate(info: ModelInfo, customKeys?: Record<string, string>): LanguageModelV1 {
+  const customKey = customKeys?.[info.provider];
+  const client = getClientForProvider(info.provider, customKey);
+  if (info.provider === 'openrouter') {
+    return (client as ReturnType<typeof createOpenRouter>).chat(info.id) as unknown as LanguageModelV1;
+  }
+  return (client as any)(info.id);
 }
 
 /**
@@ -61,7 +68,8 @@ function instantiate(info: ModelInfo): LanguageModelV1 {
  * configured, otherwise fall back to the curated default.
  */
 export function getLanguageModel(modelId?: string | null): LanguageModelV1 {
-  return instantiate(resolveModel(modelId));
+  const context = getRequestContext();
+  return instantiate(resolveModel(modelId), context.customApiKeys);
 }
 
 /** UI-facing list: `{value,label}[]` filtered to configured providers. */

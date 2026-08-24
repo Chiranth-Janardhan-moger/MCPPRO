@@ -79,9 +79,11 @@ export function Header({ config }: HeaderProps) {
                 ? "h-14" 
                 : "h-16"
             )}>
-              <Link href="/" className="group relative flex items-center gap-3">
-                <span className="flex h-6 w-6 items-center justify-center">{config.brand.icon}</span>
-                <span className="font-medium tracking-tight">{config.brand.title}</span>
+              <Link href="/" className="group relative flex items-center gap-2.5">
+                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-blue-600 to-cyan-500 text-white font-bold text-xs shadow-sm shadow-blue-500/20 group-hover:scale-105 transition-transform">
+                  M
+                </div>
+                <span className="font-semibold tracking-tight text-foreground">{config.brand.title}</span>
               </Link>
 
               <nav className="relative hidden md:block">

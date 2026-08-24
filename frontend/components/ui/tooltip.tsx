@@ -27,6 +27,5 @@ const TooltipContent = React.forwardRef<
     />
   </TooltipPrimitive.Portal>
 ))
-TooltipContent.displayName = TooltipPrimitive.Content.displayName
-
 export { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider }
+export { Tooltip as AstryxTooltip } from "@astryxdesign/core"
