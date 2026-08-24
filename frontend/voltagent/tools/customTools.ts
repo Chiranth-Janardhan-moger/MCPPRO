@@ -106,7 +106,25 @@ export const searchUploadedDocumentsTool = createTool({
       }
 
       const data = await res.json();
-      return JSON.stringify(data);
+      if (!data.chunks || data.chunks.length === 0) {
+        return JSON.stringify({
+          result: "No matching document chunks found in the vector store. Make sure a document is uploaded via 'My Documents' in the sidebar.",
+          count: 0,
+        });
+      }
+
+      const formattedContext = data.chunks
+        .map(
+          (c: any, i: number) =>
+            `--- [Chunk ${i + 1} from ${c.metadata?.source || 'Uploaded Document'}] ---\n${c.content}`
+        )
+        .join('\n\n');
+
+      return JSON.stringify({
+        status: "success",
+        matched_chunks: data.chunks.length,
+        document_context: formattedContext,
+      });
     } catch (err: any) {
       console.error('Error in searchUploadedDocumentsTool:', err);
       return JSON.stringify({ error: `RAG search error: ${err.message}` });

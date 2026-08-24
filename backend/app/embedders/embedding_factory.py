@@ -34,6 +34,12 @@ class FastEmbedOfflineEmbeddings:
         embeddings = list(self.client.embed([text]))
         return embeddings[0].tolist()
 
+    async def aembed_documents(self, texts: List[str]) -> List[List[float]]:
+        return self.embed_documents(texts)
+
+    async def aembed_query(self, text: str) -> List[float]:
+        return self.embed_query(text)
+
 
 class DeterministicEmbeddings:
     """Fast zero-dependency embedding provider based on feature hashing for zero-config in-memory RAG."""
@@ -59,6 +65,12 @@ class DeterministicEmbeddings:
 
     def embed_query(self, text: str) -> List[float]:
         return self._embed_text(text)
+
+    async def aembed_documents(self, texts: List[str]) -> List[List[float]]:
+        return self.embed_documents(texts)
+
+    async def aembed_query(self, text: str) -> List[float]:
+        return self.embed_query(text)
 
 
 class EmbeddingFactory:
