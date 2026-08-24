@@ -30,6 +30,7 @@ import { cn } from "@/lib/utils";
 import { verifyOtp } from "@/actions/auth";
 import { toast } from "sonner";
 import { usePathname, useRouter } from "next/navigation";
+import { createSupabaseBrowser } from "@/lib/supabase/client";
 const FormSchema = z
   .object({
     email: z.string().email({
@@ -105,16 +106,31 @@ export default function SignUp({ redirectTo }: { redirectTo: string }) {
       password: data.password,
     });
     if (!json.error) {
+      if (json.directLogin) {
+        toast.success("Account created successfully!");
+        const supabase = createSupabaseBrowser();
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          email: data.email,
+          password: data.password,
+        });
+        if (signInError) {
+          router.push(redirectTo ? `/signin?next=${redirectTo}` : "/signin");
+        } else {
+          router.push(redirectTo || "/chat");
+          router.refresh();
+        }
+        return;
+      }
       router.replace(
         (pathname || "/") + "?verify=true&email=" + form.getValues("email"),
       );
       setIsConfirmed(true);
     } else {
-      if (json.error.code) {
-        toast.error(json.error.code);
-      } else if (json.error.message) {
-        toast.error(json.error.message);
-      }
+      const msg =
+        json.error?.message ||
+        json.error?.code ||
+        (typeof json.error === "string" ? json.error : "Registration failed");
+      toast.error(msg);
     }
   };
   const inputOptClass = cn({
