@@ -127,7 +127,6 @@ export function Header({ config }: HeaderProps) {
                 <div className="md:hidden">
                   <NavigationMobile navigationLinks={config.navigationLinks} />
                 </div>
-                <ModeToggle />
               </div>
             </div>
           </div>

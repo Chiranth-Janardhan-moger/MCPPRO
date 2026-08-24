@@ -113,7 +113,6 @@ export function Breadcrumbs({
         </Breadcrumb>
         <div className="ml-auto flex items-center gap-4">
           {action}
-          <ModeToggle />
         </div>
       </div>
     </header>

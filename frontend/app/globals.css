@@ -2,13 +2,8 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Early-paint dark support without any bootstrap script: the browser picks
-   the palette from the OS preference until ThemeProvider mounts and applies
-   the stored/explicit choice as a .dark/.light class on <html>. */
-@media (prefers-color-scheme: dark) {
-  html:not(.light):not(.dark) {
-    color-scheme: dark;
-  }
+html {
+  color-scheme: light;
 }
 
 

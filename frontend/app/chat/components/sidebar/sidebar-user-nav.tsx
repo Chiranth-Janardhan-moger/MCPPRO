@@ -43,13 +43,6 @@ export function SidebarUserNav({ user }: { user: User }) {
           >
             <DropdownMenuItem
               className="cursor-pointer"
-              onSelect={() => setTheme(theme === "dark" ? "light" : "dark")}
-            >
-              {`Toggle ${theme === "light" ? "dark" : "light"} mode`}
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              className="cursor-pointer"
               onClick={async () => {
                 await supabase.auth.signOut();
                 window.location.href = "/";

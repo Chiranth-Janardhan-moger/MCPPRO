@@ -34,7 +34,6 @@ function PureChatHeader({ chatId }: ChatHeaderProps) {
 
       <div className="flex items-center gap-1">
         <ApiKeysDialog />
-        <ModeToggle />
       </div>
     </header>
   );
