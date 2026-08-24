@@ -17,7 +17,7 @@ function PureChatHeader({ chatId }: ChatHeaderProps) {
   const { toggleSidebar } = useSidebar();
 
   return (
-    <header className="flex items-center justify-between px-4 py-2.5 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="flex items-center justify-between px-4 py-2.5 border-b border-blue-100/70 dark:border-zinc-800 bg-white/75 dark:bg-zinc-900/75 backdrop-blur-md">
       <div className="flex items-center gap-2">
         <Button
           variant="ghost"

@@ -118,7 +118,7 @@ export function Chat({ id, initialMessages = [] }: ChatProps) {
   };
 
   return (
-    <div className="relative flex-1 flex flex-col h-full bg-background">
+    <div className="relative flex-1 flex flex-col h-full bg-gradient-to-br from-blue-50/60 via-white to-sky-50/50 dark:from-zinc-950 dark:via-zinc-900 dark:to-blue-950/20">
       <ChatHeader chatId={id} />
       <div className="flex-1 overflow-auto">
         <Messages
@@ -126,7 +126,7 @@ export function Chat({ id, initialMessages = [] }: ChatProps) {
           messages={messages}
         />
       </div>
-      <div className="sticky bottom-0 bg-gradient-to-t from-background to-transparent">
+      <div className="sticky bottom-0 bg-gradient-to-t from-white via-white/90 to-transparent dark:from-zinc-950 dark:via-zinc-950/90 pt-4">
         <div className="mx-auto max-w-3xl px-4 pb-4">
           <MultimodalInput
             chatId={id}
