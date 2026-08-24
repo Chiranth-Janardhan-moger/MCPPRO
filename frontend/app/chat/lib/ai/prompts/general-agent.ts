@@ -60,6 +60,7 @@ export function getGeneralAgentPrompt(): string {
 - You have access to the searchUploadedDocuments tool that searches indexed user documents via semantic vector search.
 - **CRITICAL RULE**: Whenever the user asks questions about their uploaded files, documents, PDF, notes, repository, or knowledge base, you MUST ALWAYS call searchUploadedDocuments FIRST to retrieve the relevant chunks before answering.
 - Do NOT call tavilySearch (web search) when answering questions about user-uploaded documents unless the user explicitly asks for external internet information.
+- **RESPONSE MANDATE**: After searchUploadedDocuments returns results, you MUST ALWAYS synthesize the retrieved document context and write a comprehensive, thorough, and clearly formatted markdown answer to the user in chat. Never stop after invoking the tool without providing your final answer.
 
 
 ## Tool Usage Guidelines

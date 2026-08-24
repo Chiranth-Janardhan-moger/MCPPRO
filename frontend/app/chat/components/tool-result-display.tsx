@@ -43,6 +43,7 @@ const TOOL_DISPLAY_NAMES: { [key: string]: string } = {
   querySupabase: "Database Query",
   generateChart: "Chart Generation",
   tavilySearch: "Searching the web",
+  searchUploadedDocuments: "Searching Document Knowledge Base",
   ragRetrieval: "Retrieving from Documents",
   generateImage: "Generating Image",
   sendHealthReport: "Sending Health Report",
@@ -60,6 +61,7 @@ const TOOL_ICONS: { [key: string]: React.ComponentType<{ className?: string }> }
   querySupabase: Database,
   generateChart: BarChart,
   tavilySearch: Search,
+  searchUploadedDocuments: FileText,
   ragRetrieval: FileText,
   generateImage: ImageIcon,
   sendHealthReport: Mail,
@@ -72,6 +74,12 @@ const TOOL_COLORS: { [key: string]: { bg: string; text: string; line: string; do
     text: "text-blue-700 dark:text-blue-300",
     line: "bg-blue-500",
     dot: "bg-blue-500"
+  },
+  searchUploadedDocuments: {
+    bg: "bg-sky-50 dark:bg-sky-950/20",
+    text: "text-sky-700 dark:text-sky-300",
+    line: "bg-sky-500",
+    dot: "bg-sky-500"
   },
   generateChart: {
     bg: "bg-green-50 dark:bg-green-950/20",
