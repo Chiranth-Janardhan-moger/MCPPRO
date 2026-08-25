@@ -31,7 +31,11 @@ export const headerConfig: HeaderConfig = {
     },
     {
       href: "/dashboard",
-      label: "Dashboard"
+      label: "QA Dashboard"
+    },
+    {
+      href: "/admin",
+      label: "Admin Panel"
     }
   ]
 }

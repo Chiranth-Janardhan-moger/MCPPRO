@@ -1,6 +1,7 @@
 import { getUser } from '@/app/chat/hooks/get-user';
-
-const BACKEND_URL = process.env.BACKEND_URL || 'http://127.0.0.1:8000';
+import { isUserAdmin } from '@/lib/auth/admin';
+import { isUserUploadAllowed } from '@/lib/services/admin-settings';
+import supabaseAdmin from '@/lib/supabase/admin';
 
 const MAX_UPLOAD_BYTES = 25 * 1024 * 1024; // 25 MB
 
@@ -11,6 +12,18 @@ export async function POST(req: Request) {
       status: 401,
       headers: { 'Content-Type': 'application/json' },
     });
+  }
+
+  const isAdmin = await isUserAdmin(user);
+  const uploadsAllowed = await isUserUploadAllowed();
+
+  if (!uploadsAllowed && !isAdmin) {
+    return new Response(
+      JSON.stringify({
+        error: 'File uploads are currently restricted by the administrator. You can search and query all fixed documents in the System Knowledge Base.',
+      }),
+      { status: 403, headers: { 'Content-Type': 'application/json' } }
+    );
   }
 
   let formData: FormData;
@@ -37,6 +50,8 @@ export async function POST(req: Request) {
     });
   }
 
+  const isGlobal = isAdmin && formData.get('is_global') === 'true';
+
   try {
     const upstreamForm = new FormData();
     upstreamForm.append('file', file, file.name);
@@ -57,10 +72,29 @@ export async function POST(req: Request) {
       signal: AbortSignal.timeout(300_000),
     });
 
-    const text = await upstream.text();
-    return new Response(text, {
+    const responseData = await upstream.json();
+
+    // Record metadata in user_documents
+    try {
+      const supabase = supabaseAdmin();
+      await supabase.from('user_documents').insert({
+        user_id: user.id,
+        file_name: file.name,
+        status: responseData?.success ? 'ready' : 'failed',
+        document_ref: responseData?.document_id ?? null,
+        chunk_count: responseData?.chunks_processed ?? 0,
+        file_size: file.size,
+        is_global: isGlobal,
+        uploaded_by_email: user.email,
+        description: isGlobal ? 'Fixed System Knowledge Base' : 'User Document',
+      });
+    } catch (metaErr) {
+      console.warn('[api/rag/upload] Metadata insertion warning:', metaErr);
+    }
+
+    return new Response(JSON.stringify(responseData), {
       status: upstream.status,
-      headers: { 'Content-Type': upstream.headers.get('content-type') ?? 'application/json' },
+      headers: { 'Content-Type': 'application/json' },
     });
   } catch (error: any) {
     console.error('[api/rag/upload] error:', error);

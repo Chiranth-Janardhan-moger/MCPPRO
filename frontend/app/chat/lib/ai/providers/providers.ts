@@ -16,35 +16,40 @@ import {
 
 import { getRequestContext } from '@/lib/request-context';
 
-function getClientForProvider(provider: ProviderId, customKey?: string) {
+function getClientForProvider(provider: ProviderId, customKey?: string, systemKeys?: Record<string, string>) {
+  const effectiveKey =
+    customKey ||
+    systemKeys?.[provider] ||
+    (provider === 'google' ? systemKeys?.gemini : undefined);
+
   switch (provider) {
     case 'openai':
       return createOpenAI({
-        apiKey: customKey || process.env.OPENAI_API_KEY,
+        apiKey: effectiveKey || process.env.OPENAI_API_KEY,
         compatibility: 'strict',
       });
     case 'google':
       return createGoogleGenerativeAI({
         apiKey:
-          customKey ||
+          effectiveKey ||
           process.env.GOOGLE_GENERATIVE_AI_API_KEY ||
           process.env.GEMINI_API_KEY,
       });
     case 'anthropic':
       return createAnthropic({
-        apiKey: customKey || process.env.ANTHROPIC_API_KEY,
+        apiKey: effectiveKey || process.env.ANTHROPIC_API_KEY,
       });
     case 'groq':
       return createGroq({
-        apiKey: customKey || process.env.GROQ_API_KEY,
+        apiKey: effectiveKey || process.env.GROQ_API_KEY,
       });
     case 'xai':
       return createXai({
-        apiKey: customKey || process.env.XAI_API_KEY,
+        apiKey: effectiveKey || process.env.XAI_API_KEY,
       });
     case 'openrouter':
       return createOpenRouter({
-        apiKey: customKey || process.env.OPENROUTER_API_KEY,
+        apiKey: effectiveKey || process.env.OPENROUTER_API_KEY,
       });
     default: {
       const never: never = provider;
@@ -53,9 +58,9 @@ function getClientForProvider(provider: ProviderId, customKey?: string) {
   }
 }
 
-function instantiate(info: ModelInfo, customKeys?: Record<string, string>): LanguageModelV1 {
+function instantiate(info: ModelInfo, customKeys?: Record<string, string>, systemKeys?: Record<string, string>): LanguageModelV1 {
   const customKey = customKeys?.[info.provider];
-  const client = getClientForProvider(info.provider, customKey);
+  const client = getClientForProvider(info.provider, customKey, systemKeys);
   if (info.provider === 'openrouter') {
     return (client as ReturnType<typeof createOpenRouter>).chat(info.id) as unknown as LanguageModelV1;
   }
@@ -69,7 +74,7 @@ function instantiate(info: ModelInfo, customKeys?: Record<string, string>): Lang
  */
 export function getLanguageModel(modelId?: string | null): LanguageModelV1 {
   const context = getRequestContext();
-  return instantiate(resolveModel(modelId), context.customApiKeys);
+  return instantiate(resolveModel(modelId), context.customApiKeys, context.systemApiKeys);
 }
 
 /** UI-facing list: `{value,label}[]` filtered to configured providers. */

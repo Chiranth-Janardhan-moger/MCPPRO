@@ -8,8 +8,10 @@ import { useConversationsContext } from "../../hooks/conversations-context";
 import { SidebarHistory } from "./sidebar-history";
 import { FileUpload } from "./file-upload";
 import { SidebarUserNav } from "./sidebar-user-nav";
-import Image from "next/image"
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
+import { useIsAdmin } from "@/hooks/use-is-admin";
+import { ShieldCheck } from "lucide-react";
 
 import {
   Sidebar,
@@ -24,15 +26,19 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+
 interface AppSidebarProps {
   user: User | null;
 }
+
 export function AppSidebar({ user }: AppSidebarProps) {
   const router = useRouter();
   const { setOpenMobile } = useSidebar();
   const { createConversation, conversations } = useConversationsContext();
+  const { isAdmin } = useIsAdmin();
   const appName = process.env.NEXT_PUBLIC_APP_NAME || "MCPPro";
   const appIcon = process.env.NEXT_PUBLIC_APP_ICON || "/logo.svg";
+
   return (
     <Sidebar className="group-data-[side=left]:border-r-0">
       <SidebarHeader>
@@ -52,7 +58,7 @@ export function AppSidebar({ user }: AppSidebarProps) {
                   width={40}
                   height={40}
                   className="h-10 w-10 rounded-xl"
-                  />
+                />
               ) : (
                 <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground text-lg font-bold">
                   {appName.charAt(0)}
@@ -62,33 +68,54 @@ export function AppSidebar({ user }: AppSidebarProps) {
                 {appName}
               </span>
             </Link>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  type="button"
-                  className="p-2 h-fit cursor-pointer"
-                  onClick={async () => {
-                    setOpenMobile(false);
-                    if (!user) return;
-                    // If an empty "New Chat" already exists, reuse it instead of creating duplicates
-                    const existingEmpty = conversations.find(c => c.title === "New Chat");
-                    if (existingEmpty) {
-                      router.push(`/chat/${existingEmpty.id}`);
-                      return;
-                    }
-                    const newConv = await createConversation(user.id, "New Chat");
-                    if (newConv) {
-                      router.push(`/chat/${newConv.id}`);
-                    }
-                  }}
-                >
-                  <PlusIcon />
-                </Button>
 
-              </TooltipTrigger>
-              <TooltipContent align="end">process</TooltipContent>
-            </Tooltip>
+            <div className="flex items-center gap-1">
+              {isAdmin && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/50"
+                      onClick={() => {
+                        setOpenMobile(false);
+                        router.push("/admin");
+                      }}
+                    >
+                      <ShieldCheck className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent align="end">Admin Panel</TooltipContent>
+                </Tooltip>
+              )}
+
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    type="button"
+                    className="p-2 h-fit cursor-pointer"
+                    onClick={async () => {
+                      setOpenMobile(false);
+                      if (!user) return;
+                      // If an empty "New Chat" already exists, reuse it instead of creating duplicates
+                      const existingEmpty = conversations.find(c => c.title === "New Chat");
+                      if (existingEmpty) {
+                        router.push(`/chat/${existingEmpty.id}`);
+                        return;
+                      }
+                      const newConv = await createConversation(user.id, "New Chat");
+                      if (newConv) {
+                        router.push(`/chat/${newConv.id}`);
+                      }
+                    }}
+                  >
+                    <PlusIcon />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent align="end">New Chat</TooltipContent>
+              </Tooltip>
+            </div>
           </div>
         </SidebarMenu>
       </SidebarHeader>

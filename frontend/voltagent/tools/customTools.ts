@@ -1,7 +1,8 @@
 import { createTool } from "@voltagent/core";
 import { z } from "zod";
 import supabaseAdmin from '@/lib/supabase/admin';
-import tvly from '@/lib/tavily/client';
+import { getTavilyClient } from '@/lib/tavily/client';
+import { getEffectiveTavilyKey, getSystemSettings } from '@/lib/services/admin-settings';
 import { generateText } from 'ai';
 import { google } from '@ai-sdk/google';
 import createAdmin from '@/lib/supabase/admin';
@@ -14,8 +15,6 @@ export const querySupabaseTool = createTool({
   }),
   execute: async (args) => {
     const supabase = supabaseAdmin();
-    console.log(args.query);
-    // Remove trailing semicolon to prevent syntax errors
     const sanitizedQuery = args.query.trim().replace(/;$/, '');
     const { data, error } = await supabase.rpc('execute_sql', { query: sanitizedQuery });
 
@@ -49,38 +48,43 @@ export const generateChartTool = createTool({
     description: z.string().optional().describe('A description of the chart.'),
   }),
   execute: async (args) => {
-    // This tool doesn't perform a server-side action.
-    // It returns its arguments so the UI can render the chart.
     return args;
   },
 });
 
 export const tavilySearchTool = createTool({
   name: "tavilySearch",
-  description: "Search the web using Tavily for up-to-date information, news, and research",
+  description: "Search the web using Tavily for real-time information, breaking news, live data, and current research",
   parameters: z.object({
     query: z.string().describe("The search query to use"),
   }),
   execute: async (args) => {
     try {
-      const searchResult = await tvly.search(args.query, {
+      const tavilyKey = await getEffectiveTavilyKey();
+      if (!tavilyKey || tavilyKey.startsWith('tvly_dummy')) {
+        return JSON.stringify({
+          error: 'Tavily web search API key is not configured. Please add your Tavily API key in the Admin Panel settings.',
+        });
+      }
+
+      const client = getTavilyClient(tavilyKey);
+      const searchResult = await client.search(args.query, {
         includeAnswer: true,
         maxResults: 5,
         includeRawContent: false,
         includeImages: true,
       });
-      // The result needs to be a JSON string for the client to parse.
       return JSON.stringify(searchResult);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error searching with Tavily:', error);
-      return JSON.stringify({ error: 'Failed to perform search. Please try again.' });
+      return JSON.stringify({ error: `Failed to perform search: ${error?.message || 'Unknown Tavily error'}` });
     }
   },
 });
 
 export const searchUploadedDocumentsTool = createTool({
   name: "searchUploadedDocuments",
-  description: "Search indexed user documents and files via RAG vector search. ALWAYS call this tool first whenever the user asks questions about their uploaded files, documents, text, code, or knowledge base.",
+  description: "Search indexed system knowledge base files and user-uploaded documents via semantic vector RAG search. ALWAYS call this tool first whenever the user asks questions about documents, company files, policies, or knowledge base.",
   parameters: z.object({
     query: z.string().describe("The search query or question to retrieve relevant chunks from the uploaded documents"),
   }),
@@ -90,7 +94,9 @@ export const searchUploadedDocumentsTool = createTool({
       const headers: Record<string, string> = {
         'Content-Type': 'application/json',
       };
-      const token = process.env.BACKEND_BEARER_TOKEN || process.env.BEARER_TOKEN;
+      
+      const settings = await getSystemSettings();
+      const token = settings.api_keys.backend_token || process.env.BACKEND_BEARER_TOKEN || process.env.BEARER_TOKEN;
       if (token) headers.Authorization = `Bearer ${token.trim()}`;
 
       const res = await fetch(`${backendUrl}/documents/query`, {
@@ -108,7 +114,7 @@ export const searchUploadedDocumentsTool = createTool({
       const data = await res.json();
       if (!data.chunks || data.chunks.length === 0) {
         return JSON.stringify({
-          result: "No matching document chunks found in the vector store. Make sure a document is uploaded via 'My Documents' in the sidebar.",
+          result: "No matching document chunks found in the vector store. Make sure documents are indexed in the Knowledge Base.",
           count: 0,
         });
       }
@@ -116,7 +122,7 @@ export const searchUploadedDocumentsTool = createTool({
       const formattedContext = data.chunks
         .map(
           (c: any, i: number) =>
-            `--- [Chunk ${i + 1} from ${c.metadata?.source || 'Uploaded Document'}] ---\n${c.content}`
+            `--- [Chunk ${i + 1} from ${c.metadata?.source || 'Knowledge Base'}] ---\n${c.content}`
         )
         .join('\n\n');
 
@@ -183,9 +189,7 @@ export const generateImageTool = createTool({
       };
     } catch (error) {
       console.error('Error generating image:', error);
-      // Return a structured error that the client can display
       return { error: 'Sorry, I was unable to generate the image.' };
     }
   },
 });
-

@@ -7,11 +7,16 @@ import { toast } from 'sonner';
 import { DocumentManagerDialog } from './document-manager-dialog';
 import { UploadIcon } from '../icons';
 import { createSupabaseBrowser } from '@/lib/supabase/client';
+import { useIsAdmin } from '@/hooks/use-is-admin';
+import { Lock, BookOpen } from 'lucide-react';
 
 export function FileUpload() {
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { isAdmin, allowUserUploads } = useIsAdmin();
+
+  const canUpload = isAdmin || allowUserUploads;
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -20,6 +25,9 @@ export function FileUpload() {
 
     const formData = new FormData();
     formData.append('file', file);
+    if (isAdmin) {
+      formData.append('is_global', 'false'); // user dialog uploads private files
+    }
 
     const uploadToast = toast.loading('Uploading file...', {
       description: file.name,
@@ -49,6 +57,7 @@ export function FileUpload() {
             status: result?.success ? 'ready' : 'failed',
             document_ref: result?.document_id ?? null,
             chunk_count: result?.chunks_processed ?? null,
+            is_global: false,
           });
         }
       } catch (dbErr) {
@@ -76,6 +85,23 @@ export function FileUpload() {
   const handleUploadClick = () => {
     fileInputRef.current?.click();
   };
+
+  // If upload is blocked by admin and user is not admin, show Knowledge Base status
+  if (!canUpload) {
+    return (
+      <>
+        <Button
+          variant="ghost"
+          className="w-full justify-start text-xs text-muted-foreground hover:text-foreground"
+          onClick={() => setIsDialogOpen(true)}
+        >
+          <BookOpen className="mr-2 h-4 w-4 text-blue-500" />
+          <span className="truncate">System Knowledge Base</span>
+        </Button>
+        <DocumentManagerDialog isOpen={isDialogOpen} onOpenChange={setIsDialogOpen} />
+      </>
+    );
+  }
 
   return (
     <>

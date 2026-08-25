@@ -9,7 +9,7 @@ const sidebarConfig: SidebarConfig = {
   },
   sections: [
     {
-      label: "Overview",
+      label: "Navigation",
       items: [
         {
           title: "Home",
@@ -17,18 +17,22 @@ const sidebarConfig: SidebarConfig = {
           icon: Icons.home
         },
         {
-          title: "Dashboard",
+          title: "Chat Studio",
+          href: "/chat",
+          icon: Icons.brainCircuit
+        },
+        {
+          title: "QA Dashboard",
           href: "/dashboard",
           icon: Icons.layoutDashboard
         },
         {
-          title: "Chat",
-          href: "/chat",
-          icon: Icons.brainCircuit
+          title: "Admin Panel",
+          href: "/admin",
+          icon: Icons.shield
         }
       ]
     },
-    
   ]
 }
 
