@@ -24,8 +24,7 @@ export function useIsAdmin() {
       const isClientAdmin =
         email === 'chiranth@gmail.com' ||
         user?.app_metadata?.role === 'admin' ||
-        user?.user_metadata?.role === 'admin' ||
-        user?.user_metadata?.is_admin === true;
+        user?.user_metadata?.role === 'admin';
 
       // 2. Server verification endpoint
       let serverData: any = {};
@@ -38,8 +37,9 @@ export function useIsAdmin() {
         console.warn('[use-is-admin] Server check warning:', err);
       }
 
-      const isAdmin = isClientAdmin || Boolean(serverData?.isAdmin);
+      // Must be authenticated to be admin
       const isAuthenticated = Boolean(user) || Boolean(serverData?.authenticated);
+      const isAdmin = isAuthenticated && (isClientAdmin || Boolean(serverData?.isAdmin));
 
       return {
         authenticated: isAuthenticated,

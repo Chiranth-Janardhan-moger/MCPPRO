@@ -4,6 +4,7 @@ import { getUser } from '@/app/chat/hooks/get-user';
 
 /**
  * Determine if a given Supabase user has admin privileges.
+ * STRICT CHECK: Only returns true for verified administrator accounts.
  */
 export async function isUserAdmin(user: User | null): Promise<boolean> {
   if (!user) return false;
@@ -11,17 +12,15 @@ export async function isUserAdmin(user: User | null): Promise<boolean> {
   const email = (user.email || '').toLowerCase().trim();
   if (!email) return false;
 
-  // 1. Primary configured administrator email
+  // 1. Primary administrator email
   if (email === 'chiranth@gmail.com') {
     return true;
   }
 
-  // 2. Direct role in metadata
+  // 2. Direct admin role in Supabase metadata
   if (
     user.app_metadata?.role === 'admin' ||
-    user.user_metadata?.role === 'admin' ||
-    user.app_metadata?.is_admin === true ||
-    user.user_metadata?.is_admin === true
+    user.user_metadata?.role === 'admin'
   ) {
     return true;
   }
@@ -36,22 +35,18 @@ export async function isUserAdmin(user: User | null): Promise<boolean> {
     return true;
   }
 
-  // 4. Check system settings DB
+  // 4. Check system settings DB admin list
   try {
     const settings = await getSystemSettings();
     const dbAdminEmails = (settings.admin_emails || []).map((e) => e.trim().toLowerCase());
     if (dbAdminEmails.includes(email)) {
       return true;
     }
-
-    // 5. Zero-config fallback: If no admin emails configured anywhere, allow the signed-in user
-    if (envAdminEmails.length === 0 && dbAdminEmails.length === 0) {
-      return true;
-    }
   } catch (err) {
-    if (envAdminEmails.length === 0) return true;
+    // DB lookup failed, do not grant admin
   }
 
+  // Strictly non-admin for all other users
   return false;
 }
 
