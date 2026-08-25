@@ -12,6 +12,7 @@ import Link from "next/link"
 import { cn } from "@/lib/utils"
 import { NavProfile } from "@/components/navigation/nav-profile"
 import useUser from "@/hooks/use-user"
+import { useIsAdmin } from "@/hooks/use-is-admin"
 import { LucideProps, LucideIcon } from "lucide-react"
 import Icons from "@/components/global/icons"
 import defaultConfig from "@/lib/config/sidebar"
@@ -24,7 +25,7 @@ type NavItem = {
   disabled?: boolean
 }
 
-type NavSection = {
+type NavSectionType = {
   label: string
   items: NavItem[]
 }
@@ -35,11 +36,8 @@ export type SidebarConfig = {
     icon?: LucideIcon
     href?: string
   }
-  sections: NavSection[]
+  sections: NavSectionType[]
 }
-
-// Default configuration - can be overridden via props
-
 
 interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
   config?: SidebarConfig
@@ -47,8 +45,20 @@ interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
 
 export function AppSidebar({ config = defaultConfig, ...props }: AppSidebarProps) {
   const { data: user } = useUser()
+  const { isAdmin } = useIsAdmin()
 
   if (!user) return null
+
+  // Filter out /dashboard and /admin for non-admin users
+  const filteredSections = config.sections.map((section) => ({
+    ...section,
+    items: section.items.filter((item) => {
+      if (item.href === "/dashboard" || item.href === "/admin") {
+        return isAdmin
+      }
+      return true
+    }),
+  }))
 
   return (
     <Sidebar collapsible="offcanvas" {...props}>
@@ -70,7 +80,7 @@ export function AppSidebar({ config = defaultConfig, ...props }: AppSidebarProps
       </SidebarHeader>
       <SidebarContent>
         <div className="space-y-4 py-4">
-          {config.sections.map((section, index) => (
+          {filteredSections.map((section, index) => (
             <NavSection 
               key={section.label + index}
               label={section.label}
@@ -85,4 +95,4 @@ export function AppSidebar({ config = defaultConfig, ...props }: AppSidebarProps
       </SidebarFooter>
     </Sidebar>
   )
-} 
+}

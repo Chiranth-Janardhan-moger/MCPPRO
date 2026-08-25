@@ -27,7 +27,6 @@ export const footerConfig: FooterConfig = {
       title: "Platform",
       links: [
         { href: "/chat", label: "Chat Studio" },
-        { href: "/dashboard", label: "Dashboard" },
         { href: "/api/models", label: "Model Catalog" },
         { href: "#", label: "MCP Tools" }
       ]

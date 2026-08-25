@@ -60,12 +60,14 @@ export function SidebarUserNav({ user }: { user: User }) {
                 </Link>
               </DropdownMenuItem>
             )}
-            <DropdownMenuItem asChild className="cursor-pointer">
-              <Link href="/dashboard" className="flex items-center gap-2">
-                <LayoutDashboard className="h-4 w-4 text-muted-foreground" />
-                QA Dashboard
-              </Link>
-            </DropdownMenuItem>
+            {isAdmin && (
+              <DropdownMenuItem asChild className="cursor-pointer">
+                <Link href="/dashboard" className="flex items-center gap-2">
+                  <LayoutDashboard className="h-4 w-4 text-muted-foreground" />
+                  QA Dashboard
+                </Link>
+              </DropdownMenuItem>
+            )}
             <DropdownMenuSeparator />
             <DropdownMenuItem
               className="cursor-pointer text-red-600 dark:text-red-400 flex items-center gap-2"

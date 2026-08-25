@@ -49,6 +49,13 @@ export function Header({ config }: HeaderProps) {
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
 
+  const filteredLinks = config.navigationLinks.filter((item) => {
+    if (item.href === "/dashboard" || item.href === "/admin") {
+      return isAdmin;
+    }
+    return true;
+  });
+
   return (
     <>
       <div className="m-10" />
@@ -93,7 +100,7 @@ export function Header({ config }: HeaderProps) {
               <nav className="relative hidden md:block">
                 <LayoutGroup>
                   <motion.ul className="flex items-center gap-1">
-                    {config.navigationLinks.map((item) => {
+                    {filteredLinks.map((item) => {
                       const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`)
                       return (
                         <motion.li key={item.href} className="relative flex items-center justify-center">
@@ -156,7 +163,7 @@ export function Header({ config }: HeaderProps) {
                 )}
 
                 <div className="md:hidden">
-                  <NavigationMobile navigationLinks={config.navigationLinks} />
+                  <NavigationMobile navigationLinks={filteredLinks} />
                 </div>
               </div>
             </div>
