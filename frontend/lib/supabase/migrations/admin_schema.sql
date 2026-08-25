@@ -1,5 +1,6 @@
 -- Migration for Admin Panel, Global System Documents, Context-Aware Routing & Analytics
--- Table for System Settings (API keys, default model, router config, feature flags)
+
+-- 1. System Settings Table
 CREATE TABLE IF NOT EXISTS app_system_settings (
     key TEXT PRIMARY KEY,
     value JSONB NOT NULL DEFAULT '{}'::jsonb,
@@ -7,7 +8,7 @@ CREATE TABLE IF NOT EXISTS app_system_settings (
     updated_by TEXT
 );
 
--- Table for User and Global Documents
+-- 2. User Documents Table (Create if not exists)
 CREATE TABLE IF NOT EXISTS user_documents (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID,
@@ -23,10 +24,21 @@ CREATE TABLE IF NOT EXISTS user_documents (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+-- 2b. Add columns if user_documents table already exists
+ALTER TABLE user_documents ADD COLUMN IF NOT EXISTS is_global BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE user_documents ADD COLUMN IF NOT EXISTS uploaded_by_email TEXT;
+ALTER TABLE user_documents ADD COLUMN IF NOT EXISTS description TEXT;
+ALTER TABLE user_documents ADD COLUMN IF NOT EXISTS chunk_count INTEGER DEFAULT 0;
+ALTER TABLE user_documents ADD COLUMN IF NOT EXISTS file_size BIGINT DEFAULT 0;
+ALTER TABLE user_documents ADD COLUMN IF NOT EXISTS document_ref TEXT;
+ALTER TABLE user_documents ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'ready';
+ALTER TABLE user_documents ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW();
+ALTER TABLE user_documents ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
+
 CREATE INDEX IF NOT EXISTS idx_user_documents_user_id ON user_documents(user_id);
 CREATE INDEX IF NOT EXISTS idx_user_documents_is_global ON user_documents(is_global);
 
--- Ensure mcppro_requests has necessary columns for analytics and routing
+-- 3. Telemetry & Analytics Requests Table
 CREATE TABLE IF NOT EXISTS mcppro_requests (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     timestamp TIMESTAMPTZ DEFAULT NOW(),
@@ -44,12 +56,21 @@ CREATE TABLE IF NOT EXISTS mcppro_requests (
     user_id TEXT,
     user_email TEXT,
     model TEXT DEFAULT 'gemini-3.6-flash',
-    route TEXT DEFAULT 'DIRECT', -- 'RAG' | 'ONLINE' | 'DIRECT'
+    route TEXT DEFAULT 'DIRECT',
     router_confidence FLOAT DEFAULT 1.0,
     router_reasoning TEXT,
     tokens_used INTEGER DEFAULT 0,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    created_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- 3b. Add columns if mcppro_requests table already exists
+ALTER TABLE mcppro_requests ADD COLUMN IF NOT EXISTS user_id TEXT;
+ALTER TABLE mcppro_requests ADD COLUMN IF NOT EXISTS user_email TEXT;
+ALTER TABLE mcppro_requests ADD COLUMN IF NOT EXISTS model TEXT DEFAULT 'gemini-3.6-flash';
+ALTER TABLE mcppro_requests ADD COLUMN IF NOT EXISTS route TEXT DEFAULT 'DIRECT';
+ALTER TABLE mcppro_requests ADD COLUMN IF NOT EXISTS router_confidence FLOAT DEFAULT 1.0;
+ALTER TABLE mcppro_requests ADD COLUMN IF NOT EXISTS router_reasoning TEXT;
+ALTER TABLE mcppro_requests ADD COLUMN IF NOT EXISTS tokens_used INTEGER DEFAULT 0;
 
 CREATE INDEX IF NOT EXISTS idx_mcppro_requests_timestamp ON mcppro_requests(timestamp);
 CREATE INDEX IF NOT EXISTS idx_mcppro_requests_success ON mcppro_requests(success);
