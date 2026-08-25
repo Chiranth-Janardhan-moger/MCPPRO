@@ -1,11 +1,10 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
 import {
   Select,
   SelectContent,
@@ -19,12 +18,9 @@ import {
   Eye,
   EyeOff,
   Check,
-  Sparkles,
   Loader2,
   CheckCircle2,
   AlertCircle,
-  Globe,
-  Lock,
   Cpu,
 } from 'lucide-react';
 import { SystemSettings } from '@/lib/services/admin-settings';
@@ -36,91 +32,21 @@ interface ApiKeysTabProps {
 }
 
 const PROVIDER_ITEMS = [
-  {
-    id: 'google',
-    label: 'Google Gemini',
-    envKey: 'GOOGLE_GENERATIVE_AI_API_KEY / GEMINI_API_KEY',
-    placeholder: 'AIzaSy...',
-    hint: 'Powers Gemini 3.7 Flash, 3.6 Flash, 3.5 Flash-Lite, 2.5 Pro',
-    icon: Sparkles,
-  },
-  {
-    id: 'openai',
-    label: 'OpenAI',
-    envKey: 'OPENAI_API_KEY',
-    placeholder: 'sk-proj-...',
-    hint: 'Powers GPT-4o, GPT-4o mini, o3-mini, and o1 models',
-    icon: Cpu,
-  },
-  {
-    id: 'anthropic',
-    label: 'Anthropic Claude',
-    envKey: 'ANTHROPIC_API_KEY',
-    placeholder: 'sk-ant-api03-...',
-    hint: 'Powers Claude 3.7 Sonnet, 3.5 Sonnet & Haiku',
-    icon: Key,
-  },
-  {
-    id: 'groq',
-    label: 'Groq Cloud',
-    envKey: 'GROQ_API_KEY',
-    placeholder: 'gsk_...',
-    hint: 'Powers ultra-fast Llama 3.3 70B & Llama 3.1 8B inference',
-    icon: Cpu,
-  },
-  {
-    id: 'xai',
-    label: 'xAI Grok',
-    envKey: 'XAI_API_KEY',
-    placeholder: 'xai-...',
-    hint: 'Powers Grok 3, Grok 2, and Grok Vision models',
-    icon: Key,
-  },
-  {
-    id: 'openrouter',
-    label: 'OpenRouter',
-    envKey: 'OPENROUTER_API_KEY',
-    placeholder: 'sk-or-v1-...',
-    hint: 'Access hundreds of open-weights & frontier models via single key',
-    icon: Globe,
-  },
-  {
-    id: 'tavily',
-    label: 'Tavily Web Search',
-    envKey: 'TAVILY_API_KEY',
-    placeholder: 'tvly-...',
-    hint: 'Powers live internet search, breaking news, and real-time facts',
-    icon: Globe,
-  },
-  {
-    id: 'browserbase_api_key',
-    label: 'Browserbase API Key (App Opening & Web Browser Automation)',
-    envKey: 'BROWSERBASE_API_KEY',
-    placeholder: 'bb_live_...',
-    hint: 'Powers cloud browser execution, Stagehand agent, and opening web apps/pages',
-    icon: Globe,
-  },
-  {
-    id: 'browserbase_project_id',
-    label: 'Browserbase Project ID',
-    envKey: 'BROWSERBASE_PROJECT_ID',
-    placeholder: 'proj_...',
-    hint: 'Project ID associated with your Browserbase cloud browser instance',
-    icon: Lock,
-  },
-  {
-    id: 'backend_token',
-    label: 'Backend Bearer Token',
-    envKey: 'BACKEND_BEARER_TOKEN / BEARER_TOKEN',
-    placeholder: 'Bearer token for FastAPI RAG service...',
-    hint: 'Secures communication between frontend and backend RAG vector engine',
-    icon: Lock,
-  },
+  { id: 'google', label: 'Google Gemini Key (gemini-2.5-flash / gemini-3.7)', placeholder: 'AIzaSy...' },
+  { id: 'openai', label: 'OpenAI Key (gpt-4o / o3-mini)', placeholder: 'sk-proj-...' },
+  { id: 'anthropic', label: 'Anthropic Key (claude-3.7-sonnet)', placeholder: 'sk-ant-api03-...' },
+  { id: 'groq', label: 'Groq Cloud Key (llama-3.3-70b)', placeholder: 'gsk_...' },
+  { id: 'xai', label: 'xAI Grok Key (grok-3 / grok-2)', placeholder: 'xai-...' },
+  { id: 'openrouter', label: 'OpenRouter Key (Unified Gateway)', placeholder: 'sk-or-v1-...' },
+  { id: 'tavily', label: 'Tavily API Key (Web Access)', placeholder: 'tvly-...' },
+  { id: 'browserbase_api_key', label: 'Browserbase Key (App Opening)', placeholder: 'bb_live_...' },
+  { id: 'browserbase_project_id', label: 'Browserbase Project ID', placeholder: 'proj_...' },
+  { id: 'backend_token', label: 'Backend Bearer Token (FastAPI RAG)', placeholder: 'Bearer token...' },
 ];
 
 export function ApiKeysTab({ settings, onUpdate }: ApiKeysTabProps) {
   const [formState, setFormState] = useState<Record<string, string>>({
-    default_model: settings?.default_model || 'gemini-3.6-flash',
+    default_model: settings?.default_model || 'gemini-2.5-flash',
     google: settings?.api_keys?.google || settings?.api_keys?.gemini || '',
     openai: settings?.api_keys?.openai || '',
     anthropic: settings?.api_keys?.anthropic || '',
@@ -144,104 +70,89 @@ export function ApiKeysTab({ settings, onUpdate }: ApiKeysTabProps) {
     setShowKeys((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
-  const handleTestKey = async (provider: string) => {
-    const key = formState[provider];
-    if (!key || !key.trim()) {
-      toast.error(`Please enter an API key for ${provider} first.`);
+  const handleTestKey = async (providerId: string) => {
+    const keyVal = formState[providerId];
+    if (!keyVal || !keyVal.trim()) {
+      toast.error(`Enter a ${providerId} key before testing.`);
       return;
     }
 
-    setTestingProvider(provider);
+    setTestingProvider(providerId);
     try {
       const res = await fetch('/api/admin/test-key', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ provider, key: key.trim() }),
+        body: JSON.stringify({ provider: providerId, key: keyVal.trim() }),
       });
       const data = await res.json();
-
       setTestResults((prev) => ({
         ...prev,
-        [provider]: {
+        [providerId]: {
           success: data.success,
-          message: data.message || (data.success ? 'Valid' : 'Failed'),
+          message: data.message,
           latencyMs: data.latencyMs,
         },
       }));
-
       if (data.success) {
-        toast.success(`${provider.toUpperCase()} API key connected successfully (${data.latencyMs ?? 0}ms)!`);
+        toast.success(`${providerId} key verified (${data.latencyMs || 0}ms)`);
       } else {
-        toast.error(`${provider.toUpperCase()} check failed: ${data.message}`);
+        toast.error(data.message || 'Key invalid');
       }
     } catch (err: any) {
-      toast.error(`Connection test failed: ${err.message}`);
+      toast.error(err.message || 'Test failed');
     } finally {
       setTestingProvider(null);
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
 
-    const updatedSettings: Partial<SystemSettings> = {
+    const success = await onUpdate({
       default_model: formState.default_model,
       api_keys: {
-        openai: formState.openai.trim(),
-        anthropic: formState.anthropic.trim(),
-        google: formState.google.trim(),
-        gemini: formState.google.trim(),
-        groq: formState.groq.trim(),
-        xai: formState.xai.trim(),
-        openrouter: formState.openrouter.trim(),
-        tavily: formState.tavily.trim(),
-        backend_token: formState.backend_token.trim(),
+        google: formState.google,
+        gemini: formState.google,
+        openai: formState.openai,
+        anthropic: formState.anthropic,
+        groq: formState.groq,
+        xai: formState.xai,
+        openrouter: formState.openrouter,
+        tavily: formState.tavily,
+        browserbase_api_key: formState.browserbase_api_key,
+        browserbase_project_id: formState.browserbase_project_id,
+        backend_token: formState.backend_token,
       },
-    };
+    });
 
-    const success = await onUpdate(updatedSettings);
     setIsSaving(false);
     if (success) {
-      toast.success('System API keys and default model saved successfully!');
+      toast.success('API keys saved');
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      {/* Top Banner / Default Model Card */}
-      <Card className="bg-card/70 backdrop-blur-sm border-blue-100/70 dark:border-blue-900/40">
-        <CardHeader className="p-4 pb-3">
-          <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 text-blue-600 dark:bg-blue-950/60 dark:text-blue-400">
-              <Cpu className="h-4 w-4" />
-            </div>
-            <div>
-              <CardTitle className="text-base font-semibold">System Default Chat Model</CardTitle>
-              <CardDescription className="text-xs">
-                Select the primary model used for standard user conversations when no model is explicitly chosen.
-              </CardDescription>
-            </div>
-          </div>
+    <form onSubmit={handleSave} className="space-y-4">
+      {/* Default Chat Model */}
+      <Card className="bg-card border-border/70 shadow-xs">
+        <CardHeader className="p-4 pb-2 flex flex-row items-center gap-2 space-y-0">
+          <Cpu className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+          <CardTitle className="text-sm font-semibold">System Default Chat Model</CardTitle>
         </CardHeader>
         <CardContent className="p-4 pt-0">
           <div className="max-w-md">
             <Select
               value={formState.default_model}
-              onValueChange={(val) => setFormState((prev) => ({ ...prev, default_model: val }))}
+              onValueChange={(val) => setFormState((p) => ({ ...p, default_model: val }))}
             >
-              <SelectTrigger className="h-10 text-xs">
+              <SelectTrigger className="h-9 text-xs">
                 <SelectValue placeholder="Select default model" />
               </SelectTrigger>
-              <SelectContent className="max-h-72">
+              <SelectContent>
                 {MODEL_CATALOG.map((m) => (
                   <SelectItem key={m.id} value={m.id} className="text-xs">
-                    <div className="flex items-center justify-between gap-3 w-full">
-                      <span className="font-medium">{m.label}</span>
-                      <span className="text-[10px] text-muted-foreground uppercase font-mono">
-                        {m.provider}
-                      </span>
-                    </div>
+                    {m.label} ({m.provider})
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -250,119 +161,59 @@ export function ApiKeysTab({ settings, onUpdate }: ApiKeysTabProps) {
         </CardContent>
       </Card>
 
-      {/* Functional API Keys Grid */}
-      <Card className="bg-card/70 backdrop-blur-sm">
-        <CardHeader className="p-4 pb-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-purple-50 text-purple-600 dark:bg-purple-950/60 dark:text-purple-400">
-                <Key className="h-4 w-4" />
-              </div>
-              <div>
-                <CardTitle className="text-base font-semibold">Functional API Keys</CardTitle>
-                <CardDescription className="text-xs">
-                  Configure centralized credentials. All standard users can run inference without entering their own keys.
-                </CardDescription>
-              </div>
-            </div>
-            <Button
-              type="submit"
-              disabled={isSaving}
-              className="h-8 text-xs bg-gradient-to-r from-blue-600 to-cyan-600 text-white hover:from-blue-700 hover:to-cyan-700 gap-1.5 shadow-sm"
-            >
-              {isSaving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
-              Save All Settings
-            </Button>
-          </div>
+      {/* Provider API Keys */}
+      <Card className="bg-card border-border/70 shadow-xs">
+        <CardHeader className="p-4 pb-3 flex flex-row items-center gap-2 space-y-0">
+          <Key className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+          <CardTitle className="text-sm font-semibold">API Credentials</CardTitle>
         </CardHeader>
-        <CardContent className="p-4 pt-0 space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {PROVIDER_ITEMS.map((provider) => {
-              const val = formState[provider.id] || '';
-              const isVisible = showKeys[provider.id];
-              const isTesting = testingProvider === provider.id;
-              const testResult = testResults[provider.id];
-              const Icon = provider.icon;
+        <CardContent className="p-4 pt-0 space-y-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {PROVIDER_ITEMS.map((item) => {
+              const isShown = showKeys[item.id];
+              const isTesting = testingProvider === item.id;
+              const result = testResults[item.id];
 
               return (
-                <div
-                  key={provider.id}
-                  className="p-3.5 rounded-xl border border-border/70 bg-background/50 hover:border-blue-300/60 dark:hover:border-blue-800/60 transition-all space-y-2"
-                >
+                <div key={item.id} className="space-y-1">
                   <div className="flex items-center justify-between">
-                    <Label className="text-xs font-semibold flex items-center gap-1.5">
-                      <Icon className="h-3.5 w-3.5 text-blue-500" />
-                      {provider.label}
-                      {val.trim().length > 0 && (
-                        <Badge
-                          variant="outline"
-                          className="text-[9px] px-1 py-0 border-emerald-500/40 text-emerald-600 dark:text-emerald-400 font-mono"
-                        >
-                          Configured
-                        </Badge>
-                      )}
-                    </Label>
-                    <span className="text-[10px] text-muted-foreground font-mono">
-                      {provider.envKey.split(' ')[0]}
-                    </span>
+                    <Label className="text-xs font-medium">{item.label}</Label>
+                    {result && (
+                      <span className={`text-[10px] flex items-center gap-0.5 ${result.success ? 'text-emerald-600' : 'text-red-500'}`}>
+                        {result.success ? <CheckCircle2 className="h-2.5 w-2.5" /> : <AlertCircle className="h-2.5 w-2.5" />}
+                        {result.success ? `Valid (${result.latencyMs || 0}ms)` : 'Invalid'}
+                      </span>
+                    )}
                   </div>
-
-                  <div className="relative flex items-center gap-1.5">
-                    <div className="relative flex-1">
-                      <Input
-                        type={isVisible ? 'text' : 'password'}
-                        value={val}
-                        onChange={(e) =>
-                          setFormState((prev) => ({
-                            ...prev,
-                            [provider.id]: e.target.value,
-                          }))
-                        }
-                        placeholder={provider.placeholder}
-                        className="h-8 text-xs font-mono pr-8 bg-background"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => toggleShow(provider.id)}
-                        className="absolute right-2 top-2 text-muted-foreground hover:text-foreground cursor-pointer"
-                        title={isVisible ? 'Hide key' : 'Show key'}
-                      >
-                        {isVisible ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
-                      </button>
-                    </div>
-
+                  <div className="flex gap-1.5">
+                    <Input
+                      type={isShown ? 'text' : 'password'}
+                      value={formState[item.id] || ''}
+                      onChange={(e) =>
+                        setFormState((prev) => ({ ...prev, [item.id]: e.target.value }))
+                      }
+                      placeholder={item.placeholder}
+                      className="h-8 text-xs font-mono"
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 shrink-0"
+                      onClick={() => toggleShow(item.id)}
+                    >
+                      {isShown ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                    </Button>
                     <Button
                       type="button"
                       variant="outline"
                       size="sm"
-                      onClick={() => handleTestKey(provider.id)}
-                      disabled={isTesting || !val.trim()}
-                      className="h-8 text-[11px] px-2.5 shrink-0"
+                      disabled={isTesting || !formState[item.id]}
+                      onClick={() => handleTestKey(item.id)}
+                      className="h-8 px-2.5 text-[11px] shrink-0"
                     >
-                      {isTesting ? (
-                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                      ) : (
-                        'Test'
-                      )}
+                      {isTesting ? <Loader2 className="h-3 w-3 animate-spin" /> : 'Test'}
                     </Button>
-                  </div>
-
-                  <div className="flex items-center justify-between text-[10px] text-muted-foreground">
-                    <p className="truncate mr-2">{provider.hint}</p>
-                    {testResult && (
-                      <span
-                        className={`flex items-center gap-1 shrink-0 font-medium ${
-                          testResult.success ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'
-                        }`}
-                      >
-                        {testResult.success ? (
-                          <CheckCircle2 className="h-3 w-3" />
-                        ) : (
-                          <AlertCircle className="h-3 w-3" />
-                        )}
-                        {testResult.success ? `Connected (${testResult.latencyMs}ms)` : 'Failed'}
-                      </span>
-                    )}
                   </div>
                 </div>
               );
@@ -373,15 +224,18 @@ export function ApiKeysTab({ settings, onUpdate }: ApiKeysTabProps) {
             <Button
               type="submit"
               disabled={isSaving}
-              className="h-9 px-6 text-xs bg-gradient-to-r from-blue-600 via-sky-500 to-cyan-500 text-white font-semibold shadow-md shadow-blue-500/20 cursor-pointer"
+              className="h-8 px-4 text-xs bg-blue-600 hover:bg-blue-700 text-white font-medium gap-1.5"
             >
               {isSaving ? (
                 <>
-                  <Loader2 className="h-4 w-4 animate-spin mr-1.5" />
-                  Saving Changes...
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  Saving...
                 </>
               ) : (
-                'Save All Settings'
+                <>
+                  <Check className="h-3.5 w-3.5" />
+                  Save API Keys
+                </>
               )}
             </Button>
           </div>
