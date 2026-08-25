@@ -11,7 +11,12 @@ export async function isUserAdmin(user: User | null): Promise<boolean> {
   const email = (user.email || '').toLowerCase().trim();
   if (!email) return false;
 
-  // 1. Direct role in metadata
+  // 1. Primary configured administrator email
+  if (email === 'chiranth@gmail.com') {
+    return true;
+  }
+
+  // 2. Direct role in metadata
   if (
     user.app_metadata?.role === 'admin' ||
     user.user_metadata?.role === 'admin' ||
@@ -21,7 +26,7 @@ export async function isUserAdmin(user: User | null): Promise<boolean> {
     return true;
   }
 
-  // 2. Check environment variable ADMIN_EMAILS
+  // 3. Check environment variable ADMIN_EMAILS
   const envAdminEmails = (process.env.ADMIN_EMAILS || '')
     .split(',')
     .map((e) => e.trim().toLowerCase())
@@ -31,7 +36,7 @@ export async function isUserAdmin(user: User | null): Promise<boolean> {
     return true;
   }
 
-  // 3. Check system settings DB
+  // 4. Check system settings DB
   try {
     const settings = await getSystemSettings();
     const dbAdminEmails = (settings.admin_emails || []).map((e) => e.trim().toLowerCase());
@@ -39,12 +44,11 @@ export async function isUserAdmin(user: User | null): Promise<boolean> {
       return true;
     }
 
-    // 4. Zero-config fallback: If no admin emails configured anywhere, allow the signed-in user
+    // 5. Zero-config fallback: If no admin emails configured anywhere, allow the signed-in user
     if (envAdminEmails.length === 0 && dbAdminEmails.length === 0) {
       return true;
     }
   } catch (err) {
-    // If db fails and no env specified, allow active user
     if (envAdminEmails.length === 0) return true;
   }
 

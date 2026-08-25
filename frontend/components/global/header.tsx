@@ -8,6 +8,10 @@ import { cn } from "@/lib/utils"
 import { NavigationMobile } from "./header-mobile"
 import { motion, useAnimationControls, LayoutGroup } from "framer-motion"
 import { HeaderConfig } from "@/lib/config/header"
+import { useIsAdmin } from "@/hooks/use-is-admin"
+import UserProfile from "@/components/supaauth/user-profile"
+import { Button } from "@/components/ui/button"
+import { ShieldCheck, LogIn } from "lucide-react"
 
 interface HeaderProps {
   config: HeaderConfig
@@ -18,7 +22,7 @@ function BlobBackground() {
     <div className="pointer-events-none absolute inset-0">
       <svg width="100%" height="100%" className="absolute inset-0">
         <defs>
-          <linearGradient id="blob-gradient" x1="0" x2="1" y1="0" y2="1">
+          <linearGradient id="blob-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" stopColor="rgba(59, 130, 246, 0.15)" />
             <stop offset="100%" stopColor="rgba(56, 189, 248, 0.15)" />
           </linearGradient>
@@ -35,7 +39,7 @@ function BlobBackground() {
 export function Header({ config }: HeaderProps) {
   const pathname = usePathname()
   const [isScrolled, setIsScrolled] = React.useState(false)
-  const blobControls = useAnimationControls()
+  const { isAdmin, isAuthenticated } = useIsAdmin()
 
   React.useEffect(() => {
     const handleScroll = () => {
@@ -57,7 +61,7 @@ export function Header({ config }: HeaderProps) {
       >
         <motion.div
           animate={{
-            maxWidth: isScrolled ? "68rem" : "100%",
+            maxWidth: isScrolled ? "72rem" : "100%",
             margin: isScrolled ? "1rem auto" : "0 auto",
             borderRadius: isScrolled ? "9999px" : "0",
           }}
@@ -96,8 +100,8 @@ export function Header({ config }: HeaderProps) {
                           <Link
                             href={item.href}
                             className={cn(
-                              "relative flex items-center justify-center rounded-full px-4 py-2 text-sm transition-colors duration-200",
-                              isActive ? "text-primary font-medium" : "text-muted-foreground hover:text-primary"
+                              "relative flex items-center justify-center rounded-full px-3.5 py-1.5 text-xs font-medium transition-colors duration-200",
+                              isActive ? "text-primary font-semibold" : "text-muted-foreground hover:text-primary"
                             )}
                           >
                             {item.label}
@@ -124,6 +128,33 @@ export function Header({ config }: HeaderProps) {
               </nav>
 
               <div className="flex items-center gap-2">
+                {/* Admin Console Shortcut */}
+                {isAdmin && (
+                  <Button
+                    asChild
+                    size="sm"
+                    className="h-8 text-xs font-medium bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700 shadow-sm shadow-blue-500/20 gap-1.5"
+                  >
+                    <Link href="/admin">
+                      <ShieldCheck className="h-3.5 w-3.5" />
+                      <span className="hidden sm:inline">Admin Panel</span>
+                    </Link>
+                  </Button>
+                )}
+
+                <ModeToggle />
+
+                {isAuthenticated ? (
+                  <UserProfile />
+                ) : (
+                  <Button asChild size="sm" variant="outline" className="h-8 text-xs gap-1.5">
+                    <Link href="/signin">
+                      <LogIn className="h-3.5 w-3.5" />
+                      <span>Sign In</span>
+                    </Link>
+                  </Button>
+                )}
+
                 <div className="md:hidden">
                   <NavigationMobile navigationLinks={config.navigationLinks} />
                 </div>

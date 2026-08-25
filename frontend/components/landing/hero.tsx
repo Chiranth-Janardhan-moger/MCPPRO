@@ -1,14 +1,17 @@
 "use client"
 
-import { ArrowRight, Bot, Sparkles, BrainCircuit, Zap, Terminal, CheckCircle2, Shield, Layers } from "lucide-react"
+import { ArrowRight, Bot, Sparkles, BrainCircuit, Zap, Terminal, CheckCircle2, Shield, Layers, ShieldCheck } from "lucide-react"
 import Link from "next/link"
 import { BlurFade } from "@/components/magicui/blur-fade"
 import { BorderBeam } from "@/components/magicui/border-beam"
 import { ShimmerButton } from "@/components/magicui/shimmer-button"
 import { AnimatedShinyText } from "@/components/magicui/animated-shiny-text"
 import { Badge } from "@/components/ui/badge"
+import { useIsAdmin } from "@/hooks/use-is-admin"
 
 export function Hero() {
+  const { isAdmin } = useIsAdmin()
+
   return (
     <section className="relative overflow-hidden py-16 sm:py-24 lg:py-28">
       {/* Background Glow */}
@@ -66,6 +69,18 @@ export function Hero() {
             </ShimmerButton>
           </Link>
         </BlurFade>
+
+        {isAdmin && (
+          <BlurFade delay={0.65} inView>
+            <Link href="/admin">
+              <div className="flex items-center gap-2 rounded-full border border-blue-500/30 bg-gradient-to-r from-blue-600/10 to-indigo-600/10 px-6 py-3 text-sm font-semibold text-blue-600 dark:text-blue-400 backdrop-blur-sm transition-all hover:bg-blue-600 hover:text-white shadow-sm">
+                <ShieldCheck className="h-4 w-4" />
+                <span>Admin Console</span>
+              </div>
+            </Link>
+          </BlurFade>
+        )}
+
         <BlurFade delay={0.7} inView>
           <Link href="/dashboard">
             <div className="flex items-center gap-2 rounded-full border bg-card/80 px-6 py-3 text-sm font-medium text-foreground backdrop-blur-sm transition-colors hover:bg-accent/80 hover:text-accent-foreground shadow-sm">
@@ -94,100 +109,9 @@ export function Hero() {
               Google Gemini 2.0
             </Badge>
             <Badge variant="secondary" className="gap-1 py-1 px-2.5 font-normal">
-              <Zap className="h-3 w-3 text-orange-500" />
-              Groq LPU
+              <Zap className="h-3 w-3 text-purple-500" />
+              Groq LPU (Llama 3.3)
             </Badge>
-            <Badge variant="secondary" className="gap-1 py-1 px-2.5 font-normal">
-              DeepSeek R1 / V3
-            </Badge>
-          </div>
-        </BlurFade>
-      </div>
-
-      {/* Interactive UI Mockup Card */}
-      <div className="relative mx-auto mt-14 max-w-5xl px-4 sm:mt-16">
-        <BlurFade delay={0.9} inView>
-          <div className="relative rounded-2xl border bg-card/90 p-3 sm:p-4 shadow-2xl backdrop-blur-xl ring-1 ring-border/50">
-            {/* Mockup Header Bar */}
-            <div className="flex items-center justify-between border-b pb-3 px-2">
-              <div className="flex items-center gap-2">
-                <div className="h-3 w-3 rounded-full bg-red-500/80" />
-                <div className="h-3 w-3 rounded-full bg-amber-500/80" />
-                <div className="h-3 w-3 rounded-full bg-emerald-500/80" />
-                <span className="ml-2 font-mono text-xs text-muted-foreground hidden sm:inline">
-                  MCPPRO Agentic Workspace
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Badge variant="outline" className="text-[10px] bg-background/50 border-emerald-500/30 text-emerald-500">
-                  <CheckCircle2 className="h-3 w-3 mr-1" />
-                  MCP Server Active
-                </Badge>
-                <Badge variant="secondary" className="text-[10px]">
-                  Claude 3.7 Sonnet
-                </Badge>
-              </div>
-            </div>
-
-            {/* Mockup Content Body */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-4">
-              {/* Left Column: Tool Invocations */}
-              <div className="space-y-2 rounded-xl bg-muted/40 p-3 border border-border/50">
-                <div className="flex items-center justify-between text-xs font-semibold text-foreground">
-                  <span className="flex items-center gap-1.5">
-                    <Terminal className="h-3.5 w-3.5 text-primary" />
-                    Tool Executions
-                  </span>
-                  <span className="text-[10px] text-muted-foreground font-mono">3 calls</span>
-                </div>
-                
-                <div className="space-y-1.5 font-mono text-[11px]">
-                  <div className="rounded-lg bg-background p-2 border border-border/60">
-                    <div className="text-emerald-500 font-medium">✓ mcp_search_docs</div>
-                    <div className="text-muted-foreground text-[10px] truncate">query: &quot;hybrid Qdrant vector retrieval&quot;</div>
-                  </div>
-                  <div className="rounded-lg bg-background p-2 border border-border/60">
-                    <div className="text-blue-500 font-medium">✓ mcp_github_fetch</div>
-                    <div className="text-muted-foreground text-[10px] truncate">repo: &quot;Chiranth-Janardhan-moger/MCPPRO&quot;</div>
-                  </div>
-                  <div className="rounded-lg bg-background p-2 border border-border/60">
-                    <div className="text-purple-500 font-medium">✓ mcp_calc_pricing</div>
-                    <div className="text-muted-foreground text-[10px] truncate">tokens: 1,420 | cost: $0.0042</div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Center & Right Column: Chat & Code Streaming */}
-              <div className="md:col-span-2 space-y-3 rounded-xl bg-muted/20 p-3 sm:p-4 border border-border/50">
-                {/* User Prompt */}
-                <div className="flex items-start gap-2.5">
-                  <div className="h-6 w-6 shrink-0 rounded-full bg-primary/20 flex items-center justify-center text-[10px] font-bold text-primary">
-                    U
-                  </div>
-                  <div className="rounded-xl bg-muted p-2.5 text-xs text-foreground max-w-[90%]">
-                    Synthesize the document index and run a multi-agent vector query across our Qdrant cluster.
-                  </div>
-                </div>
-
-                {/* Assistant Output */}
-                <div className="flex items-start gap-2.5">
-                  <div className="h-6 w-6 shrink-0 rounded-full bg-blue-600 flex items-center justify-center text-[10px] font-bold text-white">
-                    AI
-                  </div>
-                  <div className="flex-1 space-y-2 text-xs">
-                    <p className="text-foreground leading-relaxed">
-                      Successfully queried the vector index with <strong>hybrid dense-sparse retrieval</strong>. Top 3 matched segments retrieved from Qdrant with sub-millisecond latency:
-                    </p>
-                    <div className="rounded-lg bg-background/90 p-2.5 font-mono text-[11px] border border-border/70 text-muted-foreground">
-                      <div className="text-sky-400 font-semibold">{`// Vector Retrieval Result [score: 0.942]`}</div>
-                      <div>{`{ "collection": "docs_cache", "matches": 3, "latency_ms": 14.2 }`}</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <BorderBeam size={250} duration={12} delay={9} />
           </div>
         </BlurFade>
       </div>

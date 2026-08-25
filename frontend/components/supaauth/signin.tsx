@@ -114,14 +114,27 @@ export function SignInForm({ redirectTo }: { redirectTo: string }) {
     const supabase = createSupabaseBrowser();
     if (!isPending) {
       startTransition(async () => {
-        const { error } = await supabase.auth.signInWithPassword({
+        const { data: authData, error } = await supabase.auth.signInWithPassword({
           email: data.email,
           password: data.password,
         });
         if (error) {
           toast.error(error.message);
         } else {
-          router.push(redirectTo);
+          const user = authData?.user;
+          const email = (user?.email || data.email || '').toLowerCase().trim();
+          const isAdmin =
+            email === 'chiranth@gmail.com' ||
+            user?.app_metadata?.role === 'admin' ||
+            user?.user_metadata?.role === 'admin' ||
+            user?.user_metadata?.is_admin === true;
+
+          toast.success(isAdmin ? 'Welcome, Administrator!' : 'Signed in successfully!');
+          if (isAdmin) {
+            router.push('/admin');
+          } else {
+            router.push(redirectTo && redirectTo !== '/' ? redirectTo : '/chat');
+          }
           router.refresh();
         }
       });
