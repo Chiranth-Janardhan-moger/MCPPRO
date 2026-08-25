@@ -3,7 +3,7 @@ import { SidebarConfig } from "@/components/global/app-sidebar";
 
 const sidebarConfig: SidebarConfig = {
   brand: {
-    title: "MCPPro API",
+    title: "MCPPro",
     icon: Icons.shield,
     href: "/"
   },
@@ -12,19 +12,9 @@ const sidebarConfig: SidebarConfig = {
       label: "Navigation",
       items: [
         {
-          title: "Home",
-          href: "/",
-          icon: Icons.home
-        },
-        {
           title: "Chat Studio",
           href: "/chat",
           icon: Icons.brainCircuit
-        },
-        {
-          title: "QA Dashboard",
-          href: "/dashboard",
-          icon: Icons.layoutDashboard
         },
         {
           title: "Admin Panel",

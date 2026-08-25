@@ -1,7 +1,6 @@
 "use client";
 
-import { ChevronUp, ShieldCheck, LayoutDashboard, LogOut } from "lucide-react";
-import Image from "next/image";
+import { ChevronUp, ShieldCheck, LogOut } from "lucide-react";
 import Link from "next/link";
 import { User } from "@supabase/supabase-js";
 import { useTheme } from "@/components/global/theme-provider";
@@ -26,19 +25,17 @@ export function SidebarUserNav({ user }: { user: User }) {
   const supabase = createSupabaseBrowser();
   const { isAdmin } = useIsAdmin();
 
+  const firstLetter = (user?.email?.[0] || "U").toUpperCase();
+
   return (
     <SidebarMenu>
       <SidebarMenuItem>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <SidebarMenuButton className="data-[state=open]:bg-sidebar-accent bg-background data-[state=open]:text-sidebar-accent-foreground h-10">
-              <Image
-                src={`https://avatar.vercel.sh/${user.email}`}
-                alt={user.email ?? "User Avatar"}
-                width={24}
-                height={24}
-                className="rounded-full"
-              />
+              <div className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-600 to-indigo-600 text-white text-xs font-bold flex items-center justify-center shrink-0 shadow-xs">
+                {firstLetter}
+              </div>
               <span className="truncate text-xs font-medium">{user?.email}</span>
               {isAdmin && (
                 <Badge variant="outline" className="ml-1 px-1 py-0 text-[9px] bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border-blue-300">
@@ -57,14 +54,6 @@ export function SidebarUserNav({ user }: { user: User }) {
                 <Link href="/admin" className="flex items-center gap-2">
                   <ShieldCheck className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                   Admin Panel
-                </Link>
-              </DropdownMenuItem>
-            )}
-            {isAdmin && (
-              <DropdownMenuItem asChild className="cursor-pointer">
-                <Link href="/dashboard" className="flex items-center gap-2">
-                  <LayoutDashboard className="h-4 w-4 text-muted-foreground" />
-                  QA Dashboard
                 </Link>
               </DropdownMenuItem>
             )}

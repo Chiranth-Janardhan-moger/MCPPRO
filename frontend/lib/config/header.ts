@@ -20,22 +20,5 @@ export const headerConfig: HeaderConfig = {
     title: "MCPPro",
     icon: "/logo.svg"
   },
-  navigationLinks: [
-    { 
-      href: "/", 
-      label: "Home" 
-    },
-    { 
-      href: "/chat", 
-      label: "Chat" 
-    },
-    {
-      href: "/dashboard",
-      label: "QA Dashboard"
-    },
-    {
-      href: "/admin",
-      label: "Admin Panel"
-    }
-  ]
+  navigationLinks: []
 }

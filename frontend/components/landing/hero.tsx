@@ -80,17 +80,6 @@ export function Hero() {
             </Link>
           </BlurFade>
         )}
-
-        {isAdmin && (
-          <BlurFade delay={0.7} inView>
-            <Link href="/dashboard">
-              <div className="flex items-center gap-2 rounded-full border bg-card/80 px-6 py-3 text-sm font-medium text-foreground backdrop-blur-sm transition-colors hover:bg-accent/80 hover:text-accent-foreground shadow-sm">
-                <Layers className="h-4 w-4 text-primary" />
-                <span>QA Dashboard</span>
-              </div>
-            </Link>
-          </BlurFade>
-        )}
       </div>
 
       {/* Provider Pill Showcase */}

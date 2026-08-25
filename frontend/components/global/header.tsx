@@ -5,35 +5,16 @@ import Link from "next/link"
 import { ModeToggle } from "./theme-switcher"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
-import { NavigationMobile } from "./header-mobile"
-import { motion, useAnimationControls, LayoutGroup } from "framer-motion"
+import { motion } from "framer-motion"
 import { HeaderConfig } from "@/lib/config/header"
 import { useIsAdmin } from "@/hooks/use-is-admin"
 import UserProfile from "@/components/supaauth/user-profile"
+import { NavigationMobile } from "./header-mobile"
 import { Button } from "@/components/ui/button"
-import { ShieldCheck, LogIn } from "lucide-react"
+import { ShieldCheck, LogIn, Sparkles } from "lucide-react"
 
 interface HeaderProps {
-  config: HeaderConfig
-}
-
-function BlobBackground() {
-  return (
-    <div className="pointer-events-none absolute inset-0">
-      <svg width="100%" height="100%" className="absolute inset-0">
-        <defs>
-          <linearGradient id="blob-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="rgba(59, 130, 246, 0.15)" />
-            <stop offset="100%" stopColor="rgba(56, 189, 248, 0.15)" />
-          </linearGradient>
-          <filter id="blob-filter">
-            <feGaussianBlur in="SourceGraphic" stdDeviation="4" result="blur" />
-            <feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 25 -15" result="blob" />
-          </filter>
-        </defs>
-      </svg>
-    </div>
-  )
+  config?: HeaderConfig
 }
 
 export function Header({ config }: HeaderProps) {
@@ -49,16 +30,9 @@ export function Header({ config }: HeaderProps) {
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
 
-  const filteredLinks = config.navigationLinks.filter((item) => {
-    if (item.href === "/dashboard" || item.href === "/admin") {
-      return isAdmin;
-    }
-    return true;
-  });
-
   return (
     <>
-      <div className="m-10" />
+      <div className="m-8" />
 
       <motion.header
         initial={{ y: -100, opacity: 0 }}
@@ -68,8 +42,8 @@ export function Header({ config }: HeaderProps) {
       >
         <motion.div
           animate={{
-            maxWidth: isScrolled ? "72rem" : "100%",
-            margin: isScrolled ? "1rem auto" : "0 auto",
+            maxWidth: isScrolled ? "64rem" : "100%",
+            margin: isScrolled ? "0.75rem auto" : "0 auto",
             borderRadius: isScrolled ? "9999px" : "0",
           }}
           transition={{
@@ -77,93 +51,62 @@ export function Header({ config }: HeaderProps) {
             ease: "easeInOut",
           }}
           className={cn(
-            "bg-background/80 border backdrop-blur-xl transition-all duration-500",
+            "bg-background/85 border backdrop-blur-xl transition-all duration-500",
             isScrolled 
-              ? "bg-background/80 mx-4 md:mx-auto shadow-lg " 
-              : "shadow-sm "
+              ? "mx-4 md:mx-auto shadow-md border-border/80" 
+              : "border-b border-border/40 shadow-xs"
           )}
         >
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div className={cn(
               "flex items-center justify-between",
-              isScrolled 
-                ? "h-14" 
-                : "h-16"
+              isScrolled ? "h-14" : "h-16"
             )}>
+              {/* Brand Logo (Left) */}
               <Link href="/" className="group relative flex items-center gap-2.5">
-                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-blue-600 to-cyan-500 text-white font-bold text-xs shadow-sm shadow-blue-500/20 group-hover:scale-105 transition-transform">
+                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-cyan-500 text-white font-bold text-xs shadow-sm shadow-blue-500/20 group-hover:scale-105 transition-transform">
                   M
                 </div>
-                <span className="font-semibold tracking-tight text-foreground">{config.brand.title}</span>
+                <span className="font-bold tracking-tight text-foreground text-sm sm:text-base">
+                  {config?.brand?.title || "MCPPro"}
+                </span>
               </Link>
 
-              <nav className="relative hidden md:block">
-                <LayoutGroup>
-                  <motion.ul className="flex items-center gap-1">
-                    {filteredLinks.map((item) => {
-                      const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`)
-                      return (
-                        <motion.li key={item.href} className="relative flex items-center justify-center">
-                          <Link
-                            href={item.href}
-                            className={cn(
-                              "relative flex items-center justify-center rounded-full px-3.5 py-1.5 text-xs font-medium transition-colors duration-200",
-                              isActive ? "text-primary font-semibold" : "text-muted-foreground hover:text-primary"
-                            )}
-                          >
-                            {item.label}
-                          </Link>
-                          {isActive && (
-                            <motion.div
-                              layoutId="blob"
-                              className="absolute inset-0 -z-10 rounded-full bg-gradient-to-r from-blue-500/30 to-sky-400/30 dark:from-blue-400/30 dark:to-sky-300/30 shadow-[0_0_15px_rgba(56,189,248,0.3)] dark:shadow-[0_0_20px_rgba(56,189,248,0.25)]"
-                              transition={{
-                                type: "spring",
-                                stiffness: 400,
-                                damping: 30,
-                                mass: 1,
-                              }}
-                            >
-                              <BlobBackground />
-                            </motion.div>
-                          )}
-                        </motion.li>
-                      )
-                    })}
-                  </motion.ul>
-                </LayoutGroup>
-              </nav>
-
-              <div className="flex items-center gap-2">
-                {/* Admin Console Shortcut */}
+              {/* Center Option (Admin Panel link only visible when logged in as Admin) */}
+              <div className="flex items-center justify-center">
                 {isAdmin && (
-                  <Button
-                    asChild
-                    size="sm"
-                    className="h-8 text-xs font-medium bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700 shadow-sm shadow-blue-500/20 gap-1.5"
+                  <Link
+                    href="/admin"
+                    className={cn(
+                      "flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold transition-all shadow-xs",
+                      pathname.startsWith("/admin")
+                        ? "bg-blue-600 text-white shadow-blue-500/20"
+                        : "bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800/60 hover:bg-blue-600 hover:text-white"
+                    )}
                   >
-                    <Link href="/admin">
-                      <ShieldCheck className="h-3.5 w-3.5" />
-                      <span className="hidden sm:inline">Admin Panel</span>
-                    </Link>
-                  </Button>
+                    <ShieldCheck className="h-3.5 w-3.5" />
+                    <span>Admin Panel</span>
+                  </Link>
                 )}
+              </div>
 
+              {/* Right End: Theme Toggle, Login / First Letter Avatar, Mobile Menu */}
+              <div className="flex items-center gap-2 sm:gap-3">
                 <ModeToggle />
 
                 {isAuthenticated ? (
                   <UserProfile />
                 ) : (
-                  <Button asChild size="sm" variant="outline" className="h-8 text-xs gap-1.5">
+                  <Button asChild size="sm" className="h-8 px-4 text-xs font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-full gap-1.5 shadow-xs">
                     <Link href="/signin">
                       <LogIn className="h-3.5 w-3.5" />
-                      <span>Sign In</span>
+                      <span>Login</span>
                     </Link>
                   </Button>
                 )}
 
                 <div className="md:hidden">
-                  <NavigationMobile navigationLinks={filteredLinks} />
+                  <NavigationMobile />
                 </div>
               </div>
             </div>
