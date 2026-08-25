@@ -55,7 +55,7 @@ export const DEFAULT_SYSTEM_SETTINGS: SystemSettings = {
   routing: {
     enabled: true,
     provider: 'google',
-    model: 'gemini-3.5-flash-lite',
+    model: 'gemini-2.5-flash',
     api_key: '',
     system_knowledge_description: 'Corporate policies, standard operating procedures, documentation, user manuals, and fixed knowledge base documents.',
   },

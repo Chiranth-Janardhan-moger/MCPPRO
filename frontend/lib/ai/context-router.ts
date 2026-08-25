@@ -64,7 +64,15 @@ export async function classifyQueryContext(
   }
 
   const provider = routing.provider || 'google';
-  const modelId = routing.model || 'gemini-3.5-flash-lite';
+  let modelId = routing.model || 'gemini-2.5-flash';
+
+  // Normalize model ID for Google provider
+  if (provider === 'google') {
+    if (modelId === 'gemini-3.5-flash-lite' || modelId === 'gemini-2.0-flash-lite') {
+      modelId = 'gemini-2.5-flash';
+    }
+  }
+
   const apiKey = customApiKey || (await getEffectiveApiKey(provider, routing.api_key));
 
   if (!apiKey) {
@@ -97,7 +105,7 @@ export async function classifyQueryContext(
       languageModel = client.chat(modelId);
     } else {
       const client = createGoogleGenerativeAI({ apiKey });
-      languageModel = client('gemini-3.5-flash-lite');
+      languageModel = client('gemini-2.5-flash');
     }
 
     const kbDescription = routing.system_knowledge_description
@@ -116,7 +124,7 @@ ${contextSnippet ? `Recent Conversation Context:\n${contextSnippet}\n` : ''}User
 
 Decision JSON:`;
 
-    // Fast generation with a tight 3.5s timeout
+    // Resilient generation with 10s timeout
     const result = await Promise.race([
       generateText({
         model: languageModel,
@@ -125,7 +133,7 @@ Decision JSON:`;
         maxTokens: 150,
       }),
       new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error('Router timeout')), 3500)
+        setTimeout(() => reject(new Error('Router timeout after 10s')), 10000)
       ),
     ]);
 
@@ -151,8 +159,8 @@ Decision JSON:`;
     } catch {
       // Fallback regex if response wasn't strictly JSON
       let fallbackRoute: RouteType = 'DIRECT';
-      if (/RAG/i.test(text)) fallbackRoute = 'RAG';
-      else if (/ONLINE/i.test(text)) fallbackRoute = 'ONLINE';
+      if (/ONLINE/i.test(text)) fallbackRoute = 'ONLINE';
+      else if (/RAG/i.test(text)) fallbackRoute = 'RAG';
 
       return {
         route: fallbackRoute,
