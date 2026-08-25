@@ -78,6 +78,18 @@ yarn-error.log*
 !.yarn/versions
 
 # ==========================================
+# Local-Only Documentation & Notes
+# ==========================================
+ARCHITECTURE.md
+INTERVIEW_PREP.md
+PRODUCTION_READINESS.md
+SYSTEM_ARCHITECTURE.md
+doubt.md
+docs/
+benchmarks/
+frontend/AGENTS.md
+
+# ==========================================
 # Editors / IDEs and System Files
 # ==========================================
 # IDEs
@@ -104,4 +116,3 @@ Thumbs.db
 .opencode/
 vector_store_cache/
 frontend/test-results/
-benchmarks/results/temp_qdrant/
