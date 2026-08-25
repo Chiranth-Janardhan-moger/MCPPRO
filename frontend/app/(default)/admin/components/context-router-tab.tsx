@@ -27,6 +27,11 @@ import {
   HelpCircle,
   Cpu,
   Clock,
+  Key,
+  ShieldCheck,
+  CheckCircle2,
+  ExternalLink,
+  Laptop,
 } from 'lucide-react';
 import { SystemSettings, RouterConfig } from '@/lib/services/admin-settings';
 
@@ -36,8 +41,10 @@ interface ContextRouterTabProps {
 }
 
 const CHEAP_ROUTER_MODELS = [
-  { provider: 'google', id: 'gemini-3.5-flash-lite', label: 'Gemini 3.5 Flash-Lite (Google - Ultra Fast & Cost-Effective)' },
-  { provider: 'google', id: 'gemini-3.6-flash', label: 'Gemini 3.6 Flash (Google - Balanced & Free Tier)' },
+  { provider: 'google', id: 'gemini-2.5-flash', label: 'Gemini 2.5 Flash (Google - Recommended for Router: Ultra Fast & Accurate)' },
+  { provider: 'google', id: 'gemini-2.0-flash', label: 'Gemini 2.0 Flash (Google - High Speed & Multimodal)' },
+  { provider: 'google', id: 'gemini-1.5-flash', label: 'Gemini 1.5 Flash (Google - Cost-Effective)' },
+  { provider: 'google', id: 'gemini-3.5-flash-lite', label: 'Gemini 3.5 Flash-Lite (Google - Lightweight)' },
   { provider: 'groq', id: 'llama-3.1-8b-instant', label: 'Llama 3.1 8B Instant (Groq - Sub-second LPU)' },
   { provider: 'openai', id: 'gpt-4o-mini', label: 'GPT-4o mini (OpenAI - High accuracy lightweight)' },
   { provider: 'openrouter', id: 'deepseek/deepseek-chat:free', label: 'DeepSeek V3 Free (OpenRouter - 0 Cost)' },
@@ -67,12 +74,18 @@ export function ContextRouterTab({ settings, onUpdate }: ContextRouterTabProps) 
   const [routingState, setRoutingState] = useState<RouterConfig>({
     enabled: settings?.routing?.enabled ?? true,
     provider: settings?.routing?.provider || 'google',
-    model: settings?.routing?.model || 'gemini-3.5-flash-lite',
+    model: settings?.routing?.model || 'gemini-2.5-flash',
     api_key: settings?.routing?.api_key || '',
     system_knowledge_description:
       settings?.routing?.system_knowledge_description ||
       'Corporate policies, standard operating procedures, documentation, user manuals, and fixed knowledge base documents.',
   });
+
+  // Additional keys editable directly from router view
+  const [googleKey, setGoogleKey] = useState(settings?.api_keys?.google || settings?.api_keys?.gemini || '');
+  const [tavilyKey, setTavilyKey] = useState(settings?.api_keys?.tavily || '');
+  const [browserbaseKey, setBrowserbaseKey] = useState(settings?.api_keys?.browserbase_api_key || '');
+  const [browserbaseProjectId, setBrowserbaseProjectId] = useState(settings?.api_keys?.browserbase_project_id || '');
 
   const [isSaving, setIsSaving] = useState(false);
 
@@ -89,10 +102,18 @@ export function ContextRouterTab({ settings, onUpdate }: ContextRouterTabProps) 
 
     const success = await onUpdate({
       routing: routingState,
+      api_keys: {
+        ...(settings?.api_keys || {}),
+        google: googleKey,
+        gemini: googleKey,
+        tavily: tavilyKey,
+        browserbase_api_key: browserbaseKey,
+        browserbase_project_id: browserbaseProjectId,
+      },
     });
     setIsSaving(false);
     if (success) {
-      toast.success('Context-Aware Router configuration updated!');
+      toast.success('Context-Aware Router & API credentials saved successfully!');
     }
   };
 
@@ -129,12 +150,12 @@ export function ContextRouterTab({ settings, onUpdate }: ContextRouterTabProps) 
   return (
     <div className="space-y-6">
       {/* Settings Form */}
-      <form onSubmit={handleSave} className="space-y-4">
-        <Card className="bg-card/70 backdrop-blur-sm border-purple-100/70 dark:border-purple-900/40">
+      <form onSubmit={handleSave} className="space-y-6">
+        <Card className="bg-card/70 backdrop-blur-sm border-purple-100/70 dark:border-purple-900/40 shadow-sm">
           <CardHeader className="p-4 pb-3">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-purple-50 text-purple-600 dark:bg-purple-950/60 dark:text-purple-400">
+              <div className="flex items-center gap-2.5">
+                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-purple-50 text-purple-600 dark:bg-purple-950/60 dark:text-purple-400">
                   <Zap className="h-4 w-4" />
                 </div>
                 <div>
@@ -142,7 +163,7 @@ export function ContextRouterTab({ settings, onUpdate }: ContextRouterTabProps) 
                     Context-Aware Routing Engine
                   </CardTitle>
                   <CardDescription className="text-xs">
-                    Uses a high-efficiency cheaper model to pre-evaluate queries and intelligently route between RAG, Live Web Search, or Direct execution.
+                    Uses a high-efficiency cheaper model (such as Gemini 2.5 Flash) to pre-evaluate queries and intelligently route between RAG, Live Web Search (Tavily), or Direct LLM execution.
                   </CardDescription>
                 </div>
               </div>
@@ -192,7 +213,7 @@ export function ContextRouterTab({ settings, onUpdate }: ContextRouterTabProps) 
                   </SelectContent>
                 </Select>
                 <p className="text-[10px] text-muted-foreground">
-                  Ultra-low latency model used for &lt;300ms query classification.
+                  Selected model will classify user queries at 0.0 temperature in &lt;200ms.
                 </p>
               </div>
 
@@ -201,10 +222,10 @@ export function ContextRouterTab({ settings, onUpdate }: ContextRouterTabProps) 
                 <Label className="text-xs font-medium flex items-center justify-between">
                   <span className="flex items-center gap-1.5">
                     <Sparkles className="h-3.5 w-3.5 text-purple-500" />
-                    Dedicated Router API Key (Optional)
+                    Dedicated Router Key (Optional)
                   </span>
                   <span className="text-[10px] text-muted-foreground">
-                    Falls back to system provider key
+                    Falls back to main Google API key
                   </span>
                 </Label>
                 <Input
@@ -213,11 +234,11 @@ export function ContextRouterTab({ settings, onUpdate }: ContextRouterTabProps) 
                   onChange={(e) =>
                     setRoutingState((prev) => ({ ...prev, api_key: e.target.value }))
                   }
-                  placeholder="Leave empty to use main provider key..."
+                  placeholder="Leave empty to use main Google key..."
                   className="h-9 text-xs font-mono"
                 />
                 <p className="text-[10px] text-muted-foreground">
-                  Custom key if you wish to isolate router costs from main inference.
+                  Custom key if you wish to isolate router costs from main user inference.
                 </p>
               </div>
             </div>
@@ -244,137 +265,250 @@ export function ContextRouterTab({ settings, onUpdate }: ContextRouterTabProps) 
                 Assists the router in identifying queries that relate to fixed documents in your system knowledge base.
               </p>
             </div>
+          </CardContent>
+        </Card>
 
-            <div className="flex justify-end pt-1">
+        {/* Quick Credentials Vault for Context Aware, Web Access & App Automation */}
+        <Card className="bg-card/70 backdrop-blur-sm border-blue-100/70 dark:border-blue-900/40 shadow-sm">
+          <CardHeader className="p-4 pb-3">
+            <div className="flex items-center gap-2.5">
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-50 text-blue-600 dark:bg-blue-950/60 dark:text-blue-400">
+                <Key className="h-4 w-4" />
+              </div>
+              <div>
+                <CardTitle className="text-base font-semibold">
+                  Required Integration Keys
+                </CardTitle>
+                <CardDescription className="text-xs">
+                  Configure the API keys used by Context-Aware Routing (Gemini 2.5 Flash), Web Search (Tavily), and App Automation (Browserbase).
+                </CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="p-4 pt-0 space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Google Gemini API Key */}
+              <div className="space-y-1.5">
+                <Label className="text-xs font-medium flex items-center gap-1.5">
+                  <Sparkles className="h-3.5 w-3.5 text-blue-500" />
+                  Google Gemini API Key (Powers Gemini 2.5 Flash)
+                </Label>
+                <Input
+                  type="password"
+                  value={googleKey}
+                  onChange={(e) => setGoogleKey(e.target.value)}
+                  placeholder="AIzaSy..."
+                  className="h-9 text-xs font-mono"
+                />
+                <p className="text-[10px] text-muted-foreground">
+                  Used by Context Router when executing Gemini 2.5 Flash query classification.
+                </p>
+              </div>
+
+              {/* Tavily Web Search API Key */}
+              <div className="space-y-1.5">
+                <Label className="text-xs font-medium flex items-center gap-1.5">
+                  <Globe className="h-3.5 w-3.5 text-sky-500" />
+                  Tavily API Key (Powers Live Web Search)
+                </Label>
+                <Input
+                  type="password"
+                  value={tavilyKey}
+                  onChange={(e) => setTavilyKey(e.target.value)}
+                  placeholder="tvly-..."
+                  className="h-9 text-xs font-mono"
+                />
+                <p className="text-[10px] text-muted-foreground">
+                  Used when router decides <code className="font-semibold text-blue-500">ONLINE</code> to fetch real-time web results.
+                </p>
+              </div>
+
+              {/* Browserbase API Key (App Automation) */}
+              <div className="space-y-1.5">
+                <Label className="text-xs font-medium flex items-center gap-1.5">
+                  <Laptop className="h-3.5 w-3.5 text-indigo-500" />
+                  Browserbase API Key (App Opening & Cloud Browser)
+                </Label>
+                <Input
+                  type="password"
+                  value={browserbaseKey}
+                  onChange={(e) => setBrowserbaseKey(e.target.value)}
+                  placeholder="bb_live_..."
+                  className="h-9 text-xs font-mono"
+                />
+                <p className="text-[10px] text-muted-foreground">
+                  Enables opening web apps, interacting with live pages, and Stagehand browser execution.
+                </p>
+              </div>
+
+              {/* Browserbase Project ID */}
+              <div className="space-y-1.5">
+                <Label className="text-xs font-medium flex items-center gap-1.5">
+                  <ShieldCheck className="h-3.5 w-3.5 text-purple-500" />
+                  Browserbase Project ID
+                </Label>
+                <Input
+                  type="text"
+                  value={browserbaseProjectId}
+                  onChange={(e) => setBrowserbaseProjectId(e.target.value)}
+                  placeholder="proj_..."
+                  className="h-9 text-xs font-mono"
+                />
+                <p className="text-[10px] text-muted-foreground">
+                  Project identifier from your Browserbase cloud dashboard.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex justify-end pt-2">
               <Button
                 type="submit"
                 disabled={isSaving}
-                className="h-8 text-xs bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:from-purple-700 hover:to-indigo-700 gap-1.5 shadow-sm"
+                className="h-9 px-5 text-xs bg-blue-600 hover:bg-blue-700 text-white font-medium gap-1.5 shadow-sm"
               >
-                {isSaving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
-                Save Router Settings
+                {isSaving ? (
+                  <>
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <Check className="h-3.5 w-3.5" />
+                    Save All Router & API Credentials
+                  </>
+                )}
               </Button>
             </div>
           </CardContent>
         </Card>
       </form>
 
-      {/* Real-time Interactive Testing Sandbox */}
-      <Card className="bg-card/70 backdrop-blur-sm border-blue-100/70 dark:border-blue-900/40">
+      {/* Interactive Router Sandbox */}
+      <Card className="bg-card/70 backdrop-blur-sm border-blue-100/70 dark:border-blue-900/40 shadow-sm">
         <CardHeader className="p-4 pb-3">
-          <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-cyan-50 text-cyan-600 dark:bg-cyan-950/60 dark:text-cyan-400">
-              <Play className="h-4 w-4" />
-            </div>
-            <div>
-              <CardTitle className="text-base font-semibold">
-                Live Router Classification Playground
-              </CardTitle>
-              <CardDescription className="text-xs">
-                Test how the cheaper model categorizes any user prompt into RAG, Web Search, or Direct LLM in real time.
-              </CardDescription>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-50 text-blue-600 dark:bg-blue-950/60 dark:text-blue-400">
+                <Play className="h-4 w-4" />
+              </div>
+              <div>
+                <CardTitle className="text-base font-semibold">
+                  Real-Time Routing Sandbox
+                </CardTitle>
+                <CardDescription className="text-xs">
+                  Test query intent classification using your configured model ({routingState.model}).
+                </CardDescription>
+              </div>
             </div>
           </div>
         </CardHeader>
         <CardContent className="p-4 pt-0 space-y-4">
-          <div className="space-y-2">
-            <div className="flex items-center gap-1.5 flex-wrap">
-              <span className="text-[11px] font-medium text-muted-foreground">Try presets:</span>
-              {PRESET_QUERIES.map((preset, idx) => (
+          {/* Preset Prompts */}
+          <div className="space-y-1.5">
+            <Label className="text-[11px] font-medium text-muted-foreground">
+              Try sample query scenarios:
+            </Label>
+            <div className="flex flex-wrap gap-1.5">
+              {PRESET_QUERIES.map((p, idx) => (
                 <button
                   key={idx}
                   type="button"
-                  onClick={() => setTestQuery(preset.text)}
-                  className="px-2 py-0.5 rounded-md bg-muted hover:bg-muted/80 text-[10px] text-foreground transition-colors border border-border/60"
+                  onClick={() => setTestQuery(p.text)}
+                  className="px-2.5 py-1 rounded-full text-[11px] border border-border/80 bg-muted/40 hover:bg-muted text-foreground transition-colors flex items-center gap-1.5 cursor-pointer"
                 >
-                  {preset.expected === 'RAG' && '📁 RAG: '}
-                  {preset.expected === 'ONLINE' && '🌐 Web: '}
-                  {preset.expected === 'DIRECT' && '⚡ Direct: '}
-                  {preset.text.slice(0, 32)}...
+                  <span className="font-semibold text-primary">[{p.expected}]</span>
+                  <span className="truncate max-w-[260px]">{p.text}</span>
                 </button>
               ))}
             </div>
+          </div>
 
-            <div className="flex items-center gap-2">
+          <div className="space-y-1.5">
+            <Label className="text-xs font-medium">Test Prompt</Label>
+            <div className="flex gap-2">
               <Input
                 value={testQuery}
                 onChange={(e) => setTestQuery(e.target.value)}
-                placeholder="Enter sample user query to test router..."
-                className="h-10 text-xs flex-1"
+                placeholder="Enter any user prompt to evaluate route..."
+                className="text-xs h-10"
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter') handleRunTest();
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleRunTest();
+                  }
                 }}
               />
               <Button
+                type="button"
                 onClick={handleRunTest}
-                disabled={isEvaluating || !testQuery.trim()}
-                className="h-10 px-4 text-xs bg-blue-600 hover:bg-blue-700 text-white gap-1.5"
+                disabled={isEvaluating}
+                className="h-10 px-4 text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white gap-1.5 shrink-0 shadow-sm"
               >
                 {isEvaluating ? (
                   <>
                     <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                    Evaluating...
+                    Routing...
                   </>
                 ) : (
                   <>
                     <Play className="h-3.5 w-3.5" />
-                    Test Route Decision
+                    Evaluate Route
                   </>
                 )}
               </Button>
             </div>
           </div>
 
-          {/* Result Card */}
+          {/* Test Decision Output */}
           {decisionResult && (
-            <div className="p-4 rounded-xl border border-border bg-background/80 space-y-3 animate-in fade-in-50">
-              <div className="flex items-center justify-between flex-wrap gap-2">
+            <div className="p-4 rounded-xl border border-border/80 bg-muted/30 space-y-3 animate-in fade-in-50">
+              <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-semibold text-muted-foreground">Classification:</span>
+                  <span className="text-xs font-medium text-muted-foreground">Classified Route:</span>
                   <Badge
-                    className={`text-xs px-2.5 py-1 font-bold ${
+                    className={
                       decisionResult.route === 'RAG'
-                        ? 'bg-purple-600 text-white'
+                        ? 'bg-emerald-600 text-white font-bold'
                         : decisionResult.route === 'ONLINE'
-                        ? 'bg-cyan-600 text-white'
-                        : 'bg-emerald-600 text-white'
-                    }`}
+                        ? 'bg-sky-600 text-white font-bold'
+                        : 'bg-purple-600 text-white font-bold'
+                    }
                   >
-                    {decisionResult.route === 'RAG' && <Database className="h-3 w-3 mr-1" />}
-                    {decisionResult.route === 'ONLINE' && <Globe className="h-3 w-3 mr-1" />}
-                    {decisionResult.route === 'DIRECT' && <Zap className="h-3 w-3 mr-1" />}
                     {decisionResult.route}
                   </Badge>
-                  <span className="text-xs font-semibold text-muted-foreground">
-                    Confidence: {Math.round((decisionResult.confidence || 0) * 100)}%
+                  <span className="text-xs font-semibold text-foreground">
+                    ({Math.round((decisionResult.confidence || 0) * 100)}% confidence)
                   </span>
                 </div>
 
-                <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                  <span className="flex items-center gap-1 font-mono">
-                    <Clock className="h-3.5 w-3.5 text-blue-500" />
-                    {decisionResult.latencyMs}ms latency
+                <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
+                  <span className="flex items-center gap-1">
+                    <Clock className="h-3 w-3" />
+                    {decisionResult.latencyMs || 0}ms
                   </span>
-                  <span className="font-mono text-[11px]">
-                    via {decisionResult.modelUsed} ({decisionResult.providerUsed})
+                  <span className="flex items-center gap-1 font-mono">
+                    <Cpu className="h-3 w-3" />
+                    {decisionResult.modelUsed}
                   </span>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
-                <div className="p-2.5 rounded-lg bg-muted/40 space-y-1">
-                  <span className="font-semibold text-muted-foreground text-[10px]">
-                    Router Reasoning:
+                <div className="space-y-1">
+                  <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">
+                    Reasoning
                   </span>
-                  <p className="text-foreground">{decisionResult.reasoning}</p>
+                  <p className="p-2 rounded-lg bg-background border text-foreground leading-relaxed">
+                    {decisionResult.reasoning}
+                  </p>
                 </div>
 
-                <div className="p-2.5 rounded-lg bg-muted/40 space-y-1">
-                  <span className="font-semibold text-muted-foreground text-[10px]">
-                    Refined Retrieval Query:
+                <div className="space-y-1">
+                  <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">
+                    Refined Query for Execution
                   </span>
-                  <p className="font-mono text-[11px] text-blue-600 dark:text-sky-400">
-                    "{decisionResult.refinedQuery}"
+                  <p className="p-2 rounded-lg bg-background border font-mono text-[11px] text-foreground leading-relaxed">
+                    {decisionResult.refinedQuery || decisionResult.refined_query || testQuery}
                   </p>
                 </div>
               </div>

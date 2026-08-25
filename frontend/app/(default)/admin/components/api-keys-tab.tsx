@@ -93,6 +93,22 @@ const PROVIDER_ITEMS = [
     icon: Globe,
   },
   {
+    id: 'browserbase_api_key',
+    label: 'Browserbase API Key (App Opening & Web Browser Automation)',
+    envKey: 'BROWSERBASE_API_KEY',
+    placeholder: 'bb_live_...',
+    hint: 'Powers cloud browser execution, Stagehand agent, and opening web apps/pages',
+    icon: Globe,
+  },
+  {
+    id: 'browserbase_project_id',
+    label: 'Browserbase Project ID',
+    envKey: 'BROWSERBASE_PROJECT_ID',
+    placeholder: 'proj_...',
+    hint: 'Project ID associated with your Browserbase cloud browser instance',
+    icon: Lock,
+  },
+  {
     id: 'backend_token',
     label: 'Backend Bearer Token',
     envKey: 'BACKEND_BEARER_TOKEN / BEARER_TOKEN',
@@ -112,6 +128,8 @@ export function ApiKeysTab({ settings, onUpdate }: ApiKeysTabProps) {
     xai: settings?.api_keys?.xai || '',
     openrouter: settings?.api_keys?.openrouter || '',
     tavily: settings?.api_keys?.tavily || '',
+    browserbase_api_key: settings?.api_keys?.browserbase_api_key || '',
+    browserbase_project_id: settings?.api_keys?.browserbase_project_id || '',
     backend_token: settings?.api_keys?.backend_token || '',
   });
 

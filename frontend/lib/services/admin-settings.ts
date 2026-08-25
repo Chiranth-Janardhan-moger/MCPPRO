@@ -9,6 +9,8 @@ export interface SystemApiKeys {
   xai?: string;
   openrouter?: string;
   tavily?: string;
+  browserbase_api_key?: string;
+  browserbase_project_id?: string;
   backend_token?: string;
   [key: string]: string | undefined;
 }
@@ -45,6 +47,8 @@ export const DEFAULT_SYSTEM_SETTINGS: SystemSettings = {
     xai: process.env.XAI_API_KEY || '',
     openrouter: process.env.OPENROUTER_API_KEY || '',
     tavily: process.env.TAVILY_API_KEY || '',
+    browserbase_api_key: process.env.BROWSERBASE_API_KEY || '',
+    browserbase_project_id: process.env.BROWSERBASE_PROJECT_ID || '',
     backend_token: process.env.BACKEND_BEARER_TOKEN || process.env.BEARER_TOKEN || '',
   },
   default_model: 'gemini-3.6-flash',

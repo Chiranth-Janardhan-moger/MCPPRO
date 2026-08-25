@@ -143,6 +143,24 @@ export async function POST(req: Request) {
         });
       }
 
+      case 'browserbase':
+      case 'browserbase_api_key': {
+        const res = await fetch('https://api.browserbase.com/v1/sessions', {
+          headers: { 'x-bb-api-key': cleanKey },
+          signal: AbortSignal.timeout(8000),
+        });
+        const latencyMs = Date.now() - startTime;
+        if (res.ok || res.status === 200) {
+          return Response.json({ success: true, message: 'Browserbase API key is valid!', latencyMs });
+        }
+        const data = await res.json().catch(() => ({}));
+        return Response.json({
+          success: false,
+          message: data?.message || data?.error || `Browserbase returned status ${res.status}`,
+          latencyMs,
+        });
+      }
+
       case 'backend': {
         const backendUrl = (process.env.BACKEND_URL || 'http://127.0.0.1:8000').trim().replace(/\/$/, '');
         const res = await fetch(`${backendUrl}/docs`, {
