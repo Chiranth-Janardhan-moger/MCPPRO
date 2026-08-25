@@ -26,6 +26,8 @@ import {
   Clock,
   Laptop,
   Key,
+  Save,
+  CheckCircle2,
 } from 'lucide-react';
 import { SystemSettings, RouterConfig } from '@/lib/services/admin-settings';
 
@@ -35,10 +37,10 @@ interface ContextRouterTabProps {
 }
 
 const CHEAP_ROUTER_MODELS = [
-  { provider: 'google', id: 'gemini-2.5-flash', label: 'Gemini 2.5 Flash (Recommended)' },
+  { provider: 'google', id: 'gemini-2.5-flash', label: 'Gemini 2.5 Flash (Recommended - Fast & Accurate)' },
+  { provider: 'google', id: 'gemini-3.6-flash', label: 'Gemini 3.6 Flash' },
   { provider: 'google', id: 'gemini-2.0-flash', label: 'Gemini 2.0 Flash' },
   { provider: 'google', id: 'gemini-1.5-flash', label: 'Gemini 1.5 Flash' },
-  { provider: 'google', id: 'gemini-3.5-flash-lite', label: 'Gemini 3.5 Flash-Lite' },
   { provider: 'groq', id: 'llama-3.1-8b-instant', label: 'Llama 3.1 8B Instant (Groq)' },
   { provider: 'openai', id: 'gpt-4o-mini', label: 'GPT-4o mini (OpenAI)' },
   { provider: 'openrouter', id: 'deepseek/deepseek-chat:free', label: 'DeepSeek V3 Free (OpenRouter)' },
@@ -80,7 +82,7 @@ export function ContextRouterTab({ settings, onUpdate }: ContextRouterTabProps) 
     });
     setIsSaving(false);
     if (success) {
-      toast.success('Router & API keys saved');
+      toast.success('Context Router and API keys saved successfully!');
     }
   };
 
@@ -108,13 +110,13 @@ export function ContextRouterTab({ settings, onUpdate }: ContextRouterTabProps) 
 
   return (
     <div className="space-y-4">
+      {/* Context-Aware Router Form */}
       <form onSubmit={handleSave} className="space-y-4">
-        {/* Main Router Configuration */}
-        <Card className="bg-card border-border/70 shadow-xs">
-          <CardHeader className="p-4 pb-3 flex flex-row items-center justify-between space-y-0">
+        <Card className="bg-card border-border/80 shadow-xs">
+          <CardHeader className="p-4 pb-3 flex flex-row items-center justify-between space-y-0 border-b">
             <div className="flex items-center gap-2">
               <Zap className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-              <CardTitle className="text-sm font-semibold">Context-Aware Router</CardTitle>
+              <CardTitle className="text-sm font-semibold">Context-Aware Router Configuration</CardTitle>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-xs font-medium text-muted-foreground">
@@ -128,11 +130,13 @@ export function ContextRouterTab({ settings, onUpdate }: ContextRouterTabProps) 
               />
             </div>
           </CardHeader>
-          <CardContent className="p-4 pt-0 space-y-3">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+
+          <CardContent className="p-4 space-y-4">
+            {/* Row 1: Model & Google Gemini Key */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {/* Router Model Selection */}
-              <div className="space-y-1">
-                <Label className="text-xs font-medium flex items-center gap-1">
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold flex items-center gap-1.5">
                   <Cpu className="h-3.5 w-3.5 text-blue-500" />
                   Router Model
                 </Label>
@@ -160,53 +164,29 @@ export function ContextRouterTab({ settings, onUpdate }: ContextRouterTabProps) 
                 </Select>
               </div>
 
-              {/* Context Router / Google Gemini API Key */}
-              <div className="space-y-1">
-                <Label className="text-xs font-medium flex items-center gap-1 text-blue-600 dark:text-blue-400">
+              {/* Google Gemini API Key */}
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold flex items-center gap-1.5 text-blue-600 dark:text-blue-400">
                   <Sparkles className="h-3.5 w-3.5" />
-                  Context Router API Key (Google Gemini)
+                  Context Router Key (Google Gemini AIzaSy...)
                 </Label>
                 <Input
                   type="password"
                   value={googleKey}
                   onChange={(e) => setGoogleKey(e.target.value)}
-                  placeholder="AIzaSy... (Google Gemini Key)"
+                  placeholder="Paste Google Gemini Key (AIzaSy...)"
                   className="h-9 text-xs font-mono"
                 />
               </div>
             </div>
 
-            {/* Knowledge Base Topic Hint */}
-            <div className="space-y-1">
-              <Label className="text-xs font-medium">Knowledge Base Topics (Optional)</Label>
-              <Input
-                value={routingState.system_knowledge_description || ''}
-                onChange={(e) =>
-                  setRoutingState((prev) => ({
-                    ...prev,
-                    system_knowledge_description: e.target.value,
-                  }))
-                }
-                placeholder="e.g. Employee handbook, technical docs, product specs..."
-                className="h-9 text-xs"
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Integration API Keys */}
-        <Card className="bg-card border-border/70 shadow-xs">
-          <CardHeader className="p-4 pb-3 flex flex-row items-center gap-2 space-y-0">
-            <Key className="h-4 w-4 text-purple-600 dark:text-purple-400" />
-            <CardTitle className="text-sm font-semibold">Web Search & App Automation Keys</CardTitle>
-          </CardHeader>
-          <CardContent className="p-4 pt-0 space-y-3">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {/* Tavily Key */}
-              <div className="space-y-1">
-                <Label className="text-xs font-medium flex items-center gap-1">
+            {/* Row 2: Tavily Key & Browserbase Key */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* Tavily API Key */}
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold flex items-center gap-1.5">
                   <Globe className="h-3.5 w-3.5 text-sky-500" />
-                  Tavily API Key (Web Access)
+                  Tavily API Key (Live Web Search)
                 </Label>
                 <Input
                   type="password"
@@ -218,10 +198,10 @@ export function ContextRouterTab({ settings, onUpdate }: ContextRouterTabProps) 
               </div>
 
               {/* Browserbase API Key */}
-              <div className="space-y-1">
-                <Label className="text-xs font-medium flex items-center gap-1">
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold flex items-center gap-1.5">
                   <Laptop className="h-3.5 w-3.5 text-indigo-500" />
-                  Browserbase API Key (App Opening)
+                  Browserbase API Key (App Opening & Cloud Browser)
                 </Label>
                 <Input
                   type="password"
@@ -231,10 +211,12 @@ export function ContextRouterTab({ settings, onUpdate }: ContextRouterTabProps) 
                   className="h-9 text-xs font-mono"
                 />
               </div>
+            </div>
 
-              {/* Browserbase Project ID */}
-              <div className="space-y-1 sm:col-span-2">
-                <Label className="text-xs font-medium">Browserbase Project ID</Label>
+            {/* Row 3: Browserbase Project ID & Knowledge Scope */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold">Browserbase Project ID</Label>
                 <Input
                   type="text"
                   value={browserbaseProjectId}
@@ -243,23 +225,42 @@ export function ContextRouterTab({ settings, onUpdate }: ContextRouterTabProps) 
                   className="h-9 text-xs font-mono"
                 />
               </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold">Knowledge Scope Hint (Optional)</Label>
+                <Input
+                  value={routingState.system_knowledge_description || ''}
+                  onChange={(e) =>
+                    setRoutingState((prev) => ({
+                      ...prev,
+                      system_knowledge_description: e.target.value,
+                    }))
+                  }
+                  placeholder="e.g. Employee handbook, internal policies, system documentation..."
+                  className="h-9 text-xs"
+                />
+              </div>
             </div>
 
-            <div className="flex justify-end pt-1">
+            {/* Prominent Save Button */}
+            <div className="flex items-center justify-between pt-3 border-t">
+              <p className="text-[11px] text-muted-foreground">
+                Changes take effect immediately across all chat sessions.
+              </p>
               <Button
                 type="submit"
                 disabled={isSaving}
-                className="h-8 px-4 text-xs bg-blue-600 hover:bg-blue-700 text-white font-medium gap-1.5"
+                className="h-9 px-6 text-xs bg-blue-600 hover:bg-blue-700 text-white font-semibold flex items-center gap-2 shadow-sm"
               >
                 {isSaving ? (
                   <>
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                    Saving...
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <span>Saving...</span>
                   </>
                 ) : (
                   <>
-                    <Check className="h-3.5 w-3.5" />
-                    Save Settings
+                    <Save className="h-4 w-4" />
+                    <span>Save Router Settings</span>
                   </>
                 )}
               </Button>
@@ -269,7 +270,7 @@ export function ContextRouterTab({ settings, onUpdate }: ContextRouterTabProps) 
       </form>
 
       {/* Real-time Sandbox */}
-      <Card className="bg-card border-border/70 shadow-xs">
+      <Card className="bg-card border-border/80 shadow-xs">
         <CardHeader className="p-4 pb-2 flex flex-row items-center gap-2 space-y-0">
           <Play className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
           <CardTitle className="text-sm font-semibold">Test Context Router</CardTitle>
@@ -292,14 +293,19 @@ export function ContextRouterTab({ settings, onUpdate }: ContextRouterTabProps) 
               type="button"
               onClick={handleRunTest}
               disabled={isEvaluating}
-              className="h-9 px-3 text-xs bg-blue-600 hover:bg-blue-700 text-white gap-1.5 shrink-0"
+              className="h-9 px-4 text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white gap-1.5 shrink-0 shadow-xs"
             >
               {isEvaluating ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                <>
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  <span>Evaluating...</span>
+                </>
               ) : (
-                <Play className="h-3.5 w-3.5" />
+                <>
+                  <Play className="h-3.5 w-3.5" />
+                  <span>Test</span>
+                </>
               )}
-              Test
             </Button>
           </div>
 
