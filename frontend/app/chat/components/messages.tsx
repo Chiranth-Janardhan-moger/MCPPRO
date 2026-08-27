@@ -23,22 +23,11 @@ function PureMessages({
       className="flex flex-col min-w-0 gap-6 flex-1 pt-4"
     >
       {messages.map((message, index) => (
-        <div key={message.id || index}>
-          {/* Render tool invocations if they exist */}
-          {message.toolInvocations && message.toolInvocations.map((toolCall) => (
-            <div key={toolCall.toolCallId} className="">
-              <ToolResultDisplay toolCall={toolCall} />
-            </div>
-          ))}
-          
-          {/* Render the message content */}
-          {message.content && (
-            <PreviewMessage
-              message={message}
-              isLoading={isLoading && index === messages.length - 1 && !message.toolInvocations}
-            />
-          )}
-        </div>
+        <PreviewMessage
+          key={message.id || index}
+          message={message}
+          isLoading={isLoading && index === messages.length - 1}
+        />
       ))}
 
       {isLoading &&
