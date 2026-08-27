@@ -1,13 +1,26 @@
 import { createClient } from '@supabase/supabase-js';
-import * as dotenv from 'dotenv';
+import * as fs from 'fs';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-dotenv.config({ path: path.resolve(__dirname, '../.env.local') });
-dotenv.config({ path: path.resolve(__dirname, '../../.env') });
+// Read .env.local natively
+const envLocalPath = path.resolve(__dirname, '../.env.local');
+if (fs.existsSync(envLocalPath)) {
+  const lines = fs.readFileSync(envLocalPath, 'utf8').split('\n');
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith('#')) continue;
+    const idx = trimmed.indexOf('=');
+    if (idx > 0) {
+      const k = trimmed.slice(0, idx).trim();
+      const v = trimmed.slice(idx + 1).trim();
+      if (!process.env[k]) process.env[k] = v;
+    }
+  }
+}
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
 const SERVICE_KEY =
