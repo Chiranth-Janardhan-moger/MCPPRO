@@ -1,52 +1,37 @@
-import {
-  Body,
-  Container,
-  Head,
-  Heading,
-  Hr,
-  Html,
-  Img,
-  Link,
-  Preview,
-  Section,
-  Text,
-} from "@react-email/components";
 import * as React from "react";
+
 interface StocksEmailProps {
   verificationCode?: string;
 }
+
 export default function StocksEmail({
   verificationCode = "596853",
 }: StocksEmailProps) {
-  const appName = process.env.NEXT_PUBLIC_APP_NAME!;
+  const appName = process.env.NEXT_PUBLIC_APP_NAME || "MCPPRO";
   return (
-    <Html>
-      <Head />
-      <Preview>{appName} - Verify Your Email</Preview>
-      <Body style={main}>
-        <Container style={container}>
-          <Section style={coverSection}>
-            <Section style={upperSection}>
-              <Heading style={h1}>Verify your email address</Heading>
-              <Text style={mainText}>
-                Thanks for signing up for {appName}. To get started,
-                please verify your email address by entering the following code:
-              </Text>
-              <Section style={verificationSection}>
-                <Text style={codeText}>{verificationCode}</Text>
-                <Text style={validityText}>
-                  (This code is valid for 1 hour)
-                </Text>
-              </Section>
-              <Hr style={hr} />
-              <Text style={footerText}>
-                If you didn&apos;t request this email, you can safely ignore it.
-              </Text>
-            </Section>
-          </Section>
-        </Container>
-      </Body>
-    </Html>
+    <div style={main}>
+      <div style={container}>
+        <div style={coverSection}>
+          <div style={upperSection}>
+            <h1 style={h1}>Verify your email address</h1>
+            <p style={mainText}>
+              Thanks for signing up for {appName}. To get started,
+              please verify your email address by entering the following code:
+            </p>
+            <div style={verificationSection}>
+              <p style={codeText}>{verificationCode}</p>
+              <p style={validityText}>
+                (This code is valid for 1 hour)
+              </p>
+            </div>
+            <hr style={hr} />
+            <p style={footerText}>
+              If you didn&apos;t request this email, you can safely ignore it.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
 const main = {
