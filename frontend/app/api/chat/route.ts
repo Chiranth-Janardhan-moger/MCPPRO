@@ -93,53 +93,57 @@ export async function POST(req: Request) {
     const lastUserMessage = [...messages].reverse().find((m) => m.role === 'user');
     const userQuery = typeof lastUserMessage?.content === 'string' ? lastUserMessage.content : '';
 
-    return runWithRequestContext(
-      {
-        userId: user.id,
-        userEmail: user.email,
-        selectedModel,
-        customApiKeys,
-        systemApiKeys: settings.api_keys as Record<string, string>,
-      },
-      () =>
-        createDataStreamResponse({
-          async execute(dataStream) {
-            let routerDecision: RouterDecision | null = null;
-            let finalGeneratedText = '';
+    const reqContext = {
+      userId: user.id,
+      userEmail: user.email,
+      selectedModel,
+      customApiKeys,
+      systemApiKeys: settings.api_keys as Record<string, string>,
+    };
 
-            try {
-              // 1. Run Context-Aware Routing using configured cheaper model
-              if (settings.routing.enabled && userQuery) {
-                try {
-                  routerDecision = await classifyQueryContext(
-                    userQuery,
-                    messages.slice(-3),
-                    customApiKeys[settings.routing.provider]
-                  );
+    return createDataStreamResponse({
+      async execute(dataStream) {
+        return runWithRequestContext(reqContext, async () => {
+          let routerDecision: RouterDecision | null = null;
+          let finalGeneratedText = '';
 
-                  // Send Router Annotation to UI
-                  dataStream.writeMessageAnnotation({
-                    type: 'router_decision',
-                    route: routerDecision.route,
-                    confidence: routerDecision.confidence,
-                    reasoning: routerDecision.reasoning,
-                    refinedQuery: routerDecision.refinedQuery,
-                    latencyMs: routerDecision.latencyMs,
-                    model: routerDecision.modelUsed,
-                  });
-                } catch (routerErr) {
-                  console.warn('[chat/route] Router evaluation warning:', routerErr);
-                }
-              }
-
-              const model = getLanguageModel(selectedModel);
-
-              let mcpTools: Record<string, any> = {};
+          try {
+            // 1. Run Context-Aware Routing using configured cheaper model
+            if (settings.routing.enabled && userQuery) {
               try {
-                mcpTools = await getMCPTools();
-              } catch (err) {
-                console.warn('[chat/route] MCP tools lookup skipped:', err);
+                routerDecision = await classifyQueryContext(
+                  userQuery,
+                  messages.slice(-3),
+                  customApiKeys[settings.routing.provider]
+                );
+
+                // Send Router Annotation to UI
+                dataStream.writeMessageAnnotation({
+                  type: 'router_decision',
+                  route: routerDecision.route,
+                  confidence: routerDecision.confidence,
+                  reasoning: routerDecision.reasoning,
+                  refinedQuery: routerDecision.refinedQuery,
+                  latencyMs: routerDecision.latencyMs,
+                  model: routerDecision.modelUsed,
+                });
+              } catch (routerErr) {
+                console.warn('[chat/route] Router evaluation warning:', routerErr);
               }
+            }
+
+            const model = getLanguageModel(
+              selectedModel,
+              customApiKeys,
+              settings.api_keys as Record<string, string>
+            );
+
+            let mcpTools: Record<string, any> = {};
+            try {
+              mcpTools = await getMCPTools();
+            } catch (err) {
+              console.warn('[chat/route] MCP tools lookup skipped:', err);
+            }
 
               const tools: Record<string, any> = {
                 searchUploadedDocuments: {
@@ -258,11 +262,11 @@ export async function POST(req: Request) {
                 `0:${JSON.stringify(`\n\n⚠️ **Model Execution Notice:** ${error instanceof Error ? error.message : String(error)}\n\nPlease ensure your API keys are configured in **Admin Console -> API Keys & Providers**.`)}\n`
               );
             }
-          },
-          onError: (error) =>
-            `AI Stream error: ${error instanceof Error ? error.message : String(error)}`,
-        })
-    );
+          });
+        },
+        onError: (error) =>
+          `AI Stream error: ${error instanceof Error ? error.message : String(error)}`,
+      });
   } catch (error) {
     console.error("[chat/route] API route error:", error);
     return new Response(JSON.stringify({ error: "Internal server error" }), {

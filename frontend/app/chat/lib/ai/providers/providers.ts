@@ -67,14 +67,15 @@ function instantiate(info: ModelInfo, customKeys?: Record<string, string>, syste
   return client(info.id);
 }
 
-/**
- * Resolve a model id (or undefined for the default) to a live AI SDK
- * language model instance. Unknown ids route through OpenRouter when it is
- * configured, otherwise fall back to the curated default.
- */
-export function getLanguageModel(modelId?: string | null): LanguageModelV1 {
+export function getLanguageModel(
+  modelId?: string | null,
+  customKeys?: Record<string, string>,
+  systemKeys?: Record<string, string>
+): LanguageModelV1 {
   const context = getRequestContext();
-  return instantiate(resolveModel(modelId), context.customApiKeys, context.systemApiKeys);
+  const cKeys = customKeys || context.customApiKeys;
+  const sKeys = systemKeys || context.systemApiKeys;
+  return instantiate(resolveModel(modelId), cKeys, sKeys);
 }
 
 /** UI-facing list: `{value,label}[]` filtered to configured providers. */
