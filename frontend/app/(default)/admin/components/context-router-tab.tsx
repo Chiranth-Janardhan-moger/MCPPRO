@@ -39,17 +39,16 @@ interface ContextRouterTabProps {
 }
 
 const CHEAP_ROUTER_MODELS = [
-  { provider: 'google', id: 'gemini-2.5-flash', label: 'Gemini 2.5 Flash (Recommended - Google AI)' },
-  { provider: 'google', id: 'gemini-3.6-flash', label: 'Gemini 3.6 Flash (Google AI)' },
-  { provider: 'google', id: 'gemini-2.0-flash', label: 'Gemini 2.0 Flash (Google AI)' },
-  { provider: 'openrouter', id: 'google/gemini-2.0-flash-001', label: 'Gemini 2.0 Flash (OpenRouter)' },
-  { provider: 'openrouter', id: 'meta-llama/llama-3.3-70b-instruct', label: 'Llama 3.3 70B Instruct (OpenRouter)' },
-  { provider: 'openrouter', id: 'meta-llama/llama-3.1-8b-instruct:free', label: 'Llama 3.1 8B Free (OpenRouter)' },
+  { provider: 'openrouter', id: 'meta-llama/llama-3.3-70b-instruct', label: 'Llama 3.3 70B Instruct (OpenRouter - Recommended)' },
+  { provider: 'openrouter', id: 'meta-llama/llama-3.1-8b-instruct', label: 'Llama 3.1 8B Instruct (OpenRouter - Ultra Fast)' },
   { provider: 'openrouter', id: 'deepseek/deepseek-chat', label: 'DeepSeek V3 (OpenRouter)' },
-  { provider: 'openrouter', id: 'qwen/qwen-2.5-72b-instruct', label: 'Qwen 2.5 72B (OpenRouter)' },
-  { provider: 'groq', id: 'llama-3.1-8b-instant', label: 'Llama 3.1 8B Instant (Groq)' },
-  { provider: 'groq', id: 'llama-3.3-70b-versatile', label: 'Llama 3.3 70B Versatile (Groq)' },
-  { provider: 'openai', id: 'gpt-4o-mini', label: 'GPT-4o mini (OpenAI)' },
+  { provider: 'openrouter', id: 'google/gemini-2.5-flash', label: 'Gemini 2.5 Flash (OpenRouter)' },
+  { provider: 'google', id: 'gemini-2.5-flash', label: 'Gemini 2.5 Flash (Google AI Direct)' },
+  { provider: 'google', id: 'gemini-3.6-flash', label: 'Gemini 3.6 Flash (Google AI Direct)' },
+  { provider: 'google', id: 'gemini-2.0-flash', label: 'Gemini 2.0 Flash (Google AI Direct)' },
+  { provider: 'groq', id: 'llama-3.1-8b-instant', label: 'Llama 3.1 8B Instant (Groq Direct)' },
+  { provider: 'groq', id: 'llama-3.3-70b-versatile', label: 'Llama 3.3 70B Versatile (Groq Direct)' },
+  { provider: 'openai', id: 'gpt-4o-mini', label: 'GPT-4o mini (OpenAI Direct)' },
 ];
 
 export function ContextRouterTab({ settings, onUpdate }: ContextRouterTabProps) {

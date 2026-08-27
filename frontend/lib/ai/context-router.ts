@@ -138,10 +138,20 @@ Decision JSON:`;
     ]);
 
     const latencyMs = Date.now() - startTime;
-    const text = result.text.trim().replace(/^```json\s*|\s*```$/g, '').trim();
+    let parsed: any = null;
 
     try {
-      const parsed = JSON.parse(text);
+      const match = result.text.match(/\{[\s\S]*\}/);
+      if (match) {
+        parsed = JSON.parse(match[0]);
+      } else {
+        parsed = JSON.parse(result.text.trim());
+      }
+    } catch {
+      parsed = null;
+    }
+
+    if (parsed) {
       const route: RouteType =
         parsed.route === 'RAG' || parsed.route === 'ONLINE' || parsed.route === 'DIRECT'
           ? parsed.route
@@ -151,16 +161,16 @@ Decision JSON:`;
         route,
         confidence: typeof parsed.confidence === 'number' ? Math.min(Math.max(parsed.confidence, 0.1), 1.0) : 0.9,
         reasoning: parsed.reasoning || `Classified as ${route}`,
-        refinedQuery: parsed.refined_query || query,
+        refinedQuery: parsed.refinedQuery || parsed.refined_query || query,
         latencyMs,
         modelUsed: modelId,
         providerUsed: provider,
       };
-    } catch {
+    } else {
       // Fallback regex if response wasn't strictly JSON
       let fallbackRoute: RouteType = 'DIRECT';
-      if (/ONLINE/i.test(text)) fallbackRoute = 'ONLINE';
-      else if (/RAG/i.test(text)) fallbackRoute = 'RAG';
+      if (/ONLINE/i.test(result.text)) fallbackRoute = 'ONLINE';
+      else if (/RAG/i.test(result.text)) fallbackRoute = 'RAG';
 
       return {
         route: fallbackRoute,
