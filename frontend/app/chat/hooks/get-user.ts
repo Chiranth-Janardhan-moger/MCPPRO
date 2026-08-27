@@ -7,12 +7,8 @@ import { createClient } from "@supabase/supabase-js";
  * invalid, so API routes can respond with a clean 401.
  */
 export const getUser = async (req?: Request) => {
-    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-    if (!url || !anonKey) {
-        return null;
-    }
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://nvjtypcbeoclrizscgik.supabase.co";
+    const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52anR5cGNiZW9jbHJpenNjZ2lrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcyOTk5ODksImV4cCI6MjEwMjg3NTk4OX0.0MUNhfhNBkX49IcX-lp05NYD1_rHiEKGzbv_woheRnM";
 
     // 1. Check Authorization Bearer header if passed
     if (req) {
