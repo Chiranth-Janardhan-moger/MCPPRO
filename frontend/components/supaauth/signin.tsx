@@ -116,15 +116,17 @@ export function SignInForm({ redirectTo }: { redirectTo: string }) {
     const supabase = createSupabaseBrowser();
     if (!isPending) {
       startTransition(async () => {
+        const cleanEmail = data.email.trim().toLowerCase();
+        const cleanPassword = data.password.trim();
         const { data: authData, error } = await supabase.auth.signInWithPassword({
-          email: data.email,
-          password: data.password,
+          email: cleanEmail,
+          password: cleanPassword,
         });
         if (error) {
-          toast.error(error.message);
+          toast.error(error.message || 'Invalid login credentials');
         } else {
           const user = authData?.user;
-          const email = (user?.email || data.email || '').toLowerCase().trim();
+          const email = (user?.email || cleanEmail || '').toLowerCase().trim();
           const isAdmin =
             email === 'chiranth@gmail.com' ||
             user?.app_metadata?.role === 'admin' ||
