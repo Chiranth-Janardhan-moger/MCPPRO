@@ -25,7 +25,15 @@ const TOOL_COMPONENTS: { [key: string]: React.FC<any> } = {
   querySupabase: ({ result }) => <SupabaseQuery data={result} />,
   generateChart: ({ result }) => <ChartDisplay {...result} />,
   tavilySearch: ({ result }) => <TavilySearchResult data={result} />,
-  ragRetrieval: ({ result }) => <RagResultDisplay chunks={result.chunks} />,
+  ragRetrieval: ({ result }) => <RagResultDisplay chunks={result?.chunks || result} />,
+  searchUploadedDocuments: ({ result }) => {
+    let parsed = result;
+    if (typeof result === 'string') {
+      try { parsed = JSON.parse(result); } catch {}
+    }
+    const chunks = parsed?.chunks || (Array.isArray(parsed) ? parsed : (parsed?.result ? [{ text: parsed.result, documentName: 'Knowledge Base' }] : []));
+    return <RagResultDisplay chunks={chunks} />;
+  },
   generateImage: ({ result }) => <ImageDisplay {...result} />,
 };
 
