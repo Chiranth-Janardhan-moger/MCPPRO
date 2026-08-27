@@ -24,7 +24,13 @@ import { FunctionSquareIcon } from "lucide-react";
 const TOOL_COMPONENTS: { [key: string]: React.FC<any> } = {
   querySupabase: ({ result }) => <SupabaseQuery data={result} />,
   generateChart: ({ result }) => <ChartDisplay {...result} />,
-  tavilySearch: ({ result }) => <TavilySearchResult data={result} />,
+  tavilySearch: ({ result }) => {
+    let parsed = result;
+    if (typeof result === 'string') {
+      try { parsed = JSON.parse(result); } catch {}
+    }
+    return <TavilySearchResult data={parsed} />;
+  },
   ragRetrieval: ({ result }) => <RagResultDisplay chunks={result?.chunks || result} />,
   searchUploadedDocuments: ({ result }) => {
     let parsed = result;

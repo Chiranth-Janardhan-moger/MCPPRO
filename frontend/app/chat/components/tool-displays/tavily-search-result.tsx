@@ -1,72 +1,101 @@
-    "use client";
+"use client";
 
-import { Image as ImageIcon } from 'lucide-react';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { TavilySearchResponse, TavilySearchResult as TavilySearchResultType } from '@/app/chat/types';
-import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+import React from 'react';
+import { Globe, ExternalLink, Sparkles } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 
-// The component for rendering the Tavily search results
-export function TavilySearchResult({ data }: { data: TavilySearchResponse }) {
-  if (!data || !data.results) {
-    return <p className="text-sm text-zinc-500">No search results found.</p>;
+interface TavilyResultItem {
+  title: string;
+  url: string;
+  content?: string;
+  score?: number;
+}
+
+export function TavilySearchResult({ data }: { data: any }) {
+  let parsed = data;
+  if (typeof data === 'string') {
+    try {
+      parsed = JSON.parse(data);
+    } catch {
+      parsed = null;
+    }
+  }
+
+  const results: TavilyResultItem[] = Array.isArray(parsed?.results)
+    ? parsed.results
+    : Array.isArray(parsed)
+    ? parsed
+    : [];
+
+  const answer: string | undefined = parsed?.answer;
+
+  if (results.length === 0 && !answer) {
+    return (
+      <div className="p-3 rounded-xl border border-border/70 bg-muted/20 text-xs text-muted-foreground flex items-center gap-2">
+        <Globe className="h-4 w-4 text-cyan-500" />
+        <span>Web search query executed.</span>
+      </div>
+    );
   }
 
   return (
-    <div className="space-y-4">
-      {data.answer && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Answer</CardTitle>
-          </CardHeader>
-          <CardContent className="text-sm text-zinc-700 dark:text-zinc-300">
-            <p>{data.answer}</p>
-          </CardContent>
-        </Card>
+    <div className="flex flex-col gap-2.5 my-2 w-full">
+      {answer && (
+        <div className="p-3 rounded-xl bg-cyan-50/70 dark:bg-cyan-950/30 border border-cyan-200/80 dark:border-cyan-800/60 text-xs text-cyan-950 dark:text-cyan-200 leading-relaxed shadow-xs">
+          <div className="flex items-center gap-1.5 font-semibold mb-1 text-cyan-800 dark:text-cyan-300">
+            <Sparkles className="h-3.5 w-3.5" />
+            <span>Search Direct Answer</span>
+          </div>
+          <p>{answer}</p>
+        </div>
       )}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Sources</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ScrollArea className="w-full whitespace-nowrap rounded-lg">
-            <div className="flex space-x-4 pb-4">
-              {data.results.map((result: TavilySearchResultType, index: number) => (
+
+      {results.length > 0 && (
+        <div className="space-y-1.5">
+          <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
+            <Globe className="h-3.5 w-3.5 text-cyan-600 dark:text-cyan-400" />
+            <span>Live Web Sources ({results.length})</span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {results.slice(0, 4).map((item, index) => {
+              let domain = '';
+              try {
+                domain = new URL(item.url).hostname.replace(/^www\./, '');
+              } catch {
+                domain = 'web';
+              }
+
+              return (
                 <a
                   key={index}
-                  href={result.url}
+                  href={item.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="rounded-lg border bg-zinc-50 hover:bg-zinc-100 dark:bg-zinc-900/50 dark:hover:bg-zinc-800/50 transition-colors w-64 flex-shrink-0 overflow-hidden"
+                  className="group flex flex-col justify-between p-2.5 rounded-xl border border-border/70 bg-card hover:bg-accent/40 hover:border-cyan-500/40 transition-all text-xs shadow-xs space-y-1.5"
                 >
-                  <div className="h-32 bg-zinc-200 dark:bg-zinc-800 relative">
-                    {data.images && data.images[index] ? (
-                      <img
-                        src={data.images[index].url}
-                        alt={result.title}
-                        className="h-full w-full object-cover"
-                      />
-                    ) : (
-                      <div className="h-full w-full bg-zinc-200 dark:bg-zinc-800 flex items-center justify-center">
-                        <ImageIcon className="size-8 text-zinc-400 dark:text-zinc-600" />
-                      </div>
-                    )}
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between gap-1">
+                      <Badge variant="outline" className="text-[10px] px-1.5 py-0 font-medium bg-cyan-50 dark:bg-cyan-950/40 text-cyan-700 dark:text-cyan-300 border-cyan-200 dark:border-cyan-800">
+                        {domain}
+                      </Badge>
+                      <ExternalLink className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </div>
+                    <p className="font-semibold text-foreground group-hover:text-cyan-600 dark:group-hover:text-cyan-400 line-clamp-1 transition-colors">
+                      {item.title}
+                    </p>
                   </div>
-                  <div className="p-3">
-                    <div className="font-semibold text-blue-600 dark:text-blue-400 whitespace-normal text-sm line-clamp-2">{result.title}</div>
-                    <div className="text-xs text-zinc-500 dark:text-zinc-400 truncate mt-1">{new URL(result.url).hostname}</div>
-                  </div>
+                  {item.content && (
+                    <p className="text-[11px] text-muted-foreground line-clamp-2 leading-relaxed">
+                      {item.content}
+                    </p>
+                  )}
                 </a>
-              ))}
-            </div>
-            <ScrollBar orientation="horizontal" />
-          </ScrollArea>
-        </CardContent>
-      </Card>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
