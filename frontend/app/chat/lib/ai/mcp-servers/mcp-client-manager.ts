@@ -65,7 +65,7 @@ function defaultServerConfigs(): Record<string, MCPServerConfig> {
     },
     research: {
       name: 'research',
-      url: process.env.MCP_RESEARCH_URL || 'http://127.0.0.1:8001/mcp',
+      url: process.env.MCP_RESEARCH_URL || (process.env.BACKEND_URL ? `${process.env.BACKEND_URL}/mcp` : 'https://mcppro.onrender.com/mcp'),
       transport: 'http',
       enabled: true,
       timeoutMs: DEFAULT_TIMEOUT_MS,
@@ -98,7 +98,7 @@ function defaultServerConfigs(): Record<string, MCPServerConfig> {
     },
     rag: {
       name: 'rag',
-      url: process.env.MCP_RAG_URL || 'http://127.0.0.1:8001/mcp',
+      url: process.env.MCP_RAG_URL || (process.env.BACKEND_URL ? `${process.env.BACKEND_URL}/mcp` : 'https://mcppro.onrender.com/mcp'),
       transport: 'http',
       enabled:
         !isBuildPhase && (process.env.MCP_ENABLE_RAG ?? 'true') === 'true',
