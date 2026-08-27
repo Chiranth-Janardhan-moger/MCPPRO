@@ -15,7 +15,17 @@ interface RagResultDisplayProps {
 
 export const RagResultDisplay: React.FC<RagResultDisplayProps> = ({ chunks }) => {
   const safeChunks: Chunk[] = Array.isArray(chunks)
-    ? chunks.map((c) => (typeof c === 'string' ? { text: c, documentName: 'Document' } : c))
+    ? chunks
+        .map((c) =>
+          typeof c === 'string'
+            ? { text: c, documentName: 'Document' }
+            : {
+                text: c.text || c.content || (typeof c === 'object' ? JSON.stringify(c) : ''),
+                documentName: c.documentName || c.metadata?.source || c.source || 'Knowledge Base Document',
+                score: c.score,
+              }
+        )
+        .filter((c) => c.text && c.text.trim().length > 0)
     : [];
 
   if (safeChunks.length === 0) {

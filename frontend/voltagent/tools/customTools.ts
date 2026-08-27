@@ -92,13 +92,20 @@ export const searchUploadedDocumentsTool = createTool({
   }) as any,
   execute: async (args: any) => {
     try {
-      const backendUrl = (process.env.BACKEND_URL || 'http://127.0.0.1:8000').trim().replace(/\/$/, '');
+      const backendUrl = (
+        process.env.BACKEND_URL ||
+        'https://mcppro.onrender.com'
+      ).trim().replace(/\/$/, '');
       const headers: Record<string, string> = {
         'Content-Type': 'application/json',
       };
       
       const settings = await getSystemSettings();
-      const token = settings.api_keys.backend_token || process.env.BACKEND_BEARER_TOKEN || process.env.BEARER_TOKEN;
+      const token =
+        settings.api_keys.backend_token ||
+        process.env.BACKEND_BEARER_TOKEN ||
+        process.env.BEARER_TOKEN ||
+        'y4s53fje0w7glvuc9mrpnbdzha21tqok6i8x';
       if (token) headers.Authorization = `Bearer ${token.trim()}`;
 
       const res = await fetch(`${backendUrl}/documents/query`, {
@@ -110,7 +117,8 @@ export const searchUploadedDocumentsTool = createTool({
 
       if (!res.ok) {
         return JSON.stringify({
-          result: "No matching document chunks found in Knowledge Base. Proceed with available information or real-time web search.",
+          result: "No matching document chunks found in Knowledge Base.",
+          chunks: [],
         });
       }
 
@@ -118,6 +126,7 @@ export const searchUploadedDocumentsTool = createTool({
       if (!data.chunks || data.chunks.length === 0) {
         return JSON.stringify({
           result: "No matching document chunks found in the Knowledge Base vector store.",
+          chunks: [],
           count: 0,
         });
       }
@@ -131,7 +140,13 @@ export const searchUploadedDocumentsTool = createTool({
 
       return JSON.stringify({
         status: "success",
-        matched_chunks: data.chunks.length,
+        count: data.chunks.length,
+        chunks: data.chunks.map((c: any) => ({
+          text: c.content,
+          documentName: c.metadata?.source || c.metadata?.document_name || 'Knowledge Base Document',
+          score: c.score,
+          page: c.metadata?.page,
+        })),
         document_context: formattedContext,
       });
     } catch (err: any) {
