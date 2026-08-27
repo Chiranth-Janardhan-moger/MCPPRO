@@ -165,10 +165,17 @@ export async function GET() {
           'xai',
           'openrouter',
         ] as ProviderId[]
-      ).map((p) => [p, isProviderConfigured(p)])
+      ).map((p) => {
+        const hasKey = Boolean(
+          isProviderConfigured(p) ||
+          settings.api_keys?.[p]?.trim() ||
+          (p === 'google' && settings.api_keys?.gemini?.trim())
+        );
+        return [p, hasKey];
+      })
     );
 
-    const defaultModel = settings.default_model || curated[0]?.id || 'gemini-2.5-flash';
+    const defaultModel = settings.default_model || curated[0]?.id || 'meta-llama/llama-3.3-70b-instruct';
 
     return Response.json({
       defaultModel,
