@@ -39,13 +39,17 @@ interface ContextRouterTabProps {
 }
 
 const CHEAP_ROUTER_MODELS = [
-  { provider: 'google', id: 'gemini-2.5-flash', label: 'Gemini 2.5 Flash (Recommended - Fast & Accurate)' },
-  { provider: 'google', id: 'gemini-3.6-flash', label: 'Gemini 3.6 Flash' },
-  { provider: 'google', id: 'gemini-2.0-flash', label: 'Gemini 2.0 Flash' },
-  { provider: 'google', id: 'gemini-1.5-flash', label: 'Gemini 1.5 Flash' },
+  { provider: 'google', id: 'gemini-2.5-flash', label: 'Gemini 2.5 Flash (Recommended - Google AI)' },
+  { provider: 'google', id: 'gemini-3.6-flash', label: 'Gemini 3.6 Flash (Google AI)' },
+  { provider: 'google', id: 'gemini-2.0-flash', label: 'Gemini 2.0 Flash (Google AI)' },
+  { provider: 'openrouter', id: 'google/gemini-2.0-flash-001', label: 'Gemini 2.0 Flash (OpenRouter)' },
+  { provider: 'openrouter', id: 'meta-llama/llama-3.3-70b-instruct', label: 'Llama 3.3 70B Instruct (OpenRouter)' },
+  { provider: 'openrouter', id: 'meta-llama/llama-3.1-8b-instruct:free', label: 'Llama 3.1 8B Free (OpenRouter)' },
+  { provider: 'openrouter', id: 'deepseek/deepseek-chat', label: 'DeepSeek V3 (OpenRouter)' },
+  { provider: 'openrouter', id: 'qwen/qwen-2.5-72b-instruct', label: 'Qwen 2.5 72B (OpenRouter)' },
   { provider: 'groq', id: 'llama-3.1-8b-instant', label: 'Llama 3.1 8B Instant (Groq)' },
+  { provider: 'groq', id: 'llama-3.3-70b-versatile', label: 'Llama 3.3 70B Versatile (Groq)' },
   { provider: 'openai', id: 'gpt-4o-mini', label: 'GPT-4o mini (OpenAI)' },
-  { provider: 'openrouter', id: 'deepseek/deepseek-chat:free', label: 'DeepSeek V3 Free (OpenRouter)' },
 ];
 
 export function ContextRouterTab({ settings, onUpdate }: ContextRouterTabProps) {
@@ -57,12 +61,14 @@ export function ContextRouterTab({ settings, onUpdate }: ContextRouterTabProps) 
     system_knowledge_description: settings?.routing?.system_knowledge_description || '',
   });
 
-  const [googleKey, setGoogleKey] = useState(settings?.api_keys?.google || settings?.api_keys?.gemini || settings?.routing?.api_key || '');
+  const [googleKey, setGoogleKey] = useState(settings?.api_keys?.google || settings?.api_keys?.gemini || (settings?.routing?.provider === 'google' ? settings?.routing?.api_key : '') || '');
+  const [openrouterKey, setOpenrouterKey] = useState(settings?.api_keys?.openrouter || (settings?.routing?.provider === 'openrouter' ? settings?.routing?.api_key : '') || '');
   const [tavilyKey, setTavilyKey] = useState(settings?.api_keys?.tavily || '');
   const [browserbaseKey, setBrowserbaseKey] = useState(settings?.api_keys?.browserbase_api_key || '');
   const [browserbaseProjectId, setBrowserbaseProjectId] = useState(settings?.api_keys?.browserbase_project_id || '');
 
   const [showGoogleKey, setShowGoogleKey] = useState(false);
+  const [showOpenRouterKey, setShowOpenRouterKey] = useState(false);
   const [showTavilyKey, setShowTavilyKey] = useState(false);
   const [showBbKey, setShowBbKey] = useState(false);
 
@@ -81,7 +87,8 @@ export function ContextRouterTab({ settings, onUpdate }: ContextRouterTabProps) 
         api_key: settings.routing?.api_key || '',
         system_knowledge_description: settings.routing?.system_knowledge_description || '',
       });
-      setGoogleKey(settings.api_keys?.google || settings.api_keys?.gemini || settings.routing?.api_key || '');
+      setGoogleKey(settings.api_keys?.google || settings.api_keys?.gemini || (settings?.routing?.provider === 'google' ? settings?.routing?.api_key : '') || '');
+      setOpenrouterKey(settings.api_keys?.openrouter || (settings?.routing?.provider === 'openrouter' ? settings?.routing?.api_key : '') || '');
       setTavilyKey(settings.api_keys?.tavily || '');
       setBrowserbaseKey(settings.api_keys?.browserbase_api_key || '');
       setBrowserbaseProjectId(settings.api_keys?.browserbase_project_id || '');
@@ -92,15 +99,18 @@ export function ContextRouterTab({ settings, onUpdate }: ContextRouterTabProps) 
     e.preventDefault();
     setIsSaving(true);
 
+    const activeRouterKey = routingState.provider === 'openrouter' ? openrouterKey : googleKey;
+
     const success = await onUpdate({
       routing: {
         ...routingState,
-        api_key: googleKey,
+        api_key: activeRouterKey,
       },
       api_keys: {
         ...(settings?.api_keys || {}),
         google: googleKey,
         gemini: googleKey,
+        openrouter: openrouterKey,
         tavily: tavilyKey,
         browserbase_api_key: browserbaseKey,
         browserbase_project_id: browserbaseProjectId,
@@ -201,7 +211,7 @@ export function ContextRouterTab({ settings, onUpdate }: ContextRouterTabProps) 
               <div className="space-y-1.5">
                 <Label className="text-xs font-semibold flex items-center gap-1.5 text-blue-600 dark:text-blue-400">
                   <Sparkles className="h-3.5 w-3.5" />
-                  Context Router Key (Google Gemini AIzaSy...)
+                  Router Google Key (AIzaSy...)
                 </Label>
                 <div className="flex gap-1.5">
                   <Input
@@ -213,7 +223,7 @@ export function ContextRouterTab({ settings, onUpdate }: ContextRouterTabProps) 
                     spellCheck={false}
                     value={googleKey}
                     onChange={(e) => setGoogleKey(e.target.value)}
-                    placeholder="Paste Google Gemini Key (AIzaSy...)"
+                    placeholder="AIzaSy..."
                     className="h-9 text-xs font-mono"
                   />
                   <Button
@@ -230,8 +240,40 @@ export function ContextRouterTab({ settings, onUpdate }: ContextRouterTabProps) 
               </div>
             </div>
 
-            {/* Row 2: Tavily Key & Browserbase Key */}
+            {/* Row 2: OpenRouter Key & Tavily Key */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* OpenRouter API Key */}
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold flex items-center gap-1.5 text-purple-600 dark:text-purple-400">
+                  <Cpu className="h-3.5 w-3.5" />
+                  Router OpenRouter Key (sk-or-...)
+                </Label>
+                <div className="flex gap-1.5">
+                  <Input
+                    name="cr_openrouter_key_nofill"
+                    type={showOpenRouterKey ? 'text' : 'password'}
+                    autoComplete="new-password"
+                    data-lpignore="true"
+                    data-1p-ignore="true"
+                    spellCheck={false}
+                    value={openrouterKey}
+                    onChange={(e) => setOpenrouterKey(e.target.value)}
+                    placeholder="sk-or-v1-..."
+                    className="h-9 text-xs font-mono"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-9 w-9 shrink-0"
+                    onClick={() => setShowOpenRouterKey(!showOpenRouterKey)}
+                    title={showOpenRouterKey ? 'Hide key' : 'Show key'}
+                  >
+                    {showOpenRouterKey ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                  </Button>
+                </div>
+              </div>
+
               {/* Tavily API Key */}
               <div className="space-y-1.5">
                 <Label className="text-xs font-semibold flex items-center gap-1.5">

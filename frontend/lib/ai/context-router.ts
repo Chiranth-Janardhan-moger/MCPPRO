@@ -102,7 +102,7 @@ export async function classifyQueryContext(
       languageModel = client(modelId);
     } else if (provider === 'openrouter') {
       const client = createOpenRouter({ apiKey });
-      languageModel = client.chat(modelId);
+      languageModel = typeof client === 'function' ? client(modelId) : ((client as any).chat ? (client as any).chat(modelId) : (client as any)(modelId));
     } else {
       const client = createGoogleGenerativeAI({ apiKey });
       languageModel = client('gemini-2.5-flash');
