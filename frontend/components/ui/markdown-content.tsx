@@ -1,6 +1,5 @@
 "use client";
 import { cn } from "@/lib/utils";
-import { marked } from "marked";
 import type * as React from "react";
 import { Suspense, isValidElement, memo, useMemo, useEffect, useState } from "react";
 import ReactMarkdown, { type Components } from "react-markdown";
@@ -306,8 +305,9 @@ const components: Partial<Components> = {
 };
 
 function parseMarkdownIntoBlocks(markdown: string): string[] {
-  const tokens = marked.lexer(markdown);
-  return tokens.map((token) => token.raw);
+  if (!markdown) return [];
+  const blocks = markdown.split(/\n\n+/);
+  return blocks.length > 0 ? blocks : [markdown];
 }
 
 interface MarkdownBlockProps {
