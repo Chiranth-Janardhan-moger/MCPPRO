@@ -142,9 +142,15 @@ async function discoverModels(): Promise<ModelInfo[]> {
  * provider listings (5-minute cache). Each entry carries capability and
  * pricing metadata where known.
  */
+import { getSystemSettings } from '@/lib/services/admin-settings';
+
 export async function GET() {
   try {
-    const [discovered, curated] = await Promise.all([discoverModels(), Promise.resolve(availableModels())]);
+    const [discovered, curated, settings] = await Promise.all([
+      discoverModels(),
+      Promise.resolve(availableModels()),
+      getSystemSettings(),
+    ]);
 
     const seen = new Set(curated.map((m) => `${m.provider}:${m.id}`));
     const extras = discovered.filter((m) => !seen.has(`${m.provider}:${m.id}`));
@@ -162,8 +168,10 @@ export async function GET() {
       ).map((p) => [p, isProviderConfigured(p)])
     );
 
+    const defaultModel = settings.default_model || curated[0]?.id || 'gemini-2.5-flash';
+
     return Response.json({
-      defaultModel: curated[0]?.id ?? null,
+      defaultModel,
       providers,
       models: [...curated, ...extras],
       discoveredCount: extras.length,
@@ -173,7 +181,7 @@ export async function GET() {
     console.error('[api/models] error:', error);
     // Never fail hard: fall back to the static catalog.
     return Response.json({
-      defaultModel: availableModels()[0]?.id ?? null,
+      defaultModel: availableModels()[0]?.id ?? 'gemini-2.5-flash',
       providers: {},
       models: availableModels(),
       discoveredCount: 0,

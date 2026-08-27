@@ -8,11 +8,6 @@ const nextConfig = {
       },
     ],
   },
-  serverExternalPackages: [
-    '@voltagent/core',
-    '@voltagent/vercel-ai',
-    '@voltagent/vercel-ui',
-  ],
 };
 
 export default nextConfig;

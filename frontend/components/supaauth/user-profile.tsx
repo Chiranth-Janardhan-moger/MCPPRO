@@ -20,10 +20,12 @@ import Avatar from "./avatar";
 import { ShieldCheck, LayoutDashboard } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function UserProfile() {
   const [isSignOut, startSignOut] = useTransition();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { data } = useUser();
   const { isAdmin } = useIsAdmin();
 
@@ -31,15 +33,23 @@ export default function UserProfile() {
     startSignOut(async () => {
       const supabase = createSupabaseBrowser();
       await supabase.auth.signOut();
+      queryClient.setQueryData(['admin-check'], {
+        authenticated: false,
+        isAdmin: false,
+        allowUserUploads: true,
+      });
+      queryClient.setQueryData(['user'], null);
+      queryClient.invalidateQueries({ queryKey: ['admin-check'] });
+      queryClient.invalidateQueries({ queryKey: ['user'] });
       router.push("/signin");
     });
   };
 
   return (
-    <div className="">
+    <div className="flex items-center justify-center">
       <Popover>
         <PopoverTrigger asChild>
-          <div className="cursor-pointer">
+          <div className="cursor-pointer flex items-center justify-center">
             <Avatar />
           </div>
         </PopoverTrigger>

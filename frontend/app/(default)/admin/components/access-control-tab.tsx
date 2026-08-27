@@ -35,6 +35,13 @@ export function AccessControlTab({ settings, onUpdate }: AccessControlTabProps) 
   const [newEmail, setNewEmail] = useState('');
   const [isSaving, setIsSaving] = useState(false);
 
+  React.useEffect(() => {
+    if (settings) {
+      setAllowUploads(settings.features?.allow_user_uploads ?? true);
+      setAdminEmails(settings.admin_emails || []);
+    }
+  }, [settings]);
+
   const handleAddEmail = () => {
     const clean = newEmail.trim().toLowerCase();
     if (!clean) return;

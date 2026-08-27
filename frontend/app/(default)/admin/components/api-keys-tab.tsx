@@ -66,6 +66,25 @@ export function ApiKeysTab({ settings, onUpdate }: ApiKeysTabProps) {
     Record<string, { success: boolean; message: string; latencyMs?: number }>
   >({});
 
+  // Synchronize state when settings arrive
+  React.useEffect(() => {
+    if (settings) {
+      setFormState({
+        default_model: settings.default_model || 'gemini-2.5-flash',
+        google: settings.api_keys?.google || settings.api_keys?.gemini || '',
+        openai: settings.api_keys?.openai || '',
+        anthropic: settings.api_keys?.anthropic || '',
+        groq: settings.api_keys?.groq || '',
+        xai: settings.api_keys?.xai || '',
+        openrouter: settings.api_keys?.openrouter || '',
+        tavily: settings.api_keys?.tavily || '',
+        browserbase_api_key: settings.api_keys?.browserbase_api_key || '',
+        browserbase_project_id: settings.api_keys?.browserbase_project_id || '',
+        backend_token: settings.api_keys?.backend_token || '',
+      });
+    }
+  }, [settings]);
+
   const toggleShow = (id: string) => {
     setShowKeys((prev) => ({ ...prev, [id]: !prev[id] }));
   };
@@ -112,6 +131,7 @@ export function ApiKeysTab({ settings, onUpdate }: ApiKeysTabProps) {
     const success = await onUpdate({
       default_model: formState.default_model,
       api_keys: {
+        ...(settings?.api_keys || {}),
         google: formState.google,
         gemini: formState.google,
         openai: formState.openai,
@@ -128,12 +148,19 @@ export function ApiKeysTab({ settings, onUpdate }: ApiKeysTabProps) {
 
     setIsSaving(false);
     if (success) {
-      toast.success('API keys saved');
+      toast.success('API keys saved successfully!');
     }
   };
 
   return (
-    <form onSubmit={handleSave} className="space-y-4">
+    <form
+      onSubmit={handleSave}
+      autoComplete="off"
+      data-lpignore="true"
+      data-1p-ignore="true"
+      data-form-type="other"
+      className="space-y-4"
+    >
       {/* Default Chat Model */}
       <Card className="bg-card border-border/70 shadow-xs">
         <CardHeader className="p-4 pb-2 flex flex-row items-center gap-2 space-y-0">
@@ -187,7 +214,12 @@ export function ApiKeysTab({ settings, onUpdate }: ApiKeysTabProps) {
                   </div>
                   <div className="flex gap-1.5">
                     <Input
-                      type={isShown ? 'text' : 'password'}
+                      name={`apikey_${item.id}_nofill`}
+                      type={isShown || item.id === 'browserbase_project_id' ? 'text' : 'password'}
+                      autoComplete="new-password"
+                      data-lpignore="true"
+                      data-1p-ignore="true"
+                      spellCheck={false}
                       value={formState[item.id] || ''}
                       onChange={(e) =>
                         setFormState((prev) => ({ ...prev, [item.id]: e.target.value }))
@@ -195,15 +227,17 @@ export function ApiKeysTab({ settings, onUpdate }: ApiKeysTabProps) {
                       placeholder={item.placeholder}
                       className="h-8 text-xs font-mono"
                     />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 shrink-0"
-                      onClick={() => toggleShow(item.id)}
-                    >
-                      {isShown ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
-                    </Button>
+                    {item.id !== 'browserbase_project_id' && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 shrink-0"
+                        onClick={() => toggleShow(item.id)}
+                      >
+                        {isShown ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                      </Button>
+                    )}
                     <Button
                       type="button"
                       variant="outline"

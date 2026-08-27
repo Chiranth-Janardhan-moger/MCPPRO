@@ -65,19 +65,50 @@ export const DEFAULT_SYSTEM_SETTINGS: SystemSettings = {
   admin_emails: [],
 };
 
+import fs from 'fs';
+import path from 'path';
+
 // In-memory cache to minimize Supabase roundtrips on high-frequency chat streams
 let cachedSettings: SystemSettings | null = null;
 let cacheExpiry = 0;
 const CACHE_TTL_MS = 30_000; // 30 seconds
 
+function getBackupFilePath(): string {
+  return path.join(process.cwd(), '.system_settings_cache.json');
+}
+
+function readLocalBackup(): Partial<SystemSettings> | null {
+  try {
+    const p = getBackupFilePath();
+    if (fs.existsSync(p)) {
+      const raw = fs.readFileSync(p, 'utf-8');
+      return JSON.parse(raw);
+    }
+  } catch {
+    // ignore
+  }
+  return null;
+}
+
+function writeLocalBackup(settings: SystemSettings) {
+  try {
+    const p = getBackupFilePath();
+    fs.writeFileSync(p, JSON.stringify(settings, null, 2), 'utf-8');
+  } catch {
+    // ignore
+  }
+}
+
 /**
- * Fetch system settings from Supabase with in-memory caching and resilient fallback.
+ * Fetch system settings with dual-layer fallback (Supabase -> Local persistent file -> Env defaults).
  */
 export async function getSystemSettings(forceRefresh = false): Promise<SystemSettings> {
   const now = Date.now();
   if (!forceRefresh && cachedSettings && now < cacheExpiry) {
     return cachedSettings;
   }
+
+  const localBackup = readLocalBackup();
 
   try {
     const supabase = supabaseAdmin();
@@ -87,59 +118,72 @@ export async function getSystemSettings(forceRefresh = false): Promise<SystemSet
       .eq('key', 'global')
       .maybeSingle();
 
-    if (error) {
-      // If table doesn't exist yet, return defaults merged with current env vars
-      console.warn('[admin-settings] Notice fetching settings (using defaults):', error.message);
-      return getDefaultWithEnv();
-    }
-
-    if (data?.value) {
+    if (!error && data?.value) {
       const merged: SystemSettings = {
         api_keys: {
           ...DEFAULT_SYSTEM_SETTINGS.api_keys,
+          ...(localBackup?.api_keys || {}),
           ...(data.value.api_keys || {}),
         },
-        default_model: data.value.default_model || DEFAULT_SYSTEM_SETTINGS.default_model,
+        default_model: data.value.default_model || localBackup?.default_model || DEFAULT_SYSTEM_SETTINGS.default_model,
         routing: {
           ...DEFAULT_SYSTEM_SETTINGS.routing,
+          ...(localBackup?.routing || {}),
           ...(data.value.routing || {}),
         },
         features: {
           ...DEFAULT_SYSTEM_SETTINGS.features,
+          ...(localBackup?.features || {}),
           ...(data.value.features || {}),
         },
         admin_emails: Array.isArray(data.value.admin_emails)
           ? data.value.admin_emails
+          : Array.isArray(localBackup?.admin_emails)
+          ? localBackup.admin_emails
           : DEFAULT_SYSTEM_SETTINGS.admin_emails,
-        updated_at: data.updated_at,
-        updated_by: data.updated_by,
+        updated_at: data.updated_at || new Date().toISOString(),
+        updated_by: data.updated_by || 'admin',
       };
 
+      writeLocalBackup(merged);
       cachedSettings = merged;
       cacheExpiry = now + CACHE_TTL_MS;
       return merged;
     }
 
-    // No row found: initialize default row
-    const defaults = getDefaultWithEnv();
-    try {
-      await supabase.from('app_system_settings').upsert({
-        key: 'global',
-        value: defaults,
-        updated_at: new Date().toISOString(),
-        updated_by: 'system_init',
-      });
-    } catch {
-      // Ignore if table not created
+    if (error) {
+      console.warn('[admin-settings] Notice fetching settings from Supabase:', error.message);
     }
-
-    cachedSettings = defaults;
-    cacheExpiry = now + CACHE_TTL_MS;
-    return defaults;
   } catch (err: any) {
-    console.warn('[admin-settings] Error loading settings, falling back to defaults:', err?.message);
-    return getDefaultWithEnv();
+    console.warn('[admin-settings] Error connecting to Supabase settings:', err?.message);
   }
+
+  // Resilient fallback to local backup merged with environment variables
+  const envDefaults = getDefaultWithEnv();
+  const fallbackSettings: SystemSettings = {
+    api_keys: {
+      ...envDefaults.api_keys,
+      ...(localBackup?.api_keys || {}),
+    },
+    default_model: localBackup?.default_model || envDefaults.default_model,
+    routing: {
+      ...envDefaults.routing,
+      ...(localBackup?.routing || {}),
+    },
+    features: {
+      ...envDefaults.features,
+      ...(localBackup?.features || {}),
+    },
+    admin_emails: Array.isArray(localBackup?.admin_emails) && localBackup.admin_emails.length > 0
+      ? localBackup.admin_emails
+      : envDefaults.admin_emails,
+    updated_at: localBackup?.updated_at || new Date().toISOString(),
+    updated_by: localBackup?.updated_by || 'local_cache',
+  };
+
+  cachedSettings = fallbackSettings;
+  cacheExpiry = now + CACHE_TTL_MS;
+  return fallbackSettings;
 }
 
 function getDefaultWithEnv(): SystemSettings {
@@ -164,7 +208,7 @@ function getDefaultWithEnv(): SystemSettings {
 }
 
 /**
- * Save updated system settings to Supabase and refresh cache.
+ * Save updated system settings to Supabase and persistent local cache.
  */
 export async function updateSystemSettings(
   updates: Partial<SystemSettings>,
@@ -191,16 +235,24 @@ export async function updateSystemSettings(
       updated_by: updatedByEmail || 'admin',
     };
 
-    const supabase = supabaseAdmin();
-    const { error } = await supabase.from('app_system_settings').upsert({
-      key: 'global',
-      value: updated,
-      updated_at: updated.updated_at,
-      updated_by: updated.updated_by,
-    });
+    // 1. Immediately persist to local disk backup
+    writeLocalBackup(updated);
 
-    if (error) {
-      throw new Error(`Database error saving settings: ${error.message}`);
+    // 2. Persist to Supabase database
+    try {
+      const supabase = supabaseAdmin();
+      const { error } = await supabase.from('app_system_settings').upsert({
+        key: 'global',
+        value: updated,
+        updated_at: updated.updated_at,
+        updated_by: updated.updated_by,
+      });
+
+      if (error) {
+        console.warn('[admin-settings] Supabase table notice:', error.message);
+      }
+    } catch (dbErr: any) {
+      console.warn('[admin-settings] Supabase upsert notice:', dbErr?.message);
     }
 
     cachedSettings = updated;

@@ -68,6 +68,8 @@ export function Chat({ id, initialMessages = [] }: ChatProps) {
   );
 
   const [selectedModel, setSelectedModel] = useState<string>('');
+  const activeModel = selectedModel || modelsData?.defaultModel || uiModels[0]?.value || 'gemini-2.5-flash';
+
   const { messages, input, setInput, handleInputChange, handleSubmit, status, data, append } = useChat({
     initialMessages,
     api: '/api/chat',
@@ -84,7 +86,7 @@ export function Chat({ id, initialMessages = [] }: ChatProps) {
       const customApiKeys = typeof window !== 'undefined' ? getUserApiKeys() : {};
       return {
         ...body,
-        selectedModel: selectedModel || modelsData?.defaultModel || undefined,
+        selectedModel: activeModel,
         customApiKeys,
       };
     },
@@ -105,7 +107,7 @@ export function Chat({ id, initialMessages = [] }: ChatProps) {
     // Append message to UI and send to API with active model and custom API keys
     append(userMessage, {
       body: {
-        selectedModel: selectedModel || modelsData?.defaultModel || undefined,
+        selectedModel: activeModel,
         customApiKeys: typeof window !== 'undefined' ? getUserApiKeys() : {},
       },
     });
@@ -138,11 +140,7 @@ export function Chat({ id, initialMessages = [] }: ChatProps) {
             isLoading={status === 'submitted'}
             models={uiModels}
             modelState={{
-              selectedModel:
-                selectedModel ||
-                modelsData?.defaultModel ||
-                uiModels[0]?.value ||
-                '',
+              selectedModel: activeModel,
               setSelectedModel,
             }}
           />

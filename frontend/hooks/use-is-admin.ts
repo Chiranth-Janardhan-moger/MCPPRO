@@ -1,6 +1,5 @@
-'use client';
-
-import { useQuery } from '@tanstack/react-query';
+import { useEffect } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { createSupabaseBrowser } from '@/lib/supabase/client';
 
 export interface AdminCheckState {
@@ -12,24 +11,59 @@ export interface AdminCheckState {
 }
 
 export function useIsAdmin() {
+  const queryClient = useQueryClient();
+
+  // Listen to Supabase auth state changes in real-time
+  useEffect(() => {
+    const supabase = createSupabaseBrowser();
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (
+        event === 'SIGNED_IN' ||
+        event === 'SIGNED_OUT' ||
+        event === 'TOKEN_REFRESHED' ||
+        event === 'USER_UPDATED' ||
+        event === 'INITIAL_SESSION'
+      ) {
+        queryClient.invalidateQueries({ queryKey: ['admin-check'] });
+        queryClient.invalidateQueries({ queryKey: ['user'] });
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [queryClient]);
+
   const { data, isLoading, error, refetch } = useQuery<AdminCheckState>({
     queryKey: ['admin-check'],
     queryFn: async () => {
       // 1. Direct local Supabase auth check (instant on client)
       const supabase = createSupabaseBrowser();
-      const { data: authData } = await supabase.auth.getUser();
-      const user = authData?.user;
+      const { data: sessionData } = await supabase.auth.getSession();
+      const sessionUser = sessionData?.session?.user;
+
+      let user: any = sessionUser;
+      if (!user) {
+        const { data: authData } = await supabase.auth.getUser();
+        user = authData?.user;
+      }
 
       const email = (user?.email || '').toLowerCase().trim();
       const isClientAdmin =
         email === 'chiranth@gmail.com' ||
         user?.app_metadata?.role === 'admin' ||
-        user?.user_metadata?.role === 'admin';
+        user?.user_metadata?.role === 'admin' ||
+        user?.user_metadata?.is_admin === true;
 
-      // 2. Server verification endpoint
+      // 2. Server verification endpoint with no-cache headers
       let serverData: any = {};
       try {
-        const res = await fetch('/api/admin/check');
+        const res = await fetch('/api/admin/check', {
+          cache: 'no-store',
+          headers: { 'Cache-Control': 'no-cache' },
+        });
         if (res.ok) {
           serverData = await res.json();
         }
@@ -49,7 +83,7 @@ export function useIsAdmin() {
         allowUserUploads: serverData?.allowUserUploads ?? true,
       };
     },
-    staleTime: 30 * 1000,
+    staleTime: 5 * 1000,
   });
 
   return {

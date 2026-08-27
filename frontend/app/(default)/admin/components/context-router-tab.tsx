@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -28,6 +28,8 @@ import {
   Key,
   Save,
   CheckCircle2,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
 import { SystemSettings, RouterConfig } from '@/lib/services/admin-settings';
 
@@ -55,22 +57,46 @@ export function ContextRouterTab({ settings, onUpdate }: ContextRouterTabProps) 
     system_knowledge_description: settings?.routing?.system_knowledge_description || '',
   });
 
-  const [googleKey, setGoogleKey] = useState(settings?.api_keys?.google || settings?.api_keys?.gemini || '');
+  const [googleKey, setGoogleKey] = useState(settings?.api_keys?.google || settings?.api_keys?.gemini || settings?.routing?.api_key || '');
   const [tavilyKey, setTavilyKey] = useState(settings?.api_keys?.tavily || '');
   const [browserbaseKey, setBrowserbaseKey] = useState(settings?.api_keys?.browserbase_api_key || '');
   const [browserbaseProjectId, setBrowserbaseProjectId] = useState(settings?.api_keys?.browserbase_project_id || '');
+
+  const [showGoogleKey, setShowGoogleKey] = useState(false);
+  const [showTavilyKey, setShowTavilyKey] = useState(false);
+  const [showBbKey, setShowBbKey] = useState(false);
 
   const [isSaving, setIsSaving] = useState(false);
   const [testQuery, setTestQuery] = useState('What are the top tech headlines today?');
   const [isEvaluating, setIsEvaluating] = useState(false);
   const [decisionResult, setDecisionResult] = useState<any | null>(null);
 
+  // Synchronize local state whenever settings are loaded or updated
+  useEffect(() => {
+    if (settings) {
+      setRoutingState({
+        enabled: settings.routing?.enabled ?? true,
+        provider: settings.routing?.provider || 'google',
+        model: settings.routing?.model || 'gemini-2.5-flash',
+        api_key: settings.routing?.api_key || '',
+        system_knowledge_description: settings.routing?.system_knowledge_description || '',
+      });
+      setGoogleKey(settings.api_keys?.google || settings.api_keys?.gemini || settings.routing?.api_key || '');
+      setTavilyKey(settings.api_keys?.tavily || '');
+      setBrowserbaseKey(settings.api_keys?.browserbase_api_key || '');
+      setBrowserbaseProjectId(settings.api_keys?.browserbase_project_id || '');
+    }
+  }, [settings]);
+
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
 
     const success = await onUpdate({
-      routing: routingState,
+      routing: {
+        ...routingState,
+        api_key: googleKey,
+      },
       api_keys: {
         ...(settings?.api_keys || {}),
         google: googleKey,
@@ -111,7 +137,14 @@ export function ContextRouterTab({ settings, onUpdate }: ContextRouterTabProps) 
   return (
     <div className="space-y-4">
       {/* Context-Aware Router Form */}
-      <form onSubmit={handleSave} className="space-y-4">
+      <form
+        onSubmit={handleSave}
+        autoComplete="off"
+        data-lpignore="true"
+        data-1p-ignore="true"
+        data-form-type="other"
+        className="space-y-4"
+      >
         <Card className="bg-card border-border/80 shadow-xs">
           <CardHeader className="p-4 pb-3 flex flex-row items-center justify-between space-y-0 border-b">
             <div className="flex items-center gap-2">
@@ -170,13 +203,30 @@ export function ContextRouterTab({ settings, onUpdate }: ContextRouterTabProps) 
                   <Sparkles className="h-3.5 w-3.5" />
                   Context Router Key (Google Gemini AIzaSy...)
                 </Label>
-                <Input
-                  type="password"
-                  value={googleKey}
-                  onChange={(e) => setGoogleKey(e.target.value)}
-                  placeholder="Paste Google Gemini Key (AIzaSy...)"
-                  className="h-9 text-xs font-mono"
-                />
+                <div className="flex gap-1.5">
+                  <Input
+                    name="cr_google_gemini_key_nofill"
+                    type={showGoogleKey ? 'text' : 'password'}
+                    autoComplete="new-password"
+                    data-lpignore="true"
+                    data-1p-ignore="true"
+                    spellCheck={false}
+                    value={googleKey}
+                    onChange={(e) => setGoogleKey(e.target.value)}
+                    placeholder="Paste Google Gemini Key (AIzaSy...)"
+                    className="h-9 text-xs font-mono"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-9 w-9 shrink-0"
+                    onClick={() => setShowGoogleKey(!showGoogleKey)}
+                    title={showGoogleKey ? 'Hide key' : 'Show key'}
+                  >
+                    {showGoogleKey ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                  </Button>
+                </div>
               </div>
             </div>
 
@@ -188,13 +238,30 @@ export function ContextRouterTab({ settings, onUpdate }: ContextRouterTabProps) 
                   <Globe className="h-3.5 w-3.5 text-sky-500" />
                   Tavily API Key (Live Web Search)
                 </Label>
-                <Input
-                  type="password"
-                  value={tavilyKey}
-                  onChange={(e) => setTavilyKey(e.target.value)}
-                  placeholder="tvly-..."
-                  className="h-9 text-xs font-mono"
-                />
+                <div className="flex gap-1.5">
+                  <Input
+                    name="cr_tavily_key_nofill"
+                    type={showTavilyKey ? 'text' : 'password'}
+                    autoComplete="new-password"
+                    data-lpignore="true"
+                    data-1p-ignore="true"
+                    spellCheck={false}
+                    value={tavilyKey}
+                    onChange={(e) => setTavilyKey(e.target.value)}
+                    placeholder="tvly-..."
+                    className="h-9 text-xs font-mono"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-9 w-9 shrink-0"
+                    onClick={() => setShowTavilyKey(!showTavilyKey)}
+                    title={showTavilyKey ? 'Hide key' : 'Show key'}
+                  >
+                    {showTavilyKey ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                  </Button>
+                </div>
               </div>
 
               {/* Browserbase API Key */}
@@ -203,13 +270,30 @@ export function ContextRouterTab({ settings, onUpdate }: ContextRouterTabProps) 
                   <Laptop className="h-3.5 w-3.5 text-indigo-500" />
                   Browserbase API Key (App Opening & Cloud Browser)
                 </Label>
-                <Input
-                  type="password"
-                  value={browserbaseKey}
-                  onChange={(e) => setBrowserbaseKey(e.target.value)}
-                  placeholder="bb_live_..."
-                  className="h-9 text-xs font-mono"
-                />
+                <div className="flex gap-1.5">
+                  <Input
+                    name="cr_bb_api_key_nofill"
+                    type={showBbKey ? 'text' : 'password'}
+                    autoComplete="new-password"
+                    data-lpignore="true"
+                    data-1p-ignore="true"
+                    spellCheck={false}
+                    value={browserbaseKey}
+                    onChange={(e) => setBrowserbaseKey(e.target.value)}
+                    placeholder="bb_live_..."
+                    className="h-9 text-xs font-mono"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-9 w-9 shrink-0"
+                    onClick={() => setShowBbKey(!showBbKey)}
+                    title={showBbKey ? 'Hide key' : 'Show key'}
+                  >
+                    {showBbKey ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                  </Button>
+                </div>
               </div>
             </div>
 
@@ -218,7 +302,11 @@ export function ContextRouterTab({ settings, onUpdate }: ContextRouterTabProps) 
               <div className="space-y-1.5">
                 <Label className="text-xs font-semibold">Browserbase Project ID</Label>
                 <Input
+                  name="cr_bb_proj_id_nofill"
                   type="text"
+                  autoComplete="off"
+                  data-lpignore="true"
+                  data-1p-ignore="true"
                   value={browserbaseProjectId}
                   onChange={(e) => setBrowserbaseProjectId(e.target.value)}
                   placeholder="proj_..."
@@ -229,6 +317,11 @@ export function ContextRouterTab({ settings, onUpdate }: ContextRouterTabProps) 
               <div className="space-y-1.5">
                 <Label className="text-xs font-semibold">Knowledge Scope Hint (Optional)</Label>
                 <Input
+                  name="cr_kb_hint_nofill"
+                  type="text"
+                  autoComplete="off"
+                  data-lpignore="true"
+                  data-1p-ignore="true"
                   value={routingState.system_knowledge_description || ''}
                   onChange={(e) =>
                     setRoutingState((prev) => ({

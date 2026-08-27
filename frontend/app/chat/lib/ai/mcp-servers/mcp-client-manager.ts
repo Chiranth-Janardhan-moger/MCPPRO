@@ -26,6 +26,7 @@ export interface MCPClientManager {
   addServerConfig(config: MCPServerConfig): void;
   removeServerConfig(serverName: string): void;
   getServerConfig(serverName: string): MCPServerConfig | undefined;
+  getAllConfigs(): Record<string, MCPServerConfig>;
   /** Close every client connection and reset state. */
   shutdown(): Promise<void>;
 }
@@ -50,6 +51,43 @@ const isBuildPhase =
  */
 function defaultServerConfigs(): Record<string, MCPServerConfig> {
   const configs: Record<string, MCPServerConfig> = {
+    github: {
+      name: 'github',
+      command: 'npx',
+      args: ['-y', '@modelcontextprotocol/server-github'],
+      transport: 'stdio',
+      enabled: Boolean(process.env.GITHUB_PERSONAL_ACCESS_TOKEN || process.env.GITHUB_TOKEN),
+      env: {
+        GITHUB_PERSONAL_ACCESS_TOKEN: process.env.GITHUB_PERSONAL_ACCESS_TOKEN || process.env.GITHUB_TOKEN || '',
+      },
+      timeoutMs: DEFAULT_TIMEOUT_MS,
+      reconnect: true,
+    },
+    research: {
+      name: 'research',
+      url: process.env.MCP_RESEARCH_URL || 'http://127.0.0.1:8001/mcp',
+      transport: 'http',
+      enabled: true,
+      timeoutMs: DEFAULT_TIMEOUT_MS,
+      reconnect: true,
+    },
+    database: {
+      name: 'database',
+      command: 'npx',
+      args: ['-y', '@modelcontextprotocol/server-postgres', process.env.DATABASE_URL || 'postgresql://postgres:postgres@127.0.0.1:54322/postgres'],
+      transport: 'stdio',
+      enabled: Boolean(process.env.DATABASE_URL || process.env.POSTGRES_URL),
+      timeoutMs: DEFAULT_TIMEOUT_MS,
+      reconnect: true,
+    },
+    browser: {
+      name: 'browser',
+      url: process.env.MCP_BROWSER_URL || 'http://127.0.0.1:8002/mcp',
+      transport: 'http',
+      enabled: Boolean(process.env.BROWSERBASE_API_KEY || process.env.MCP_ENABLE_COMPUTER === 'true'),
+      timeoutMs: DEFAULT_TIMEOUT_MS,
+      reconnect: true,
+    },
     computer: {
       name: 'computer',
       url: process.env.MCP_COMPUTER_URL || 'http://127.0.0.1:8002/mcp',
@@ -331,17 +369,19 @@ function createMCPClientManager(): MCPClientManager {
       return serverConfigs[serverName];
     },
 
+    getAllConfigs(): Record<string, MCPServerConfig> {
+      return { ...serverConfigs };
+    },
+
     async shutdown(): Promise<void> {
-      for (const [, state] of clients) {
+      for (const [name, state] of clients.entries()) {
         try {
-          await state.client?.close?.();
-        } catch {
-          // best-effort close
+          if (state.client?.close) {
+            await state.client.close();
+          }
+        } catch (err) {
+          console.warn(`[MCP] Error closing client ${name}:`, err);
         }
-        state.client = null;
-        state.tools = {};
-        state.initialized = false;
-        state.initPromise = null;
       }
       clients.clear();
       globalInitPromise = null;

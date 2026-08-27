@@ -24,7 +24,7 @@ Your objective is to determine the optimal execution path for a user's prompt by
    - Choose this when the user is asking about uploaded files, documents, internal corporate policies, reports, PDFs, spreadsheets, notes, guidelines, specs, documentation, or mentions "the file", "the document", "in our data", "contract", "handbook", or subjects related to the indexed knowledge base.
 
 2. "ONLINE" (Real-Time Web Search via Tavily):
-   - Choose this when the user requires live, real-time, or breaking internet information (e.g. current news, weather, stock prices, latest software versions, sports scores, live stats, current date events, or external URLs/websites).
+   - Choose this whenever the user asks for real-time information, current weather, forecasts, temperatures, today's news, live events, sports scores, live stock prices, latest software versions, or internet lookups (e.g. "weather in Bangalore", "today's headlines", "price of bitcoin").
 
 3. "DIRECT" (Direct Frontier LLM):
    - Choose this for general coding, programming, debugging, algorithms, mathematics, creative writing, formatting, roleplay, general knowledge facts, logical reasoning, and general chat that requires no external or document lookup.

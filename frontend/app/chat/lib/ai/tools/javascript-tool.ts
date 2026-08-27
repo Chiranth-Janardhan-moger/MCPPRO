@@ -121,7 +121,7 @@ export const javaScriptTool = tool({
     code: z.string().describe('The JavaScript code to execute. Should be complete and self-contained. Use console.log() to output results.'),
     filename: z.string().optional().describe('Optional filename for the JavaScript file'),
     description: z.string().optional().describe('Description of what the code does'),
-  }),
+  }) as any,
   execute: async ({ code, filename, description }) => {
     try {
       const result = await executeJavaScriptCode(code, filename);

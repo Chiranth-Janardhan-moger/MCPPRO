@@ -32,7 +32,7 @@ const Avatar = ({ className, size = "md" }: AvatarProps) => {
     >
       {!imageUrl ? (
         <div className="w-full h-full rounded-full bg-gradient-to-br from-blue-600 via-sky-500 to-indigo-600 text-white flex items-center justify-center ring-2 ring-background border border-white/20 hover:scale-105 transition-transform">
-          <span>{firstLetter}</span>
+          <span className="leading-none select-none flex items-center justify-center">{firstLetter}</span>
         </div>
       ) : (
         <Image

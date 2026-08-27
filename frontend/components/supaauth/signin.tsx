@@ -23,6 +23,7 @@ import { toast } from "sonner";
 import { createSupabaseBrowser } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
+import { useQueryClient } from "@tanstack/react-query";
 
 const FormSchema = z.object({
   email: z.string().email({
@@ -101,6 +102,7 @@ export function SignInForm({ redirectTo }: { redirectTo: string }) {
   const [passwordReveal, setPasswordReveal] = useState(false);
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
+  const queryClient = useQueryClient();
 
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
@@ -128,6 +130,20 @@ export function SignInForm({ redirectTo }: { redirectTo: string }) {
             user?.app_metadata?.role === 'admin' ||
             user?.user_metadata?.role === 'admin' ||
             user?.user_metadata?.is_admin === true;
+
+          // Prime and invalidate React Query cache immediately so destination pages have instant state
+          if (user) {
+            queryClient.setQueryData(['user'], user);
+            queryClient.setQueryData(['admin-check'], {
+              authenticated: true,
+              isAdmin,
+              userEmail: email,
+              userId: user.id,
+              allowUserUploads: true,
+            });
+          }
+          queryClient.invalidateQueries({ queryKey: ['admin-check'] });
+          queryClient.invalidateQueries({ queryKey: ['user'] });
 
           toast.success(isAdmin ? 'Welcome, Administrator!' : 'Signed in successfully!');
           if (isAdmin) {

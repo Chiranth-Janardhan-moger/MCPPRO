@@ -83,6 +83,13 @@ export function NavProfile({ user }: { user: any }) {
               </DropdownMenuItem>
             )}
 
+            <DropdownMenuItem asChild className="cursor-pointer">
+              <Link href="/mcp" className="flex items-center gap-2">
+                <ShieldCheck className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                MCP Connections
+              </Link>
+            </DropdownMenuItem>
+
             <DropdownMenuItem
               className="cursor-pointer"
               onClick={() => document.getElementById("manage-profile")?.click()}

@@ -10,5 +10,24 @@
     "dev": "npm --prefix frontend run dev",
     "start": "npm --prefix frontend run start",
     "typecheck": "npm --prefix frontend run typecheck"
+  },
+  "allowScripts": {
+    "@astryxdesign/core@0.4.5": true,
+    "@astryxdesign/cli@0.4.5": true
+  },
+  "overrides": {
+    "uuid": "^11.1.1",
+    "prismjs": "^1.30.0",
+    "jsondiffpatch": "^0.7.6",
+    "@ai-sdk/provider-utils": ">=3.0.98",
+    "brace-expansion": "^2.1.4",
+    "axios": "^1.17.1",
+    "form-data": "^4.0.6",
+    "fast-uri": "^3.1.5",
+    "hono": "^4.12.34",
+    "body-parser": "^2.2.3"
+  },
+  "dependencies": {
+    "zod": "4.4.3"
   }
 }

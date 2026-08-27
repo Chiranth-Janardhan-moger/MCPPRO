@@ -138,7 +138,7 @@ export const createCodeFileTool = tool({
     filename: z.string().describe('The name of the file to create (e.g., "solution.js", "answer.py")'),
     targetFolder: z.string().describe('The target folder path where the file should be saved (e.g., "ROUND_6", "solutions")'),
     cliCommands: z.array(z.string()).optional().describe('Optional array of CLI commands to execute from the root directory (e.g., ["git add .", "git commit -m message", "git push"])'),
-  }),
+  }) as any,
   execute: async ({ code, filename, targetFolder, cliCommands = [] }) => {
     const result = await createFileAndExecuteCli(code, filename, targetFolder, cliCommands);
     

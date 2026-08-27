@@ -17,6 +17,11 @@ const sidebarConfig: SidebarConfig = {
           icon: Icons.brainCircuit
         },
         {
+          title: "MCP Connections",
+          href: "/mcp",
+          icon: Icons.blocks
+        },
+        {
           title: "Admin Panel",
           href: "/admin",
           icon: Icons.shield

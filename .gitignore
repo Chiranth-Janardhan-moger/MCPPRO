@@ -116,3 +116,5 @@ Thumbs.db
 .opencode/
 vector_store_cache/
 frontend/test-results/
+.system_settings_cache.json
+frontend/.system_settings_cache.json
