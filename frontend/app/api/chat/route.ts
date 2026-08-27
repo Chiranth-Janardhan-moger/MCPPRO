@@ -1,7 +1,7 @@
 import { streamText, createDataStreamResponse } from "ai";
 import { getUser } from '@/app/chat/hooks/get-user';
 import { runWithRequestContext } from '@/lib/request-context';
-import { getModelInfo, isProviderConfigured } from '@/lib/ai/models';
+import { getModelInfo, isProviderConfigured, resolveModel } from '@/lib/ai/models';
 import { getLanguageModel } from '@/app/chat/lib/ai/providers/providers';
 import { getGeneralAgentPrompt } from '@/app/chat/lib/ai/prompts/general-agent';
 import { getMCPTools } from '@/voltagent/tools/mcpTools';
@@ -39,25 +39,45 @@ export async function POST(req: Request) {
     }
 
     const settings = await getSystemSettings();
-    const selectedModel: string =
+    let selectedModel: string =
       typeof body?.selectedModel === 'string' && body.selectedModel.trim()
         ? body.selectedModel.trim()
-        : settings.default_model || 'gemini-3.6-flash';
+        : settings.default_model || 'meta-llama/llama-3.3-70b-instruct';
 
     const customApiKeys: Record<string, string> =
       typeof body?.customApiKeys === 'object' && body.customApiKeys !== null
         ? body.customApiKeys
         : {};
 
-    const modelInfo = getModelInfo(selectedModel);
-    const provider = modelInfo?.provider;
+    let modelInfo = getModelInfo(selectedModel) || resolveModel(selectedModel);
+    let provider = modelInfo?.provider;
+
+    const hasGoogleKey = Boolean(
+      customApiKeys.google?.trim() ||
+      settings.api_keys.google?.trim() ||
+      settings.api_keys.gemini?.trim() ||
+      isProviderConfigured('google')
+    );
+    const hasOpenRouterKey = Boolean(
+      customApiKeys.openrouter?.trim() ||
+      settings.api_keys.openrouter?.trim() ||
+      isProviderConfigured('openrouter')
+    );
+
+    // If Google model selected but no Google key exists while OpenRouter IS configured, fallback to OpenRouter
+    if (provider === 'google' && !hasGoogleKey && hasOpenRouterKey) {
+      selectedModel = 'meta-llama/llama-3.3-70b-instruct';
+      modelInfo = getModelInfo(selectedModel) || resolveModel(selectedModel);
+      provider = modelInfo?.provider;
+    }
 
     // Check if provider has a key in customKeys, system settings, or env
     const hasKey =
       !provider ||
       Boolean(customApiKeys[provider]?.trim()) ||
       Boolean(settings.api_keys[provider]?.trim()) ||
-      (provider === 'google' && Boolean(settings.api_keys.gemini?.trim())) ||
+      (provider === 'google' && hasGoogleKey) ||
+      (provider === 'openrouter' && hasOpenRouterKey) ||
       isProviderConfigured(provider);
 
     if (modelInfo && !hasKey) {
@@ -233,6 +253,10 @@ export async function POST(req: Request) {
                   error: error instanceof Error ? error.message : "Unknown error",
                 },
               });
+
+              dataStream.write(
+                `0:${JSON.stringify(`\n\n⚠️ **Model Execution Notice:** ${error instanceof Error ? error.message : String(error)}\n\nPlease ensure your API keys are configured in **Admin Console -> API Keys & Providers**.`)}\n`
+              );
             }
           },
           onError: (error) =>

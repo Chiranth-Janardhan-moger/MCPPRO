@@ -60,11 +60,11 @@ function getClientForProvider(provider: ProviderId, customKey?: string, systemKe
 
 function instantiate(info: ModelInfo, customKeys?: Record<string, string>, systemKeys?: Record<string, string>): LanguageModelV1 {
   const customKey = customKeys?.[info.provider];
-  const client = getClientForProvider(info.provider, customKey, systemKeys);
+  const client: any = getClientForProvider(info.provider, customKey, systemKeys);
   if (info.provider === 'openrouter') {
-    return (client as ReturnType<typeof createOpenRouter>).chat(info.id) as unknown as LanguageModelV1;
+    return (typeof client === 'function' ? client(info.id) : client.chat(info.id)) as unknown as LanguageModelV1;
   }
-  return (client as any)(info.id);
+  return client(info.id);
 }
 
 /**
