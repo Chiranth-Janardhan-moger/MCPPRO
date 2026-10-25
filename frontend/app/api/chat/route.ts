@@ -89,9 +89,17 @@ export async function POST(req: Request) {
       );
     }
 
-    // Latest user message
+    // Latest user message (safely extract text whether string or multipart array)
     const lastUserMessage = [...messages].reverse().find((m) => m.role === 'user');
-    const userQuery = typeof lastUserMessage?.content === 'string' ? lastUserMessage.content : '';
+    let userQuery = '';
+    if (typeof lastUserMessage?.content === 'string') {
+      userQuery = lastUserMessage.content.trim();
+    } else if (Array.isArray(lastUserMessage?.content)) {
+      userQuery = (lastUserMessage.content as any[])
+        .map((p) => (typeof p === 'string' ? p : p?.text || ''))
+        .join(' ')
+        .trim();
+    }
 
     const reqContext = {
       userId: user.id,
@@ -169,13 +177,14 @@ export async function POST(req: Request) {
                 ...mcpTools,
               };
 
-              // Inject context router instructions based on classification
+              // Inject context router instructions based on classification (guard against empty refined queries)
               let systemPrompt = getGeneralAgentPrompt();
               if (routerDecision) {
-                if (routerDecision.route === 'RAG') {
-                  systemPrompt += `\n\n[CONTEXT ROUTER GUIDANCE: The query intent was classified as RAG (${Math.round(routerDecision.confidence * 100)}% confidence). You MUST call searchUploadedDocuments with query "${routerDecision.refinedQuery}" to retrieve the relevant document context before answering.]`;
-                } else if (routerDecision.route === 'ONLINE') {
-                  systemPrompt += `\n\n[CONTEXT ROUTER GUIDANCE: The query intent was classified as ONLINE web search (${Math.round(routerDecision.confidence * 100)}% confidence). You MUST call tavilySearch with query "${routerDecision.refinedQuery}" to fetch current internet data before answering.]`;
+                const targetQuery = (routerDecision.refinedQuery || userQuery || '').trim();
+                if (routerDecision.route === 'RAG' && targetQuery) {
+                  systemPrompt += `\n\n[CONTEXT ROUTER GUIDANCE: The query intent was classified as RAG (${Math.round(routerDecision.confidence * 100)}% confidence). You MUST call searchUploadedDocuments with query "${targetQuery}" to retrieve the relevant document context before answering.]`;
+                } else if (routerDecision.route === 'ONLINE' && targetQuery) {
+                  systemPrompt += `\n\n[CONTEXT ROUTER GUIDANCE: The query intent was classified as ONLINE web search (${Math.round(routerDecision.confidence * 100)}% confidence). You MUST call tavilySearch with query "${targetQuery}" to fetch current internet data before answering.]`;
                 }
               }
 

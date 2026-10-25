@@ -50,13 +50,26 @@ export async function classifyQueryContext(
   const settings = await getSystemSettings();
   const routing = settings.routing;
 
+  const cleanQuery = (query || '').trim();
+  if (!cleanQuery) {
+    return {
+      route: 'DIRECT',
+      confidence: 1.0,
+      reasoning: 'Direct conversational prompt.',
+      refinedQuery: '',
+      latencyMs: 0,
+      modelUsed: 'none',
+      providerUsed: 'none',
+    };
+  }
+
   // If routing is disabled, return direct immediately
   if (!routing.enabled) {
     return {
       route: 'DIRECT',
       confidence: 1.0,
       reasoning: 'Context routing is disabled by administrator.',
-      refinedQuery: query,
+      refinedQuery: cleanQuery,
       latencyMs: 0,
       modelUsed: 'none',
       providerUsed: 'none',
@@ -161,7 +174,7 @@ Decision JSON:`;
         route,
         confidence: typeof parsed.confidence === 'number' ? Math.min(Math.max(parsed.confidence, 0.1), 1.0) : 0.9,
         reasoning: parsed.reasoning || `Classified as ${route}`,
-        refinedQuery: parsed.refinedQuery || parsed.refined_query || query,
+        refinedQuery: (parsed.refinedQuery || parsed.refined_query || cleanQuery || '').trim() || cleanQuery,
         latencyMs,
         modelUsed: modelId,
         providerUsed: provider,
@@ -176,7 +189,7 @@ Decision JSON:`;
         route: fallbackRoute,
         confidence: 0.75,
         reasoning: 'Extracted from router classification output.',
-        refinedQuery: query,
+        refinedQuery: cleanQuery,
         latencyMs,
         modelUsed: modelId,
         providerUsed: provider,
@@ -188,7 +201,7 @@ Decision JSON:`;
       route: 'DIRECT',
       confidence: 0.5,
       reasoning: `Router failed: ${err.message}`,
-      refinedQuery: query,
+      refinedQuery: cleanQuery,
       latencyMs: Date.now() - startTime,
       modelUsed: modelId,
       providerUsed: provider,

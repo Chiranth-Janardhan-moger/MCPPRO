@@ -28,14 +28,15 @@ class MCPProRequest(BaseModel):
     def questions_valid(cls, v: List[str]) -> List[str]:
         if not v:
             raise ValueError("at least one question is required")
-        if len(v) > MAX_QUESTIONS:
+        cleaned = [q.strip() for q in v if q and q.strip()]
+        if not cleaned:
+            raise ValueError("questions must be non-empty strings")
+        if len(cleaned) > MAX_QUESTIONS:
             raise ValueError(f"at most {MAX_QUESTIONS} questions allowed")
-        for q in v:
-            if not q.strip():
-                raise ValueError("questions must be non-empty strings")
+        for q in cleaned:
             if len(q) > MAX_QUESTION_LENGTH:
                 raise ValueError(f"each question must be <= {MAX_QUESTION_LENGTH} chars")
-        return v
+        return cleaned
 
     @field_validator("k")
     @classmethod

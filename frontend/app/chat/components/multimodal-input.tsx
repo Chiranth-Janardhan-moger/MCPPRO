@@ -1,12 +1,11 @@
 "use client";
 
-import { FormEvent, useRef } from "react";
+import { useRef } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { ArrowUp, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SuggestedActions } from "./suggested-actions";
-
 import { ModelSelector } from "./model-selector";
 import { Message } from "ai";
 
@@ -44,22 +43,23 @@ export function MultimodalInput({
       onSubmit={handleSubmit}
       className="relative flex flex-col gap-4"
     >
-      
       <div className="relative">
         {messages.length === 0 && (
-                <SuggestedActions 
-                  append={append} 
-                  chatId={chatId} 
-                  handleSubmit={handleSubmit}
-                />
-              )}
+          <SuggestedActions
+            append={append}
+            chatId={chatId}
+            handleSubmit={handleSubmit}
+          />
+        )}
         <Textarea
           value={value}
           onChange={onChange}
-          placeholder="Send a message..."
+          placeholder="Ask MCPPRO anything or search knowledge base..."
           className={cn(
-            "min-h-[24px] max-h-[calc(75dvh)] overflow-hidden resize-none rounded-2xl !text-base",
-            "bg-muted pb-10 dark:border-zinc-700"
+            "min-h-[56px] max-h-[calc(75dvh)] overflow-y-auto resize-none rounded-2xl text-sm leading-relaxed",
+            "bg-white/95 dark:bg-zinc-900/95 border border-zinc-200/90 dark:border-zinc-800 shadow-xs",
+            "focus-visible:ring-1 focus-visible:ring-blue-500/50 dark:focus-visible:ring-blue-400/40",
+            "pt-3 px-4 pb-12"
           )}
           rows={2}
           disabled={isLoading}
@@ -71,23 +71,32 @@ export function MultimodalInput({
           }}
         />
 
-        <div className="absolute bottom-2 left-2 gap-2">
-          <ModelSelector models={models} selectedModel={modelState.selectedModel} setSelectedModel={modelState.setSelectedModel} />
+        <div className="absolute bottom-2.5 left-3 gap-2">
+          <ModelSelector
+            models={models}
+            selectedModel={modelState.selectedModel}
+            setSelectedModel={modelState.setSelectedModel}
+          />
         </div>
 
-        <div className="absolute bottom-2 right-2 flex items-center gap-2">
+        <div className="absolute bottom-2.5 right-3 flex items-center gap-2">
           {isLoading ? (
             <Button
               type="button"
-              className="rounded-full p-1.5 h-fit border dark:border-zinc-600"
+              className="rounded-full p-2 h-8 w-8 border dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 text-zinc-500 cursor-not-allowed"
             >
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <Loader2 className="h-4 w-4 animate-spin text-blue-500" />
             </Button>
           ) : (
             <Button
               type="submit"
               disabled={!value.trim()}
-              className="rounded-full p-1.5 h-fit border dark:border-zinc-600"
+              className={cn(
+                "rounded-full p-2 h-8 w-8 border transition-all",
+                value.trim()
+                  ? "bg-zinc-900 text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white shadow-xs"
+                  : "bg-zinc-100 text-zinc-400 border-zinc-200 dark:bg-zinc-800 dark:text-zinc-600 dark:border-zinc-700 cursor-not-allowed"
+              )}
             >
               <ArrowUp className="h-4 w-4" />
             </Button>

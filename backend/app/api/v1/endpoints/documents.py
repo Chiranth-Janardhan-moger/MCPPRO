@@ -94,6 +94,9 @@ async def query_documents(
     _: bool = Depends(verify_token),
 ):
     """Semantic vector search across indexed documents."""
+    query_str = (payload.query or "").strip()
+    if not query_str:
+        return {"success": True, "query": "", "count": 0, "chunks": []}
     services = _get_services()
     vector_store = services["vector_store"]
     try:

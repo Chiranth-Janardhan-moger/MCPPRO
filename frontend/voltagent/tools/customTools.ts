@@ -9,6 +9,35 @@ function createTool<T extends { name: string; description: string; parameters: a
   return def;
 }
 
+function extractQueryParam(args: any): string {
+  if (typeof args === 'string') return args.trim();
+  if (!args || typeof args !== 'object') return '';
+  const candidates = [
+    args.query,
+    args.q,
+    args.search,
+    args.search_query,
+    args.searchQuery,
+    args.question,
+    args.input,
+    args.text,
+    args.prompt,
+    args.topic,
+  ];
+  for (const c of candidates) {
+    if (typeof c === 'string' && c.trim()) return c.trim();
+  }
+  if (Array.isArray(args.queries) && args.queries.length > 0) {
+    const first = args.queries[0];
+    if (typeof first === 'string' && first.trim()) return first.trim();
+  }
+  if (Array.isArray(args.questions) && args.questions.length > 0) {
+    const first = args.questions[0];
+    if (typeof first === 'string' && first.trim()) return first.trim();
+  }
+  return '';
+}
+
 // querySupabaseTool was removed for security (arbitrary SQL execution risk)
 
 export const generateChartTool = createTool({
@@ -40,6 +69,14 @@ export const tavilySearchTool = createTool({
   }) as any,
   execute: async (args: any) => {
     try {
+      const query = extractQueryParam(args);
+      if (!query) {
+        return JSON.stringify({
+          error: 'Search query was empty. Please provide specific search keywords.',
+          results: [],
+        });
+      }
+
       const tavilyKey = await getEffectiveTavilyKey();
       if (!tavilyKey || tavilyKey.startsWith('tvly_dummy')) {
         return JSON.stringify({
@@ -48,7 +85,7 @@ export const tavilySearchTool = createTool({
       }
 
       const client = getTavilyClient(tavilyKey);
-      const searchResult = await client.search(args.query, {
+      const searchResult = await client.search(query, {
         includeAnswer: true,
         maxResults: 5,
         includeRawContent: false,
@@ -70,6 +107,14 @@ export const searchUploadedDocumentsTool = createTool({
   }) as any,
   execute: async (args: any) => {
     try {
+      const query = extractQueryParam(args);
+      if (!query) {
+        return JSON.stringify({
+          result: "No search query provided to retrieve document context.",
+          chunks: [],
+        });
+      }
+
       const backendUrl = (
         process.env.BACKEND_URL ||
         'https://mcppro.onrender.com'
@@ -88,7 +133,7 @@ export const searchUploadedDocumentsTool = createTool({
       const res = await fetch(`${backendUrl}/documents/query`, {
         method: 'POST',
         headers,
-        body: JSON.stringify({ query: args.query, k: 5 }),
+        body: JSON.stringify({ query, k: 5 }),
         signal: AbortSignal.timeout(12_000),
       });
 

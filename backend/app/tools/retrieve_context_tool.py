@@ -59,11 +59,15 @@ class RetrieveContextTool(BaseTool):
 
     async def execute(self, **kwargs):  # type: ignore[override]
         try:
-            queries = kwargs.get("questions")
-            if isinstance(queries, str):
-                queries = [queries]
+            raw_queries = kwargs.get("questions") or kwargs.get("query") or kwargs.get("question") or []
+            if isinstance(raw_queries, str):
+                queries = [raw_queries.strip()]
+            elif isinstance(raw_queries, list):
+                queries = [q.strip() for q in raw_queries if isinstance(q, str) and q.strip()]
+            else:
+                queries = []
             if not queries:
-                return ToolResult(success=False, error="'questions' (array of strings) is required")
+                return ToolResult(success=True, result={"chunks": [], "summary": "No non-empty query provided."})
             k: int = kwargs.get("k", 10)
             document_id: str = kwargs.get("document_id", "")
 
