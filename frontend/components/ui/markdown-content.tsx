@@ -4,6 +4,7 @@ import type * as React from "react";
 import { Suspense, isValidElement, memo, useMemo, useEffect, useState } from "react";
 import ReactMarkdown, { type Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { Copy, Check } from "lucide-react";
 
 const DEFAULT_PRE_BLOCK_CLASS =
   "my-4 overflow-x-auto w-fit rounded-xl bg-zinc-950 text-zinc-50 dark:bg-zinc-900 border border-border p-4";
@@ -133,18 +134,57 @@ const CodeBlock = ({
   className,
   ...props
 }: CodeBlockProps) => {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    const code = extractTextContent(children);
+    if (!code) return;
+    try {
+      await navigator.clipboard.writeText(code);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.warn('Failed to copy code:', err);
+    }
+  };
+
   return (
-    <Suspense
-      fallback={
-        <pre {...props} className={cn(DEFAULT_PRE_BLOCK_CLASS, className)}>
-          <code className="whitespace-pre-wrap">{children}</code>
-        </pre>
-      }
-    >
-      <HighlightedPre language={language} {...props}>
-        {children}
-      </HighlightedPre>
-    </Suspense>
+    <div className="relative my-3 rounded-xl overflow-hidden border border-zinc-200/80 dark:border-zinc-800 bg-zinc-950 text-zinc-50 shadow-2xs group/code w-full max-w-full">
+      <div className="flex items-center justify-between px-3.5 py-1.5 bg-zinc-900/90 border-b border-zinc-800/80 text-[11px] font-mono text-zinc-400">
+        <span>{language || 'code'}</span>
+        <button
+          type="button"
+          onClick={handleCopy}
+          className="flex items-center gap-1 px-2 py-0.5 rounded hover:bg-zinc-800 hover:text-zinc-200 transition-colors"
+          title="Copy code snippet"
+        >
+          {copied ? (
+            <>
+              <Check className="w-3 h-3 text-emerald-400" />
+              <span className="text-emerald-400 font-sans">Copied</span>
+            </>
+          ) : (
+            <>
+              <Copy className="w-3 h-3" />
+              <span className="font-sans">Copy</span>
+            </>
+          )}
+        </button>
+      </div>
+      <div className="overflow-x-auto p-3 text-xs font-mono">
+        <Suspense
+          fallback={
+            <pre {...props} className="whitespace-pre-wrap">
+              <code>{children}</code>
+            </pre>
+          }
+        >
+          <HighlightedPre language={language} {...props} className="!m-0 !p-0 !border-0 !bg-transparent">
+            {children}
+          </HighlightedPre>
+        </Suspense>
+      </div>
+    </div>
   );
 };
 

@@ -2,16 +2,27 @@
 
 import type { Message } from "ai";
 import { AnimatePresence, motion } from "framer-motion";
-import { memo, useState } from "react";
+import { memo, useState, useEffect } from "react";
 import { SparklesIcon } from "./icons";
 import { cn } from "@/lib/utils";
 import { MarkdownContent } from "@/components/ui/markdown-content";
-import { Database, Globe, Sparkles, Loader2, ChevronDown } from "lucide-react";
+import {
+  Database,
+  Globe,
+  Sparkles,
+  Loader2,
+  ChevronDown,
+  Copy,
+  Check,
+  Brain,
+  Layers,
+  Clock,
+} from "lucide-react";
 import { ToolResultDisplay } from "./tool-result-display";
 
 /**
  * Claude-style collapsible reasoning & tool execution panel.
- * Replaces disparate lines and floating chips with a single clean, collapsible thought block.
+ * Features quiet analysis header, intent router details, and tool invocations.
  */
 function ClaudeThoughtPanel({
   routerAnnotation,
@@ -52,12 +63,21 @@ function ClaudeThoughtPanel({
   }
 
   return (
-    <div className="w-full my-1 rounded-xl border border-zinc-200/80 dark:border-zinc-800 bg-zinc-50/70 dark:bg-zinc-900/40 text-xs overflow-hidden transition-all shadow-2xs">
+    <div
+      className={cn(
+        "w-full my-1 rounded-xl border border-zinc-200/90 dark:border-zinc-800 bg-zinc-50/70 dark:bg-zinc-900/50 text-xs overflow-hidden transition-all shadow-2xs border-l-[3px]",
+        route === "RAG"
+          ? "border-l-purple-500 dark:border-l-purple-400"
+          : route === "ONLINE"
+          ? "border-l-cyan-500 dark:border-l-cyan-400"
+          : "border-l-blue-500 dark:border-l-blue-400"
+      )}
+    >
       {/* Clickable Header Bar */}
       <button
         type="button"
         onClick={() => setIsOpen((prev) => !prev)}
-        className="w-full px-3 py-2 flex items-center justify-between text-left hover:bg-zinc-100/60 dark:hover:bg-zinc-800/40 transition-colors"
+        className="w-full px-3 py-2 flex items-center justify-between text-left hover:bg-zinc-100/70 dark:hover:bg-zinc-800/50 transition-colors"
       >
         <div className="flex items-center gap-2 min-w-0">
           {isLoading && !hasContent ? (
@@ -67,7 +87,7 @@ function ClaudeThoughtPanel({
           ) : route === "ONLINE" ? (
             <Globe className="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400 shrink-0" />
           ) : (
-            <Sparkles className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+            <Brain className="w-3.5 h-3.5 text-blue-500 shrink-0" />
           )}
           <span className="font-medium text-zinc-700 dark:text-zinc-300 truncate">
             {summaryTitle}
@@ -137,6 +157,7 @@ const PurePreviewMessage = ({
   isLoading: boolean;
 }) => {
   const isUser = message.role === "user";
+  const [copied, setCopied] = useState(false);
 
   const routerAnnotation = (message.annotations || []).find(
     (a: any) => a?.type === "router_decision"
@@ -145,6 +166,21 @@ const PurePreviewMessage = ({
   const hasTools = Boolean(message.toolInvocations && message.toolInvocations.length > 0);
   const hasContent = Boolean(message.content && String(message.content).trim().length > 0);
   const hasExecution = Boolean(routerAnnotation || hasTools);
+
+  const wordCount = hasContent
+    ? String(message.content).trim().split(/\s+/).filter(Boolean).length
+    : 0;
+
+  const handleCopy = async () => {
+    if (!message.content) return;
+    try {
+      await navigator.clipboard.writeText(String(message.content));
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.warn("Failed to copy message:", err);
+    }
+  };
 
   return (
     <AnimatePresence>
@@ -168,7 +204,7 @@ const PurePreviewMessage = ({
           )}
 
           <div
-            className={cn("flex flex-col gap-2 max-w-[92%] sm:max-w-2xl w-full", {
+            className={cn("flex flex-col gap-1.5 max-w-[92%] sm:max-w-2xl w-full", {
               "items-end": isUser,
               "items-start": !isUser,
             })}
@@ -199,6 +235,36 @@ const PurePreviewMessage = ({
                 />
               </div>
             )}
+
+            {/* Assistant Action Toolbar (Copy, Word Count, Route Indicator) */}
+            {!isUser && hasContent && !isLoading && (
+              <div className="flex items-center gap-2 pt-0.5 px-1 text-[11px] text-muted-foreground opacity-70 hover:opacity-100 transition-opacity">
+                <button
+                  type="button"
+                  onClick={handleCopy}
+                  className="flex items-center gap-1 px-2 py-1 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 transition-colors"
+                  title="Copy response to clipboard"
+                >
+                  {copied ? (
+                    <>
+                      <Check className="w-3 h-3 text-emerald-500" />
+                      <span className="text-emerald-600 dark:text-emerald-400 font-medium">Copied</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-3 h-3" />
+                      <span>Copy</span>
+                    </>
+                  )}
+                </button>
+
+                {wordCount > 0 && (
+                  <span className="text-[10px] text-muted-foreground/60 select-none">
+                    • {wordCount} words
+                  </span>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </motion.div>
@@ -218,12 +284,35 @@ export const PreviewMessage = memo(
   }
 );
 
+/**
+ * Modern Claude 3.7 / Perplexity style Thinking Message.
+ * Displays live stopwatch ticker, multi-phase status messages, and subtle pulse wave.
+ */
 export const ThinkingMessage = () => {
+  const [elapsed, setElapsed] = useState(0);
+
+  useEffect(() => {
+    const start = Date.now();
+    const interval = setInterval(() => {
+      setElapsed(Math.floor((Date.now() - start) / 100) / 10);
+    }, 100);
+    return () => clearInterval(interval);
+  }, []);
+
+  let statusLabel = "Thinking & analyzing...";
+  if (elapsed < 1.5) {
+    statusLabel = "Classifying query intent...";
+  } else if (elapsed < 3.5) {
+    statusLabel = "Retrieving context & knowledge...";
+  } else {
+    statusLabel = "Synthesizing response...";
+  }
+
   return (
     <motion.div
       className="w-full mx-auto max-w-3xl px-3 sm:px-4 py-1.5 group/message"
       initial={{ y: 4, opacity: 0 }}
-      animate={{ y: 0, opacity: 1, transition: { delay: 0.1 } }}
+      animate={{ y: 0, opacity: 1, transition: { delay: 0.05 } }}
       data-role="assistant"
     >
       <div className="flex gap-3 w-full items-start">
@@ -231,9 +320,16 @@ export const ThinkingMessage = () => {
           <SparklesIcon size={14} />
         </div>
 
-        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-zinc-50 dark:bg-zinc-900/60 border border-zinc-200/70 dark:border-zinc-800 text-xs text-muted-foreground shadow-2xs">
-          <Loader2 className="h-3 w-3 animate-spin text-blue-500" />
-          <span className="font-medium text-zinc-600 dark:text-zinc-300">Thinking...</span>
+        <div className="flex flex-col gap-1.5">
+          <div className="inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-zinc-50 via-blue-50/20 to-zinc-50 dark:from-zinc-900/80 dark:via-zinc-900/60 dark:to-zinc-900/80 border border-zinc-200/80 dark:border-zinc-800 text-xs shadow-2xs">
+            <Brain className="h-3.5 w-3.5 animate-pulse text-blue-500 shrink-0" />
+            <span className="font-medium text-zinc-700 dark:text-zinc-300">
+              {statusLabel}
+            </span>
+            <span className="text-[10px] font-mono text-muted-foreground/70 bg-zinc-200/50 dark:bg-zinc-800 px-1.5 py-0.5 rounded-md">
+              {elapsed.toFixed(1)}s
+            </span>
+          </div>
         </div>
       </div>
     </motion.div>

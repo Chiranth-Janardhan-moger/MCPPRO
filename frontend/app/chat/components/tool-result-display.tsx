@@ -24,21 +24,21 @@ interface ToolResultDisplayProps {
 const TOOL_COMPONENTS: { [key: string]: React.FC<any> } = {
   querySupabase: ({ result }) => <SupabaseQuery data={result} />,
   generateChart: ({ result, args }) => <ChartDisplay {...(result || args)} />,
-  tavilySearch: ({ result }) => {
+  tavilySearch: ({ result, args }) => {
     let parsed = result;
     if (typeof result === 'string') {
       try { parsed = JSON.parse(result); } catch {}
     }
-    return <TavilySearchResult data={parsed} />;
+    return <TavilySearchResult data={parsed} query={args?.query || args?.question} />;
   },
-  ragRetrieval: ({ result }) => <RagResultDisplay chunks={result?.chunks || result} />,
-  searchUploadedDocuments: ({ result }) => {
+  ragRetrieval: ({ result, args }) => <RagResultDisplay chunks={result?.chunks || result} query={args?.query} />,
+  searchUploadedDocuments: ({ result, args }) => {
     let parsed = result;
     if (typeof result === 'string') {
       try { parsed = JSON.parse(result); } catch {}
     }
     const chunks = parsed?.chunks || (Array.isArray(parsed) ? parsed : (parsed?.result ? [{ text: parsed.result, documentName: 'Knowledge Base' }] : []));
-    return <RagResultDisplay chunks={chunks} />;
+    return <RagResultDisplay chunks={chunks} query={args?.query} />;
   },
   generateImage: ({ result, args }) => <ImageDisplay {...(result || args)} />,
 };
