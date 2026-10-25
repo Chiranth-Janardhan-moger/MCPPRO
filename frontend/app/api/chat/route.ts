@@ -38,11 +38,13 @@ export async function POST(req: Request) {
       });
     }
 
-    // Sanitize conversation history: resolve any dangling tool invocations from interrupted prior turns
+    // Sanitize conversation history: resolve any dangling tool invocations across both toolInvocations and message parts
     const messages = rawMessages.map((m: any) => {
-      if (!m.toolInvocations || !Array.isArray(m.toolInvocations)) return m;
-      const sanitizedTools = m.toolInvocations.map((inv: any) => {
-        if (inv.state !== 'result' || inv.result === undefined) {
+      const sanitized = { ...m };
+
+      const sanitizeToolInv = (inv: any) => {
+        if (!inv || typeof inv !== 'object') return inv;
+        if (inv.state !== 'result' || !('result' in inv) || inv.result === undefined) {
           return {
             ...inv,
             state: 'result',
@@ -50,11 +52,25 @@ export async function POST(req: Request) {
           };
         }
         return inv;
-      });
-      return {
-        ...m,
-        toolInvocations: sanitizedTools,
       };
+
+      if (Array.isArray(sanitized.toolInvocations)) {
+        sanitized.toolInvocations = sanitized.toolInvocations.map(sanitizeToolInv);
+      }
+
+      if (Array.isArray(sanitized.parts)) {
+        sanitized.parts = sanitized.parts.map((part: any) => {
+          if (part && part.type === 'tool-invocation' && part.toolInvocation) {
+            return {
+              ...part,
+              toolInvocation: sanitizeToolInv(part.toolInvocation),
+            };
+          }
+          return part;
+        });
+      }
+
+      return sanitized;
     });
 
     const settings = await getSystemSettings();
