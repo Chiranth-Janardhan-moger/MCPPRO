@@ -5,6 +5,7 @@ import { getUser } from '@/app/chat/hooks/get-user';
 /**
  * Determine if a given Supabase user has admin privileges.
  * STRICT CHECK: Only returns true for verified administrator accounts.
+ * Note: Only app_metadata (service-role controlled) or verified admin emails are accepted.
  */
 export async function isUserAdmin(user: User | null): Promise<boolean> {
   if (!user) return false;
@@ -17,11 +18,8 @@ export async function isUserAdmin(user: User | null): Promise<boolean> {
     return true;
   }
 
-  // 2. Direct admin role in Supabase metadata
-  if (
-    user.app_metadata?.role === 'admin' ||
-    user.user_metadata?.role === 'admin'
-  ) {
+  // 2. Direct admin role in Supabase app_metadata (server-controlled only)
+  if (user.app_metadata?.role === 'admin') {
     return true;
   }
 

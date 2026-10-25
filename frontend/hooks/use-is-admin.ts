@@ -1,3 +1,5 @@
+'use client';
+
 import { useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { createSupabaseBrowser } from '@/lib/supabase/client';
@@ -18,7 +20,7 @@ export function useIsAdmin() {
     const supabase = createSupabaseBrowser();
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
+    } = supabase.auth.onAuthStateChange((event) => {
       if (
         event === 'SIGNED_IN' ||
         event === 'SIGNED_OUT' ||
@@ -53,9 +55,7 @@ export function useIsAdmin() {
       const email = (user?.email || '').toLowerCase().trim();
       const isClientAdmin =
         email === 'chiranth@gmail.com' ||
-        user?.app_metadata?.role === 'admin' ||
-        user?.user_metadata?.role === 'admin' ||
-        user?.user_metadata?.is_admin === true;
+        user?.app_metadata?.role === 'admin';
 
       // 2. Server verification endpoint with no-cache headers
       let serverData: any = {};

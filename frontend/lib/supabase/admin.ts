@@ -1,25 +1,29 @@
 import { createClient } from "@supabase/supabase-js";
 
 export default function supabaseAdmin() {
-	const serviceKey =
-		process.env.SUPABASE_SERVICE_ROLE_KEY ||
-		process.env.SUPABASE_ADMIN ||
-		process.env.SUPABASE_SERVICE_KEY ||
-		"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52anR5cGNiZW9jbHJpenNjZ2lrIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4NzI5OTk4OSwiZXhwIjoyMTAyODc1OTg5fQ.eJlJqsdVEI2hiupgoQchmqThayP-_LdluETyXTyWPoE";
+  const serviceKey =
+    process.env.SUPABASE_SERVICE_ROLE_KEY ||
+    process.env.SUPABASE_ADMIN ||
+    process.env.SUPABASE_SERVICE_KEY;
 
-	const url =
-		process.env.NEXT_PUBLIC_SUPABASE_URL ||
-		process.env.SUPABASE_URL ||
-		"https://nvjtypcbeoclrizscgik.supabase.co";
+  const url =
+    process.env.NEXT_PUBLIC_SUPABASE_URL ||
+    process.env.SUPABASE_URL;
 
-	return createClient(
-		url,
-		serviceKey,
-		{
-			auth: {
-				autoRefreshToken: false,
-				persistSession: false,
-			},
-		}
-	);
+  if (!serviceKey || !url) {
+    throw new Error(
+      "SUPABASE_SERVICE_ROLE_KEY and NEXT_PUBLIC_SUPABASE_URL must be configured in environment variables."
+    );
+  }
+
+  return createClient(
+    url,
+    serviceKey,
+    {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+      },
+    }
+  );
 }

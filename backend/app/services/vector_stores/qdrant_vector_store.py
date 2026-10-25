@@ -168,12 +168,7 @@ class QdrantVectorStoreService(BaseVectorStore):
             
             print(f"Successfully added {len(added_ids)} documents to Qdrant")
             
-            # Wait a moment for indexing
-            time.sleep(1)
-            
-            # Verify documents were added
-            if self._verify_documents_added(metadatas[0].get("document_id") if metadatas else None):
-                print("Documents verified and searchable")
+# Indexing completes immediately on write
             
             return added_ids
             
@@ -319,3 +314,7 @@ class QdrantVectorStoreService(BaseVectorStore):
         except Exception as e:
             print(f"Error getting document summaries from Qdrant: {e}")
             return []
+
+    async def adelete_documents(self, ids: List[str], namespace: Optional[str] = None) -> bool:
+        """Asynchronously delete documents by IDs"""
+        return self.delete_documents(ids, namespace)

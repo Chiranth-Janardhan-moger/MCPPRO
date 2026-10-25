@@ -9,29 +9,7 @@ function createTool<T extends { name: string; description: string; parameters: a
   return def;
 }
 
-export const querySupabaseTool = createTool({
-  name: "querySupabase",
-  description: "Query the Supabase database",
-  parameters: z.object({
-    query: z.string().describe("The SQL query to execute"),
-  }) as any,
-  execute: async (args: any) => {
-    const supabase = supabaseAdmin();
-    const sanitizedQuery = args.query.trim().replace(/;$/, '');
-    const { data, error } = await supabase.rpc('execute_sql', { query: sanitizedQuery });
-
-    if (error) {
-      console.error('Supabase query error:', error);
-      return JSON.stringify({ error: `Error running query: ${error.message}` });
-    }
-
-    if (!data) {
-      return JSON.stringify({ result: "Query returned no results." });
-    }
-
-    return JSON.stringify(data);
-  },
-});
+// querySupabaseTool was removed for security (arbitrary SQL execution risk)
 
 export const generateChartTool = createTool({
   name: "generateChart",
@@ -104,8 +82,7 @@ export const searchUploadedDocumentsTool = createTool({
       const token =
         settings.api_keys.backend_token ||
         process.env.BACKEND_BEARER_TOKEN ||
-        process.env.BEARER_TOKEN ||
-        'y4s53fje0w7glvuc9mrpnbdzha21tqok6i8x';
+        process.env.BEARER_TOKEN;
       if (token) headers.Authorization = `Bearer ${token.trim()}`;
 
       const res = await fetch(`${backendUrl}/documents/query`, {

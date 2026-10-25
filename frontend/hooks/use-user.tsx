@@ -3,8 +3,9 @@
 import { createSupabaseBrowser } from "@/lib/supabase/client";
 import { User } from "@supabase/supabase-js";
 import { useQuery } from "@tanstack/react-query";
+
 export default function useUser() {
-  return useQuery({
+  return useQuery<User | null>({
     queryKey: ["user"],
     queryFn: async () => {
       const supabase = createSupabaseBrowser();
@@ -12,7 +13,7 @@ export default function useUser() {
       if (data.user) {
         return data.user;
       }
-      return {} as User;
+      return null;
     },
   });
 }

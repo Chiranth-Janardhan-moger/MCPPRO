@@ -159,6 +159,7 @@ export const PreviewMessage = memo(
     if (prevProps.message.content !== nextProps.message.content) return false;
     if (prevProps.message.toolInvocations?.length !== nextProps.message.toolInvocations?.length) return false;
     if (prevProps.message.annotations?.length !== nextProps.message.annotations?.length) return false;
+    if (JSON.stringify(prevProps.message.toolInvocations) !== JSON.stringify(nextProps.message.toolInvocations)) return false;
     return true;
   },
 );
