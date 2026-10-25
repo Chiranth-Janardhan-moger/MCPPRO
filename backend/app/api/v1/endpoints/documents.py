@@ -127,3 +127,17 @@ async def query_documents(
     except Exception as e:
         return {"success": False, "error": str(e), "chunks": []}
 
+
+
+@router.delete("/{document_id}")
+async def delete_document(
+    document_id: str,
+    _: bool = Depends(verify_token),
+):
+    """Delete a document by ID from the vector store."""
+    services = _get_services()
+    vector_store = services["vector_store"]
+    success = vector_store.delete_documents(ids=[document_id])
+    if not success:
+        raise HTTPException(status_code=500, detail="Failed to delete document from vector store")
+    return {"success": True, "document_id": document_id}

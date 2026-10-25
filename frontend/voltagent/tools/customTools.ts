@@ -42,22 +42,62 @@ function extractQueryParam(args: any): string {
 
 export const generateChartTool = createTool({
   name: "generateChart",
-  description: "Generate a chart for data visualization. Use this to display data in a graphical format.",
+  description: "Generate an interactive chart for data visualization. Provide chartType ('bar', 'line', or 'pie'), title, description, and data as a list of points each with a 'label' (string) and 'value' (number).",
   parameters: z.object({
-    chartType: z.enum(['bar', 'line', 'pie']).describe('The type of chart to generate.'),
-    data: z.array(
-      z.object({
-        label: z.string().describe('The label for a data point.'),
-        value: z.number().describe('The value for a data point.'),
-      }),
-    ).describe('The data for the chart, as an array of objects.'),
-    xAxis: z.string().describe("The key from the data objects to use for the X-axis. This must be 'label'."),
-    yAxis: z.array(z.string()).describe("The key(s) from the data objects to use for the Y-axis. This must be 'value'."),
+    chartType: z.union([z.enum(['bar', 'line', 'pie']), z.string()]).default('bar').describe('The type of chart to generate.'),
+    data: z.union([
+      z.array(z.any()),
+      z.string()
+    ]).describe('The array of data points to visualize, or JSON string of data points.'),
+    xAxis: z.union([z.string(), z.array(z.string())]).optional().default('label').describe("The key for the X-axis, typically 'label'."),
+    yAxis: z.union([z.string(), z.array(z.string())]).optional().default('value').describe("The key(s) for the Y-axis, typically 'value'."),
     title: z.string().optional().describe('The title of the chart.'),
-    description: z.string().optional().describe('A description of the chart.'),
-  }) as any,
+    description: z.string().optional().describe('A brief caption or description of what the chart illustrates.'),
+  }).passthrough() as any,
   execute: async (args: any) => {
-    return args;
+    try {
+      let rawData: any[] = [];
+      if (Array.isArray(args.data)) {
+        rawData = args.data;
+      } else if (typeof args.data === 'string') {
+        try {
+          const parsed = JSON.parse(args.data);
+          rawData = Array.isArray(parsed) ? parsed : [];
+        } catch {
+          rawData = [];
+        }
+      }
+
+      const normalizedData = rawData.map((d: any) => {
+        if (typeof d !== 'object' || d === null) return { label: String(d), value: 0 };
+        const label = d.label ?? d.name ?? d.key ?? d.category ?? d.x ?? String(Object.values(d)[0] ?? '');
+        const value = typeof d.value === 'number' ? d.value : (typeof d.val === 'number' ? d.val : (typeof d.y === 'number' ? d.y : parseFloat(d.value || d.val || '0') || 0));
+        return { ...d, label: String(label), value };
+      });
+
+      const rawType = String(args.chartType || 'bar').toLowerCase();
+      const chartType = ['bar', 'line', 'pie'].includes(rawType) ? rawType : 'bar';
+
+      return {
+        ...args,
+        chartType,
+        data: normalizedData,
+        title: args.title || 'Chart Visualization',
+        description: args.description || '',
+        xAxis: 'label',
+        yAxis: Array.isArray(args.yAxis) ? args.yAxis : [args.yAxis || 'value'],
+      };
+    } catch (err: any) {
+      console.warn('[generateChartTool] Error formatting chart data:', err?.message);
+      return {
+        chartType: 'bar',
+        data: [],
+        title: args.title || 'Chart Visualization',
+        description: args.description || '',
+        xAxis: 'label',
+        yAxis: ['value'],
+      };
+    }
   },
 });
 
@@ -65,8 +105,8 @@ export const tavilySearchTool = createTool({
   name: "tavilySearch",
   description: "Search the web using Tavily for real-time information, current weather, breaking news, live data, stock prices, and current research. Always call this tool when the user asks about live facts, current weather, latest events, or online information.",
   parameters: z.object({
-    query: z.string().describe("The search query to use"),
-  }) as any,
+    query: z.string().optional().default("").describe("The search query to use"),
+  }).passthrough() as any,
   execute: async (args: any) => {
     try {
       const query = extractQueryParam(args);
@@ -103,8 +143,8 @@ export const searchUploadedDocumentsTool = createTool({
   name: "searchUploadedDocuments",
   description: "Search indexed system knowledge base files and user-uploaded documents via semantic vector RAG search. Call this tool whenever the user asks questions about uploaded documents, files, internal policies, or company knowledge base.",
   parameters: z.object({
-    query: z.string().describe("The search query or question to retrieve relevant chunks from the uploaded documents"),
-  }) as any,
+    query: z.string().optional().default("").describe("The search query or question to retrieve relevant chunks from the uploaded documents"),
+  }).passthrough() as any,
   execute: async (args: any) => {
     try {
       const query = extractQueryParam(args);

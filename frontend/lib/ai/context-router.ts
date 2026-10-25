@@ -21,7 +21,7 @@ const ROUTER_SYSTEM_PROMPT = `You are an ultra-fast, intelligent Query Intent Cl
 Your objective is to determine the optimal execution path for a user's prompt by selecting one of three routes:
 
 1. "RAG" (Retrieval-Augmented Generation / Knowledge Base Search):
-   - Choose this when the user is asking about uploaded files, documents, internal corporate policies, reports, PDFs, spreadsheets, notes, guidelines, specs, documentation, or mentions "the file", "the document", "in our data", "contract", "handbook", or subjects related to the indexed knowledge base.
+   - Choose this when the user is asking about uploaded files, documents, internal corporate policies, reports, PDFs, spreadsheets, notes, guidelines, specs, documentation, system architecture, MCPPro design, whitepapers, manuals, or mentions "the file", "the document", "in our data", "contract", "handbook", or subjects related to the indexed knowledge base.
 
 2. "ONLINE" (Real-Time Web Search via Tavily):
    - Choose this whenever the user asks for real-time information, current weather, forecasts, temperatures, today's news, live events, sports scores, live stock prices, latest software versions, or internet lookups (e.g. "weather in Bangalore", "today's headlines", "price of bitcoin").

@@ -67,8 +67,8 @@ function defaultServerConfigs(): Record<string, MCPServerConfig> {
       name: 'research',
       url: process.env.MCP_RESEARCH_URL || (process.env.BACKEND_URL ? `${process.env.BACKEND_URL}/mcp` : 'https://mcppro.onrender.com/mcp'),
       transport: 'http',
-      enabled: true,
-      timeoutMs: DEFAULT_TIMEOUT_MS,
+      enabled: false,
+      timeoutMs: 3000,
       reconnect: true,
     },
     database: {
@@ -100,9 +100,8 @@ function defaultServerConfigs(): Record<string, MCPServerConfig> {
       name: 'rag',
       url: process.env.MCP_RAG_URL || (process.env.BACKEND_URL ? `${process.env.BACKEND_URL}/mcp` : 'https://mcppro.onrender.com/mcp'),
       transport: 'http',
-      enabled:
-        !isBuildPhase && (process.env.MCP_ENABLE_RAG ?? 'true') === 'true',
-      timeoutMs: DEFAULT_TIMEOUT_MS,
+      enabled: false,
+      timeoutMs: 3000,
       reconnect: true,
     },
   };
