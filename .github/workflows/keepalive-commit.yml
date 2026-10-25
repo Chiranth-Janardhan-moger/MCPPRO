@@ -31,7 +31,9 @@ jobs:
           git commit -m "chore: keepalive $(date -u +%F)"
           git push origin keepalive
 
-      - name: Re-enable ping workflow if GitHub disabled it
+      - name: Re-enable scheduled workflows if GitHub disabled them
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh workflow enable keep-alive.yml || true
+        run: |
+          gh workflow enable keep-alive.yml || true
+          gh workflow enable supabase-keepalive.yml || true

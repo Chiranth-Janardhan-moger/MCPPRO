@@ -1,0 +1,50 @@
+name: supabase-keepalive
+
+on:
+  schedule:
+    # Runs daily every 24 hours at 04:00 UTC (09:30 IST)
+    - cron: "0 4 * * *"
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  keepalive:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Ping Supabase Database and Services
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL || 'https://nvjtypcbeoclrizscgik.supabase.co' }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52anR5cGNiZW9jbHJpenNjZ2lrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcyOTk5ODksImV4cCI6MjEwMjg3NTk4OX0.0MUNhfhNBkX49IcX-lp05NYD1_rHiEKGzbv_woheRnM' }}
+        run: |
+          echo "Pinging Supabase services to prevent 7-day inactivity pause..."
+
+          # 1. Execute SQL query on PostgreSQL via PostgREST
+          echo "Querying Supabase PostgreSQL via PostgREST..."
+          DB_CODE=$(curl -fsS -o /dev/null -w "%{http_code}" \
+            --max-time 30 --retry 3 --retry-delay 5 \
+            -H "apikey: ${SUPABASE_ANON_KEY}" \
+            -H "Authorization: Bearer ${SUPABASE_ANON_KEY}" \
+            "${SUPABASE_URL}/rest/v1/documents?select=count")
+          echo "PostgreSQL DB Query Status: HTTP ${DB_CODE}"
+
+          # 2. Check Supabase Auth Service
+          echo "Checking Supabase Auth service..."
+          AUTH_CODE=$(curl -fsS -o /dev/null -w "%{http_code}" \
+            --max-time 30 --retry 3 --retry-delay 5 \
+            -H "apikey: ${SUPABASE_ANON_KEY}" \
+            -H "Authorization: Bearer ${SUPABASE_ANON_KEY}" \
+            "${SUPABASE_URL}/auth/v1/health")
+          echo "Auth Service Status: HTTP ${AUTH_CODE}"
+
+          # 3. Check Supabase Storage Service
+          echo "Checking Supabase Storage service..."
+          STORAGE_CODE=$(curl -fsS -o /dev/null -w "%{http_code}" \
+            --max-time 30 --retry 3 --retry-delay 5 \
+            -H "apikey: ${SUPABASE_ANON_KEY}" \
+            -H "Authorization: Bearer ${SUPABASE_ANON_KEY}" \
+            "${SUPABASE_URL}/storage/v1/status")
+          echo "Storage Service Status: HTTP ${STORAGE_CODE}"
+
+          echo "Supabase keepalive ping finished successfully."
