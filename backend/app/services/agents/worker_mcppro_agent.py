@@ -14,10 +14,19 @@ logger = logging.getLogger(__name__)
 
 
 class WorkerMCPPro:
-    def __init__(self):
-        self.llm_provider = LLMProviderFactory.create_provider(
-            settings.DEFAULT_LLM_PROVIDER, settings
-        )
+    def __init__(self, llm_provider=None):
+        if llm_provider is not None:
+            self.llm_provider = llm_provider
+        else:
+            provider_name = settings.DEFAULT_LLM_PROVIDER
+            if provider_name == 'openai' and not settings.OPENAI_API_KEY:
+                if settings.GEMINI_API_KEY or getattr(settings, 'GOOGLE_API_KEY', None):
+                    provider_name = 'gemini'
+                elif settings.GROQ_API_KEY:
+                    provider_name = 'groq'
+            self.llm_provider = LLMProviderFactory.create_provider(
+                provider_name, settings
+            )
         self.max_iterations = settings.AGENT_MAX_ITERATIONS
 
     @staticmethod

@@ -73,10 +73,10 @@ export function FeatureDetails() {
                   <span className="text-blue-400">@registry.register_tool</span>{'\n'}
                   <span className="text-purple-400">class</span> <span className="text-amber-300">VectorSearchTool</span>(BaseTool):{'\n'}
                   {'  '}name = <span className="text-emerald-400">&quot;mcp_search_docs&quot;</span>{'\n'}
-                  {'  '}description = <span className="text-emerald-400">&quot;Hybrid vector search in Qdrant&quot;</span>{'\n\n'}
+                  {'  '}description = <span className="text-emerald-400">&quot;Semantic vector search&quot;</span>{'\n\n'}
                   {'  '}<span className="text-purple-400">async def</span> <span className="text-sky-300">execute</span>(self, query: str, top_k: int = 5):{'\n'}
                   {'    '}embeddings = <span className="text-purple-400">await</span> model.embed(query){'\n'}
-                  {'    '}results = <span className="text-purple-400">await</span> qdrant.search(embeddings, limit=top_k){'\n'}
+                  {'    '}results = <span className="text-purple-400">await</span> vectorStore.search(embeddings, limit=top_k){'\n'}
                   {'    '}<span className="text-purple-400">return</span> format_tool_response(results)
                 </code>
               </pre>
@@ -93,7 +93,7 @@ export function FeatureDetails() {
                 Hybrid Vector Retrieval & Multi-Store Caching
               </h3>
               <p className="mt-4 text-base text-muted-foreground leading-relaxed">
-                Ingest massive PDF documents, research files, and markdown notes. Our multi-store architecture manages dense vector indexes in Qdrant Cloud or Pinecone, backed by persistent in-memory caching to eliminate redundant embedding roundtrips.
+                Ingest massive PDF documents, research files, and markdown notes. Our architecture manages dense vector indexes backed by persistent in-memory caching to eliminate redundant embedding roundtrips.
               </p>
               <ul className="mt-6 space-y-2.5 text-sm text-muted-foreground">
                 <li className="flex items-center gap-2">
@@ -124,7 +124,7 @@ export function FeatureDetails() {
               <div className="grid grid-cols-2 gap-3 pt-1">
                 <div className="rounded-xl bg-muted/40 p-3 border border-border/50">
                   <div className="text-[11px] text-muted-foreground">Active Provider</div>
-                  <div className="text-sm font-semibold text-foreground mt-0.5">Qdrant Cloud</div>
+                  <div className="text-sm font-semibold text-foreground mt-0.5">Vector Store</div>
                 </div>
                 <div className="rounded-xl bg-muted/40 p-3 border border-border/50">
                   <div className="text-[11px] text-muted-foreground">Query Latency</div>

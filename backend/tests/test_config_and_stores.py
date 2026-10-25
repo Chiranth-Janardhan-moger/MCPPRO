@@ -21,6 +21,13 @@ class TestSettingsDefaults:
         s = Settings(BEARER_TOKEN="t")
         assert s.MCP_SERVER_AUTH_TOKEN is None
 
+    def test_qdrant_hnsw_defaults(self):
+        s = Settings(BEARER_TOKEN="t")
+        assert s.QDRANT_HNSW_M == 16
+        assert s.QDRANT_HNSW_EF_CONSTRUCT == 100
+        assert s.QDRANT_HNSW_EF_SEARCH == 64
+        assert s.QDRANT_HNSW_ON_DISK is False
+
 
 class TestInMemoryStore:
     def _make_store(self):

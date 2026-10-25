@@ -9,29 +9,29 @@ import SectionBadge from "@/components/ui/section-badge"
 const flowSteps = [
   {
     step: "01",
-    title: "Configure Model & API Keys",
-    description: "Choose from Claude 3.7, GPT-4o, Gemini 2.0, Groq, or OpenRouter. Set your keys directly in browser storage with instant switching.",
+    title: "Connect Models & Keys",
+    description: "Select frontier models or connect your own API keys in browser storage.",
     icon: BrainCircuit,
     gradient: "from-blue-500 to-indigo-500",
   },
   {
     step: "02",
-    title: "Ingest Documents & Vector Stores",
-    description: "Upload PDFs, research papers, and datasets. Documents are automatically chunked, embedded, and indexed in Qdrant & Pinecone.",
+    title: "Ingest Knowledge Base",
+    description: "Upload documents for automated chunking and semantic vector search.",
     icon: Database,
     gradient: "from-sky-500 to-cyan-500",
   },
   {
     step: "03",
-    title: "Run Multi-Agent MCP Tools",
-    description: "Your autonomous agents call Model Context Protocol (MCP) tools for real-time web retrieval, GitHub operations, and vector searches.",
+    title: "Execute MCP Tools",
+    description: "Autonomous agents call external tools and web search in real time.",
     icon: Terminal,
     gradient: "from-purple-500 to-violet-500",
   },
   {
     step: "04",
-    title: "Stream Structured Insights",
-    description: "Get lightning-fast token streaming, interactive code highlights, structured tool result viewers, and persistent conversations.",
+    title: "Stream Results",
+    description: "Receive real-time token streaming with live tool chips and markdown output.",
     icon: Sparkles,
     gradient: "from-emerald-500 to-teal-500",
   },
@@ -57,9 +57,9 @@ export function SystemFlow() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5, delay: 0.1 }}
-            className="mx-auto mt-4 max-w-2xl text-base text-muted-foreground sm:text-lg"
+            className="mx-auto mt-3 max-w-xl text-sm text-muted-foreground sm:text-base"
           >
-            A cohesive architecture connecting state-of-the-art language models with your private knowledge and external tools.
+            A cohesive architecture connecting frontier models with private knowledge and tools.
           </motion.p>
         </div>
 

@@ -1,0 +1,37 @@
+name: keepalive-commit
+
+on:
+  schedule:
+    - cron: "30 2 * * *"    # daily, 08:00 IST
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  keepalive:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Commit to keepalive branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git ls-remote --exit-code --heads origin keepalive >/dev/null 2>&1; then
+            git checkout keepalive
+          else
+            git checkout -b keepalive
+          fi
+          date -u +"%Y-%m-%dT%H:%M:%SZ" > .keepalive
+          git add .keepalive
+          git commit -m "chore: keepalive $(date -u +%F)"
+          git push origin keepalive
+
+      - name: Re-enable ping workflow if GitHub disabled it
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh workflow enable keep-alive.yml || true

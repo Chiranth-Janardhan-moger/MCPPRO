@@ -1,29 +1,27 @@
-import { dirname } from "path";
-import { fileURLToPath } from "url";
-import { FlatCompat } from "@eslint/eslintrc";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
-const compat = new FlatCompat({
-  baseDirectory: __dirname,
-});
+import nextPlugin from "@next/eslint-plugin-next";
 
 const eslintConfig = [
   {
-    ignores: ['.next/**', 'node_modules/**', 'test-results/**', 'playwright-report/**'],
+    ignores: [
+      ".next/**",
+      "node_modules/**",
+      "test-results/**",
+      "playwright-report/**",
+      "coverage/**",
+      "dist/**",
+      "out/**",
+      "*.tsbuildinfo",
+      "next-env.d.ts",
+    ],
   },
-  ...compat.config({
-    extends: ['next'],
+  nextPlugin.configs["core-web-vitals"],
+  {
     rules: {
-      'react/no-unescaped-entities': 'off',
-      '@next/next/no-page-custom-font': 'off',
-      "@typescript-eslint/no-unused-vars": "off",
-      "@typescript-eslint/no-explicit-any": "off"
-
-
+      "react/no-unescaped-entities": "off",
+      "@next/next/no-page-custom-font": "off",
+      "@next/next/no-img-element": "off",
     },
-  }),
-]
+  },
+];
 
 export default eslintConfig;

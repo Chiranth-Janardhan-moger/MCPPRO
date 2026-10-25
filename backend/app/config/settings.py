@@ -2,7 +2,7 @@ from typing import List, Optional
 
 from dotenv import load_dotenv
 from pydantic import model_validator
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # Compute the path relative to this file to load the env file robustly
 import os
@@ -51,6 +51,10 @@ class Settings(BaseSettings):
     QDRANT_COLLECTION_NAME: str = "mcppro-documents"
     QDRANT_PATH: Optional[str] = None  # For local on-disk storage
     QDRANT_PREFER_GRPC: bool = True
+    QDRANT_HNSW_M: int = 16
+    QDRANT_HNSW_EF_CONSTRUCT: int = 100
+    QDRANT_HNSW_EF_SEARCH: int = 64
+    QDRANT_HNSW_ON_DISK: bool = False
 
     # LLM Providers
     DEFAULT_LLM_PROVIDER: str = "openai"
@@ -109,8 +113,9 @@ class Settings(BaseSettings):
     MCP_SERVER_PORT: int = 8001
     MCP_SERVER_AUTH_TOKEN: Optional[str] = None  # require bearer auth when set
 
-    class Config:
-        env_file = ".env"
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+
+
 
     @model_validator(mode="after")
     def _empty_strings_to_none(self):

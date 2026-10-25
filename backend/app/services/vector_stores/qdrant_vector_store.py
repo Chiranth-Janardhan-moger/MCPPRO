@@ -1,7 +1,7 @@
 from langchain_qdrant import QdrantVectorStore
 from app.embedders.embedding_factory import EmbeddingFactory
 from qdrant_client import QdrantClient
-from qdrant_client.http.models import Distance, VectorParams
+from qdrant_client.http.models import Distance, VectorParams, HnswConfigDiff, SearchParams
 from app.services.vector_stores.base_vector_store import BaseVectorStore
 from typing import List, Dict, Optional, Any
 from langchain_core.documents import Document
@@ -9,6 +9,14 @@ from app.config.settings import settings
 import uuid
 import time
 import os
+
+def _to_valid_qdrant_id(raw_id: Any) -> str:
+    """Ensure point ID is a valid RFC-4122 UUID string as required by Qdrant."""
+    try:
+        return str(uuid.UUID(str(raw_id)))
+    except (ValueError, AttributeError):
+        return str(uuid.uuid5(uuid.NAMESPACE_DNS, str(raw_id)))
+
 
 class QdrantVectorStoreService(BaseVectorStore):
     def __init__(
@@ -62,7 +70,7 @@ class QdrantVectorStoreService(BaseVectorStore):
         """Initialize Qdrant client based on configuration"""
         if self.url:
             # Cloud or server deployment
-            print(f"ðŸ”— Connecting to Qdrant server at {self.url}")
+            print(f"Connecting to Qdrant server at {self.url}")
             return QdrantClient(
                 url=self.url,
                 api_key=self.api_key,
@@ -70,48 +78,68 @@ class QdrantVectorStoreService(BaseVectorStore):
             )
         elif self.path:
             # Local on-disk storage
-            print(f"ðŸ’¾ Using Qdrant local storage at {self.path}")
+            print(f"Using Qdrant local storage at {self.path}")
             return QdrantClient(path=self.path)
         else:
             # In-memory storage
-            print("ðŸ§  Using Qdrant in-memory storage")
+            print("Using Qdrant in-memory storage")
             return QdrantClient(":memory:")
     
     def _get_embedding_dimension(self) -> int:
-        """Get dimension based on embedding model"""
-        model_dimensions = {
-            "text-embedding-ada-002": 1536,
-            "text-embedding-3-small": 1536,
-            "text-embedding-3-large": 3072
-        }
-        return model_dimensions.get(self.embedding_model, 1536)
+        """Dynamically detect embedding dimension from active embedding model."""
+        try:
+            sample = self.embeddings.embed_query("dimension test")
+            return len(sample)
+        except Exception:
+            model_dimensions = {
+                "text-embedding-ada-002": 1536,
+                "text-embedding-3-small": 1536,
+                "text-embedding-3-large": 3072,
+                "gemini-embedding-001": 3072,
+            }
+            return model_dimensions.get(self.embedding_model, 1536)
     
     def _setup_collection(self):
-        """Create collection if it doesn't exist"""
+        """Create collection if it doesn't exist or recreate if empty with mismatched dim"""
         try:
-            # Check if collection exists
             collections = self.client.get_collections()
             collection_names = [col.name for col in collections.collections]
+            dimension = self._get_embedding_dimension()
             
+            if self.collection_name in collection_names:
+                existing_info = self.client.get_collection(self.collection_name)
+                existing_dim = getattr(getattr(existing_info.config.params, "vectors", None), "size", None)
+                if existing_dim and existing_dim != dimension:
+                    print(f"Dimension mismatch in '{self.collection_name}': existing {existing_dim} vs required {dimension}")
+                    if (existing_info.points_count or 0) == 0:
+                        print("Recreating empty collection with correct dimension...")
+                        self.client.delete_collection(self.collection_name)
+                        collection_names.remove(self.collection_name)
+
             if self.collection_name not in collection_names:
-                print(f"ðŸ“š Creating Qdrant collection: {self.collection_name}")
+                print(f"Creating Qdrant collection: {self.collection_name} (dim: {dimension})")
                 
-                # Get dimension from embedding model
-                dimension = self._get_embedding_dimension()
+                hnsw_diff = HnswConfigDiff(
+                    m=getattr(settings, 'QDRANT_HNSW_M', 16),
+                    ef_construct=getattr(settings, 'QDRANT_HNSW_EF_CONSTRUCT', 100),
+                    on_disk=getattr(settings, 'QDRANT_HNSW_ON_DISK', False),
+                )
                 
                 self.client.create_collection(
                     collection_name=self.collection_name,
                     vectors_config=VectorParams(
                         size=dimension,
-                        distance=Distance.COSINE
-                    )
+                        distance=Distance.COSINE,
+                        hnsw_config=hnsw_diff,
+                    ),
+                    hnsw_config=hnsw_diff,
                 )
-                print(f"âœ… Created collection '{self.collection_name}' with dimension {dimension}")
+                print(f"Created collection '{self.collection_name}' with dimension {dimension} and HNSW index")
             else:
-                print(f"âœ… Collection '{self.collection_name}' already exists")
+                print(f"Collection '{self.collection_name}' already exists")
                 
         except Exception as e:
-            print(f"âš ï¸ Error setting up collection: {e}")
+            print(f"Error setting up collection: {e}")
             raise
     
     def add_documents(
@@ -123,8 +151,10 @@ class QdrantVectorStoreService(BaseVectorStore):
         """Add documents to Qdrant vector store"""
         if not ids:
             ids = [str(uuid.uuid4()) for _ in texts]
+        else:
+            ids = [_to_valid_qdrant_id(i) for i in ids]
         
-        print(f"ðŸ“ Adding {len(texts)} documents to Qdrant...")
+        print(f"Adding {len(texts)} documents to Qdrant...")
         
         try:
             # Create Document objects
@@ -136,19 +166,19 @@ class QdrantVectorStoreService(BaseVectorStore):
             # Add documents to Qdrant
             added_ids = self.vector_store.add_documents(documents, ids=ids)
             
-            print(f"âœ… Successfully added {len(added_ids)} documents to Qdrant")
+            print(f"Successfully added {len(added_ids)} documents to Qdrant")
             
             # Wait a moment for indexing
             time.sleep(1)
             
             # Verify documents were added
             if self._verify_documents_added(metadatas[0].get("document_id") if metadatas else None):
-                print("ðŸ” Documents verified and searchable")
+                print("Documents verified and searchable")
             
             return added_ids
             
         except Exception as e:
-            print(f"âŒ Error adding documents to Qdrant: {e}")
+            print(f"Error adding documents to Qdrant: {e}")
             raise
     
     def _verify_documents_added(self, document_id: Optional[str] = None) -> bool:
@@ -163,6 +193,26 @@ class QdrantVectorStoreService(BaseVectorStore):
         except Exception:
             return False
     
+    def similarity_search(
+        self,
+        query: str,
+        k: int = 10,
+        filter: Optional[Dict] = None,
+        **kwargs: Any
+    ) -> List[Document]:
+        """Search similar documents using HNSW approximate nearest neighbor index."""
+        try:
+            search_params = SearchParams(
+                hnsw_ef=getattr(settings, "QDRANT_HNSW_EF_SEARCH", 64),
+                exact=False,
+            )
+            return self.vector_store.similarity_search(
+                query, k=k, filter=filter, search_params=search_params, **kwargs
+            )
+        except Exception as e:
+            print(f"Error during HNSW similarity search: {e}")
+            return []
+
     def similarity_search_with_score(
         self, 
         query: str, 
@@ -170,20 +220,24 @@ class QdrantVectorStoreService(BaseVectorStore):
         filter: Optional[Dict] = None,
         namespace: Optional[str] = None
     ) -> List[tuple]:
-        """Search with relevance scores, honouring metadata filters."""
+        """Search with relevance scores using HNSW approximate nearest neighbor index."""
         try:
-            # LangChain's Qdrant vector store accepts either a Qdrant Filter
-            # model or a plain dict of metadata equality conditions.
+            search_params = SearchParams(
+                hnsw_ef=getattr(settings, "QDRANT_HNSW_EF_SEARCH", 64),
+                exact=False,
+            )
             if filter:
                 results = self.vector_store.similarity_search_with_score(
-                    query, k=k, filter=filter
+                    query, k=k, filter=filter, search_params=search_params
                 )
             else:
-                results = self.vector_store.similarity_search_with_score(query, k=k)
+                results = self.vector_store.similarity_search_with_score(
+                    query, k=k, search_params=search_params
+                )
             return results
             
         except Exception as e:
-            print(f"âŒ Error during similarity search with score: {e}")
+            print(f"Error during HNSW similarity search with score: {e}")
             return []
     
     def as_retriever(self, **kwargs) -> Any:
@@ -198,12 +252,13 @@ class QdrantVectorStoreService(BaseVectorStore):
         """Delete documents by IDs"""
         try:
             # Qdrant uses delete method
-            self.vector_store.delete(ids)
-            print(f"ðŸ—‘ï¸ Deleted {len(ids)} documents from Qdrant")
+            valid_ids = [_to_valid_qdrant_id(i) for i in ids]
+            self.vector_store.delete(valid_ids)
+            print(f"Deleted {len(ids)} documents from Qdrant")
             return True
             
         except Exception as e:
-            print(f"âŒ Error deleting documents: {e}")
+            print(f"Error deleting documents: {e}")
             return False
     
     def get_document_count(self, namespace: Optional[str] = None) -> int:
@@ -213,7 +268,7 @@ class QdrantVectorStoreService(BaseVectorStore):
             return collection_info.points_count or 0
             
         except Exception as e:
-            print(f"âŒ Error getting document count: {e}")
+            print(f"Error getting document count: {e}")
             return 0
     
     def delete_all_documents(self, namespace: Optional[str] = None) -> bool:
@@ -230,10 +285,37 @@ class QdrantVectorStoreService(BaseVectorStore):
                 embedding=self.embeddings
             )
             
-            print(f"ðŸ—‘ï¸ Deleted all documents from collection '{self.collection_name}'")
+            print(f"Deleted all documents from collection '{self.collection_name}'")
             return True
             
         except Exception as e:
-            print(f"âŒ Error deleting all documents: {e}")
+            print(f"Error deleting all documents: {e}")
             return False
 
+    def get_document_summaries(self) -> List[Dict]:
+        """Summarise indexed documents in Qdrant (id, file_name, status, chunk_count)."""
+        try:
+            points, _ = self.client.scroll(
+                collection_name=self.collection_name,
+                limit=1000,
+                with_payload=True,
+                with_vectors=False,
+            )
+            by_id: Dict[str, Dict] = {}
+            for p in points:
+                payload = p.payload or {}
+                meta = payload.get("metadata", payload)
+                doc_id = meta.get("document_id") or str(p.id)
+                file_name = meta.get("file_name") or meta.get("source") or "document"
+                if doc_id not in by_id:
+                    by_id[doc_id] = {
+                        "id": doc_id,
+                        "file_name": file_name,
+                        "status": "ready",
+                        "chunk_count": 0,
+                    }
+                by_id[doc_id]["chunk_count"] += 1
+            return list(by_id.values())
+        except Exception as e:
+            print(f"Error getting document summaries from Qdrant: {e}")
+            return []

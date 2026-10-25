@@ -8,37 +8,37 @@ import { cn } from "@/lib/utils"
 const features = [
   {
     title: "Multi-Model Intelligence",
-    info: "Switch freely between Anthropic Claude 3.7, OpenAI o3/GPT-4o, Google Gemini 2.0, Groq LPU, and OpenRouter.",
+    info: "Switch freely between Anthropic, OpenAI, Gemini, Groq, and OpenRouter.",
     icon: BrainCircuit,
     gradient: "from-blue-500 to-indigo-500",
   },
   {
-    title: "Model Context Protocol (MCP)",
-    info: "Native support for custom MCP tools, automated function calling, tool execution pipelines, and SSE servers.",
+    title: "Model Context Protocol",
+    info: "Standardized tool calling, dynamic schemas, and real-time agent execution.",
     icon: Terminal,
     gradient: "from-sky-500 to-cyan-500",
   },
   {
-    title: "Hybrid Vector Retrieval",
-    info: "Multi-tenant vector search backed by Qdrant Cloud, Pinecone, and high-performance in-memory caching layers.",
+    title: "Semantic Vector RAG",
+    info: "Fast multi-document retrieval with in-memory caching and persistent vector search.",
     icon: Database,
     gradient: "from-emerald-500 to-teal-500",
   },
   {
-    title: "BYOK Browser Key Vault",
-    info: "Add and manage your OpenAI, Anthropic, Gemini, and Groq API keys locally in your browser settings with zero server leakage.",
+    title: "Client-Side Key Vault",
+    info: "Manage API keys securely in your browser with zero server-side exposure.",
     icon: KeyRound,
     gradient: "from-purple-500 to-violet-500",
   },
   {
-    title: "Real-Time Agentic Streaming",
-    info: "Token-by-token streaming with interactive tool call notifications, syntax-highlighted code, and multi-turn persistence.",
+    title: "Real-Time Streaming",
+    info: "Token-by-token streaming with live tool chips and markdown syntax highlighting.",
     icon: Zap,
     gradient: "from-amber-500 to-orange-500",
   },
   {
-    title: "Document Ingestion & OCR",
-    info: "Upload PDFs, Markdown files, and datasets with automated text chunking, embedding generation, and OCR fallback.",
+    title: "Document Ingestion",
+    info: "Automated chunking and embedding for PDFs, markdown, and datasets.",
     icon: Layers,
     gradient: "from-pink-500 to-rose-500",
   },
@@ -79,9 +79,9 @@ export function Features() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5, delay: 0.1 }}
-            className="mx-auto mt-4 max-w-2xl text-base text-muted-foreground sm:text-lg"
+            className="mx-auto mt-3 max-w-xl text-sm text-muted-foreground sm:text-base"
           >
-            Everything you need to build, test, and deploy intelligent multi-agent systems connected to real-world data and tools.
+            Intelligent multi-agent systems connected to live data and tools.
           </motion.p>
         </div>
 

@@ -45,7 +45,7 @@ def _get_services():
             _singletons["services"] = {
                 "vector_store": vector_store,
                 "llm_provider": llm_provider,
-                "mcppro_agent": MasterMCPPro() if llm_provider else None,
+                "mcppro_agent": MasterMCPPro(llm_provider=llm_provider) if llm_provider else None,
                 "document_processor": DocumentProcessor(
                     vector_store=vector_store,
                     chunk_size=settings.CHUNK_SIZE,

@@ -24,8 +24,8 @@ class MasterMCPPro:
        - otherwise                 â†’ LLM decides
     4. Execute the chosen pipeline with graceful fallback to agentic.
     """
-    def __init__(self):
-        self.worker_agent = WorkerMCPPro()
+    def __init__(self, llm_provider=None):
+        self.worker_agent = WorkerMCPPro(llm_provider=llm_provider)
 
     async def process_request(
         self,

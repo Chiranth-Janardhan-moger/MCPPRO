@@ -50,8 +50,8 @@ export function Hero() {
           </h1>
         </BlurFade>
         <BlurFade delay={0.45} inView>
-          <p className="mx-auto mt-6 max-w-2xl text-base leading-relaxed text-muted-foreground sm:text-lg sm:mt-7">
-            Orchestrate Anthropic Claude 3.7 Sonnet, OpenAI o3/GPT-4o, Google Gemini 2.0, and OpenRouter with extensible Model Context Protocol (MCP) tool execution and streaming agents.
+          <p className="mx-auto mt-5 max-w-2xl text-base leading-relaxed text-muted-foreground sm:text-lg">
+            Orchestrate autonomous agents with real-time MCP tool execution, semantic document retrieval, and frontier AI models.
           </p>
         </BlurFade>
       </div>

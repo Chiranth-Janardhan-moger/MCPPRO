@@ -20,7 +20,7 @@ export interface FooterConfig {
 export const footerConfig: FooterConfig = {
   brand: {
     title: "MCPPRO",
-    description: "Enterprise Multi-Agent Model Context Protocol & AI Orchestration Platform. Deploy autonomous agents, connect vector databases, and execute tools in real time."
+    description: "Model Context Protocol & frontier AI orchestration platform."
   },
   sections: [
     {
@@ -44,7 +44,7 @@ export const footerConfig: FooterConfig = {
       title: "Architecture",
       links: [
         { href: "#", label: "Model Context Protocol" },
-        { href: "#", label: "Qdrant Vector Store" },
+        { href: "#", label: "Semantic Vector RAG" },
         { href: "#", label: "Agentic Streaming" },
         { href: "#", label: "BYOK Vault" }
       ]
