@@ -30,13 +30,32 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const messages = Array.isArray(body?.messages) ? body.messages : null;
-    if (!messages || messages.length === 0) {
+    const rawMessages = Array.isArray(body?.messages) ? body.messages : null;
+    if (!rawMessages || rawMessages.length === 0) {
       return new Response(JSON.stringify({ error: 'messages array is required' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json' },
       });
     }
+
+    // Sanitize conversation history: resolve any dangling tool invocations from interrupted prior turns
+    const messages = rawMessages.map((m: any) => {
+      if (!m.toolInvocations || !Array.isArray(m.toolInvocations)) return m;
+      const sanitizedTools = m.toolInvocations.map((inv: any) => {
+        if (inv.state !== 'result' || inv.result === undefined) {
+          return {
+            ...inv,
+            state: 'result',
+            result: inv.result ?? { note: 'Tool execution resolved' },
+          };
+        }
+        return inv;
+      });
+      return {
+        ...m,
+        toolInvocations: sanitizedTools,
+      };
+    });
 
     const settings = await getSystemSettings();
     let selectedModel: string =
@@ -267,8 +286,13 @@ export async function POST(req: Request) {
                 },
               });
 
+              const errStr = error instanceof Error ? error.message : String(error);
+              const isAuthError = /api[ -]?key|unauthorized|401|auth/i.test(errStr);
+              const hint = isAuthError
+                ? "\n\nPlease check your API keys in Settings or Admin Console -> API Keys & Providers."
+                : "";
               dataStream.write(
-                `0:${JSON.stringify(`\n\n⚠️ **Model Execution Notice:** ${error instanceof Error ? error.message : String(error)}\n\nPlease ensure your API keys are configured in **Admin Console -> API Keys & Providers**.`)}\n`
+                `0:${JSON.stringify(`\n\n**Notice:** ${errStr}${hint}`)}\n`
               );
             }
           });
