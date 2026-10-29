@@ -311,77 +311,104 @@ export const stagehandRunTool = createTool({
       let pageContent = '';
       let connectUrl = '';
 
-      // 1. Create a remote browser session via Browserbase API with Stealth & Residential Proxies
+      // 1. Create a remote browser session via Browserbase API
       try {
         const sessionPayload: Record<string, any> = {
-          proxies: true,
           browserSettings: {
-            advancedStealth: true,
-            solveCaptchas: true,
             blockAds: true,
           },
         };
         if (projectId) sessionPayload.projectId = projectId;
 
-        const sessionRes = await fetch('https://api.browserbase.com/v1/sessions', {
-          method: 'POST',
+        let sessionRes = await fetch("https://api.browserbase.com/v1/sessions", {
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
-            'x-bb-api-key': apiKey,
+            "Content-Type": "application/json",
+            "x-bb-api-key": apiKey,
           },
           body: JSON.stringify(sessionPayload),
-          signal: AbortSignal.timeout(10000),
+          signal: AbortSignal.timeout(12000),
         });
+
+        // If rejected with 400 (strict plan or custom settings schema), retry with minimal payload
+        if (!sessionRes.ok && sessionRes.status === 400) {
+          sessionRes = await fetch("https://api.browserbase.com/v1/sessions", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "x-bb-api-key": apiKey,
+            },
+            body: JSON.stringify(projectId ? { projectId } : {}),
+            signal: AbortSignal.timeout(10000),
+          });
+        }
 
         if (sessionRes.ok) {
           const sessionData = await sessionRes.json();
-          sessionId = sessionData.id || '';
-          connectUrl = sessionData.connectUrl || '';
+          sessionId = sessionData.id || "";
+          connectUrl = sessionData.connectUrl || "";
+        } else {
+          const errText = await sessionRes.text().catch(() => "");
+          console.warn(`[Browserbase] Session creation failed (HTTP ${sessionRes.status}):`, errText);
         }
       } catch (sessErr: any) {
-        console.warn('[Browserbase] Session creation notice:', sessErr?.message);
+        console.warn("[Browserbase] Session creation notice:", sessErr?.message);
       }
 
       // 2. If session and connectUrl are active, interact via CDP
       let cdpSuccess = false;
       if (connectUrl) {
         try {
-          const { chromium } = await import('playwright-core');
-          const browser = await chromium.connectOverCDP(connectUrl, { timeout: 20000 });
+          const { chromium } = await import("playwright-core");
+          const browser = await chromium.connectOverCDP(connectUrl, { timeout: 25000 });
           const context = browser.contexts()[0] || await browser.newContext();
           const page = context.pages()[0] || await context.newPage();
 
-          await page.goto(targetUrl, { waitUntil: 'domcontentloaded', timeout: 20000 });
+          // Set realistic desktop navigation headers
+          await page.setExtraHTTPHeaders({
+            "Accept-Language": "en-US,en;q=0.9",
+            "sec-ch-ua": '"Chromium";v="131", "Not_A Brand";v="24"',
+            "sec-ch-ua-mobile": "?0",
+            "sec-ch-ua-platform": '"Windows"',
+          }).catch(() => {});
+
+          await page.goto(targetUrl, { waitUntil: "domcontentloaded", timeout: 25000 });
+          await page.waitForTimeout(1000); // 1-second human-like pause
           pageTitle = await page.title();
 
           if (Array.isArray(args.actions)) {
             for (const act of args.actions) {
-              if (act.action === 'click' && act.selector) {
-                await page.click(act.selector, { timeout: 4000 }).catch(() => {});
-              } else if (act.action === 'type' && act.selector && act.text) {
-                await page.fill(act.selector, act.text, { timeout: 4000 }).catch(() => {});
-              } else if (act.action === 'scroll') {
+              if (act.action === "click" && act.selector) {
+                await page.waitForTimeout(500);
+                await page.click(act.selector, { timeout: 5000 }).catch(() => {});
+                await page.waitForTimeout(1000);
+              } else if (act.action === "type" && act.selector && act.text) {
+                await page.waitForTimeout(300);
+                await page.fill(act.selector, act.text, { timeout: 5000 }).catch(() => {});
+                await page.waitForTimeout(500);
+              } else if (act.action === "scroll") {
                 await page.evaluate(() => window.scrollBy(0, 500));
-              } else if (act.action === 'wait') {
+                await page.waitForTimeout(500);
+              } else if (act.action === "wait") {
                 await page.waitForTimeout(1500);
               }
             }
           }
 
           pageContent = await page.evaluate(() => {
-            const bad = document.querySelectorAll('script, style, noscript, svg');
+            const bad = document.querySelectorAll("script, style, noscript, svg");
             bad.forEach(el => el.remove());
-            return (document.body?.innerText || '').slice(0, 7000);
+            return (document.body?.innerText || "").slice(0, 8000);
           });
 
           // Detect anti-bot/rate-limit notice and attempt a reload with delay
           if (pageContent.includes("Sorry, we're not able to serve your requests this quickly")) {
-            await page.waitForTimeout(2000);
-            await page.reload({ waitUntil: 'domcontentloaded', timeout: 15000 }).catch(() => {});
+            await page.waitForTimeout(2500);
+            await page.reload({ waitUntil: "domcontentloaded", timeout: 15000 }).catch(() => {});
             pageContent = await page.evaluate(() => {
-              const bad = document.querySelectorAll('script, style, noscript, svg');
+              const bad = document.querySelectorAll("script, style, noscript, svg");
               bad.forEach(el => el.remove());
-              return (document.body?.innerText || '').slice(0, 7000);
+              return (document.body?.innerText || "").slice(0, 8000);
             });
           }
 
@@ -389,7 +416,7 @@ export const stagehandRunTool = createTool({
           await browser.close().catch(() => {});
           cdpSuccess = true;
         } catch (cdpErr: any) {
-          console.warn('[Browserbase] CDP execution notice:', cdpErr?.message);
+          console.warn("[Browserbase] CDP execution notice:", cdpErr?.message);
         }
       }
 
@@ -397,27 +424,83 @@ export const stagehandRunTool = createTool({
       const isBlocked = pageContent.includes("Sorry, we're not able to serve your requests this quickly");
       if (!cdpSuccess || !pageContent.trim() || isBlocked) {
         try {
-          const fetchRes = await fetch('https://api.browserbase.com/v1/fetch', {
-            method: 'POST',
+          const fetchRes = await fetch("https://api.browserbase.com/v1/fetch", {
+            method: "POST",
             headers: {
-              'Content-Type': 'application/json',
-              'x-bb-api-key': apiKey,
+              "Content-Type": "application/json",
+              "x-bb-api-key": apiKey,
             },
             body: JSON.stringify({
               url: targetUrl,
-              format: 'markdown',
-              proxies: true,
+              format: "markdown",
             }),
             signal: AbortSignal.timeout(15000),
           });
 
           if (fetchRes.ok) {
             const fetchData = await fetchRes.json();
-            pageContent = fetchData.content || fetchData.markdown || '';
-            pageTitle = pageTitle || fetchData.title || targetUrl;
+            const fetchedContent = fetchData.content || fetchData.markdown || "";
+            if (fetchedContent && !fetchedContent.includes("Sorry, we're not able to serve your requests this quickly")) {
+              pageContent = fetchedContent;
+              pageTitle = pageTitle || fetchData.title || targetUrl;
+            }
+          } else {
+            const errText = await fetchRes.text().catch(() => "");
+            console.warn(`[Browserbase] Fetch API failed (HTTP ${fetchRes.status}):`, errText);
           }
         } catch (fetchErr: any) {
-          console.warn('[Browserbase] Fetch API notice:', fetchErr?.message);
+          console.warn("[Browserbase] Fetch API notice:", fetchErr?.message);
+        }
+      }
+
+      // 4. Special domain resilience: If Hacker News was rate-limited on the cloud IP
+      if (
+        targetUrl.includes("news.ycombinator.com") &&
+        (!pageContent.trim() || pageContent.includes("Sorry, we're not able to serve your requests this quickly"))
+      ) {
+        try {
+          const hnRes = await fetch("https://hn.algolia.com/api/v1/search?tags=front_page", {
+            signal: AbortSignal.timeout(8000),
+          });
+          if (hnRes.ok) {
+            const hnData = await hnRes.json();
+            const stories = (hnData.hits || []).slice(0, 20).map((s: any, idx: number) =>
+              `${idx + 1}. [${s.title}](${s.url || `https://news.ycombinator.com/item?id=${s.objectID}`}) - ${s.points || 0} pts by ${s.author} (${s.num_comments || 0} comments)`
+            ).join("\n");
+            pageContent = `Hacker News Front Page Stories:\n\n${stories}`;
+            pageTitle = "Hacker News";
+          }
+        } catch (hnErr: any) {
+          console.warn("[Browserbase] HN fallback notice:", hnErr?.message);
+        }
+      }
+
+      // 5. Universal direct fetch fallback if pageContent is still empty
+      if (!pageContent.trim()) {
+        try {
+          const directRes = await fetch(targetUrl, {
+            headers: {
+              "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+              "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+              "Accept-Language": "en-US,en;q=0.9",
+            },
+            signal: AbortSignal.timeout(10000),
+          });
+          if (directRes.ok) {
+            const html = await directRes.text();
+            pageTitle = pageTitle || html.match(/<title[^>]*>([^<]+)<\/title>/i)?.[1]?.trim() || targetUrl;
+            const stripped = html
+              .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "")
+              .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, "")
+              .replace(/<[^>]+>/g, " ")
+              .replace(/\s+/g, " ")
+              .trim();
+            if (stripped.length > 50) {
+              pageContent = stripped.slice(0, 8000);
+            }
+          }
+        } catch (directErr: any) {
+          console.warn("[Browserbase] Direct fetch fallback notice:", directErr?.message);
         }
       }
 
