@@ -238,16 +238,18 @@ export function ApiKeysTab({ settings, onUpdate }: ApiKeysTabProps) {
                         {isShown ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
                       </Button>
                     )}
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      disabled={isTesting || !formState[item.id]}
-                      onClick={() => handleTestKey(item.id)}
-                      className="h-8 px-2.5 text-[11px] shrink-0"
-                    >
-                      {isTesting ? <Loader2 className="h-3 w-3 animate-spin" /> : 'Test'}
-                    </Button>
+                    {item.id !== 'browserbase_project_id' && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        disabled={isTesting || !formState[item.id]}
+                        onClick={() => handleTestKey(item.id)}
+                        className="h-8 px-2.5 text-[11px] shrink-0"
+                      >
+                        {isTesting ? <Loader2 className="h-3 w-3 animate-spin" /> : 'Test'}
+                      </Button>
+                    )}
                   </div>
                 </div>
               );

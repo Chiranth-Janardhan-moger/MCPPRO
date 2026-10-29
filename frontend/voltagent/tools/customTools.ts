@@ -275,3 +275,161 @@ export const generateImageTool = createTool({
     }
   },
 });
+
+export const stagehandRunTool = createTool({
+  name: 'stagehandRun',
+  description: 'Automate and inspect web pages in a headless cloud browser (powered by Browserbase). Use this to open live websites, navigate URLs, interact with page elements (click, type, scroll), and extract dynamic rendered content.',
+  parameters: z.object({
+    url: z.string().describe('The HTTP or HTTPS URL to open and interact with in the cloud browser.'),
+    instruction: z.string().optional().describe('Natural language instruction of what to extract or do on the page.'),
+    actions: z.array(z.object({
+      action: z.enum(['click', 'type', 'extract', 'wait', 'scroll', 'screenshot']),
+      selector: z.string().optional().describe('CSS selector or element description to target.'),
+      text: z.string().optional().describe('Text to type if action is type.'),
+    })).optional().describe('Optional list of structured browser actions to perform.'),
+  }),
+  execute: async (args: any) => {
+    try {
+      const settings = await getSystemSettings();
+      const apiKey = (settings.api_keys?.browserbase_api_key || process.env.BROWSERBASE_API_KEY || '').trim();
+      const projectId = (settings.api_keys?.browserbase_project_id || process.env.BROWSERBASE_PROJECT_ID || '').trim();
+
+      if (!apiKey) {
+        return {
+          success: false,
+          error: 'Browserbase API Key is missing. Please configure your Browserbase Key in Admin Settings (/admin) or set BROWSERBASE_API_KEY in your environment.',
+        };
+      }
+
+      const targetUrl = (typeof args === 'string' ? args : args?.url || '').trim();
+      if (!targetUrl || !targetUrl.startsWith('http')) {
+        return { success: false, error: 'A valid HTTP/HTTPS URL is required.' };
+      }
+
+      let sessionId = '';
+      let pageTitle = '';
+      let pageContent = '';
+      let connectUrl = '';
+
+      // 1. Create a remote browser session via Browserbase API
+      try {
+        const sessionRes = await fetch('https://api.browserbase.com/v1/sessions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-bb-api-key': apiKey,
+          },
+          body: JSON.stringify(projectId ? { projectId } : {}),
+          signal: AbortSignal.timeout(10000),
+        });
+
+        if (sessionRes.ok) {
+          const sessionData = await sessionRes.json();
+          sessionId = sessionData.id || '';
+          connectUrl = sessionData.connectUrl || '';
+        }
+      } catch (sessErr: any) {
+        console.warn('[Browserbase] Session creation notice:', sessErr?.message);
+      }
+
+      // 2. If session and connectUrl are active, interact via CDP
+      let cdpSuccess = false;
+      if (connectUrl) {
+        try {
+          const { chromium } = await import('playwright-core');
+          const browser = await chromium.connectOverCDP(connectUrl, { timeout: 20000 });
+          const context = browser.contexts()[0] || await browser.newContext();
+          const page = context.pages()[0] || await context.newPage();
+
+          await page.goto(targetUrl, { waitUntil: 'domcontentloaded', timeout: 20000 });
+          pageTitle = await page.title();
+
+          if (Array.isArray(args.actions)) {
+            for (const act of args.actions) {
+              if (act.action === 'click' && act.selector) {
+                await page.click(act.selector, { timeout: 4000 }).catch(() => {});
+              } else if (act.action === 'type' && act.selector && act.text) {
+                await page.fill(act.selector, act.text, { timeout: 4000 }).catch(() => {});
+              } else if (act.action === 'scroll') {
+                await page.evaluate(() => window.scrollBy(0, 500));
+              } else if (act.action === 'wait') {
+                await page.waitForTimeout(1500);
+              }
+            }
+          }
+
+          pageContent = await page.evaluate(() => {
+            const bad = document.querySelectorAll('script, style, noscript, svg');
+            bad.forEach(el => el.remove());
+            return (document.body?.innerText || '').slice(0, 7000);
+          });
+
+          await page.close().catch(() => {});
+          await browser.close().catch(() => {});
+          cdpSuccess = true;
+        } catch (cdpErr: any) {
+          console.warn('[Browserbase] CDP execution notice:', cdpErr?.message);
+        }
+      }
+
+      // 3. Fallback to Browserbase Fetch API if CDP was skipped or returned empty content
+      if (!cdpSuccess || !pageContent.trim()) {
+        try {
+          const fetchRes = await fetch('https://api.browserbase.com/v1/fetch', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-bb-api-key': apiKey,
+            },
+            body: JSON.stringify({
+              url: targetUrl,
+              format: 'markdown',
+            }),
+            signal: AbortSignal.timeout(15000),
+          });
+
+          if (fetchRes.ok) {
+            const fetchData = await fetchRes.json();
+            pageContent = fetchData.content || fetchData.markdown || '';
+            pageTitle = pageTitle || fetchData.title || targetUrl;
+          }
+        } catch (fetchErr: any) {
+          console.warn('[Browserbase] Fetch API notice:', fetchErr?.message);
+        }
+      }
+
+      if (!pageContent.trim()) {
+        return {
+          success: false,
+          url: targetUrl,
+          error: 'Could not retrieve page content from cloud browser.',
+          sessionId: sessionId || undefined,
+          liveViewUrl: sessionId ? ('https://www.browserbase.com/sessions/' + sessionId) : undefined,
+        };
+      }
+
+      return {
+        success: true,
+        url: targetUrl,
+        title: pageTitle || targetUrl,
+        content: pageContent.slice(0, 7000),
+        sessionId: sessionId || undefined,
+        liveViewUrl: sessionId ? ('https://www.browserbase.com/sessions/' + sessionId) : undefined,
+        note: 'Rendered via Browserbase Cloud Browser session.',
+      };
+    } catch (err: any) {
+      console.error('[stagehandRunTool] Error:', err);
+      return {
+        success: false,
+        error: err.message || 'Browserbase cloud execution failed.',
+      };
+    }
+  },
+});
+
+export const playwrightCloudBrowserTool = createTool({
+  name: 'playwrightCloudBrowser',
+  description: 'Alias for stagehandRun. Opens and interacts with pages in a headless cloud browser (Browserbase).',
+  parameters: (stagehandRunTool as any).parameters,
+  execute: stagehandRunTool.execute,
+});

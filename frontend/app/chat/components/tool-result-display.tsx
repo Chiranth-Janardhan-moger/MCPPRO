@@ -3,7 +3,7 @@
 import React, { memo } from 'react';
 import { ToolInvocation } from "ai";
 import { motion } from 'framer-motion';
-import { Database, Search, FileText, BarChart, Image as ImageIcon, Mail, MonitorPlay, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Database, Search, FileText, BarChart, Image as ImageIcon, Mail, MonitorPlay, ExternalLink, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
 import { SupabaseQuery } from "./tool-displays/supabase-query";
 import { ChartDisplay } from './tool-displays/chart-display';
 import { ImageDisplay } from './tool-displays/image-display';
@@ -41,6 +41,40 @@ const TOOL_COMPONENTS: { [key: string]: React.FC<any> } = {
     return <RagResultDisplay chunks={chunks} query={args?.query} />;
   },
   generateImage: ({ result, args }) => <ImageDisplay {...(result || args)} />,
+  stagehandRun: ({ result, args }) => {
+    return (
+      <div className="space-y-2 text-xs">
+        <div className="flex items-center justify-between gap-2">
+          <span className="font-semibold text-foreground truncate">
+            {result?.title || args?.url || 'Cloud Browser Session'}
+          </span>
+          {result?.liveViewUrl && (
+            <a
+              href={result.liveViewUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 dark:text-blue-400 hover:underline inline-flex items-center gap-1 font-medium text-[11px]"
+            >
+              <span>View Session</span>
+              <ExternalLink className="h-3 w-3" />
+            </a>
+          )}
+        </div>
+        {result?.content && (
+          <div className="p-2.5 rounded-md bg-muted/40 border border-border/60 max-h-48 overflow-y-auto whitespace-pre-wrap font-mono text-[11px] leading-relaxed text-muted-foreground">
+            {result.content.slice(0, 1500)}
+            {result.content.length > 1500 ? '...' : ''}
+          </div>
+        )}
+        {result?.error && (
+          <div className="p-2 rounded bg-red-500/10 border border-red-500/30 text-red-600 dark:text-red-400">
+            {result.error}
+          </div>
+        )}
+      </div>
+    );
+  },
+  playwrightCloudBrowser: ({ result, args }) => TOOL_COMPONENTS.stagehandRun({ result, args }),
 };
 
 function getToolComponent(toolName: string): React.FC<any> {
@@ -60,6 +94,7 @@ const TOOL_DISPLAY_NAMES: { [key: string]: string } = {
   generateImage: "Image Generation",
   sendHealthReport: "Health Report",
   stagehandRun: "Web Automation",
+  playwrightCloudBrowser: "Cloud Browser Automation",
 };
 
 function getToolDisplayName(toolName: string): string {
@@ -76,6 +111,7 @@ const TOOL_ICONS: { [key: string]: React.ComponentType<{ className?: string }> }
   generateImage: ImageIcon,
   sendHealthReport: Mail,
   stagehandRun: MonitorPlay,
+  playwrightCloudBrowser: MonitorPlay,
 };
 
 function ToolResultDisplayInternal({ toolCall }: ToolResultDisplayProps) {

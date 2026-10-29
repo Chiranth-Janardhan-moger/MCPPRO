@@ -143,6 +143,19 @@ export async function POST(req: Request) {
         });
       }
 
+      case 'browserbase_project_id': {
+        const isValid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(cleanKey) || cleanKey.startsWith('proj_') || cleanKey.length >= 8;
+        const latencyMs = Date.now() - startTime;
+        if (isValid) {
+          return Response.json({ success: true, message: 'Browserbase Project ID format is valid!', latencyMs });
+        }
+        return Response.json({
+          success: false,
+          message: 'Invalid Project ID format. Expected a Browserbase Project UUID or identifier.',
+          latencyMs,
+        });
+      }
+
       case 'browserbase':
       case 'browserbase_api_key': {
         const res = await fetch('https://api.browserbase.com/v1/sessions', {

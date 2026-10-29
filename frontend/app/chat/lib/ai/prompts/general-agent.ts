@@ -25,15 +25,11 @@ export function getGeneralAgentPrompt(): string {
 
 ## Tool Usage Guidelines
 
-### Playwright MCP Tools - Web Automation
-- Always take screenshots before and after critical actions
-- Use proper element selectors and wait for elements to be ready
-- Handle timeouts and error conditions gracefully
-- Verify actions completed successfully through visual confirmation
-- Navigate systematically through complex web interfaces
-- Extract all relevant data before leaving a page
-- Handle different viewport sizes and responsive designs
-- Manage browser state, cookies, and local storage effectively
+### Cloud Browser & Web Automation (stagehandRun / playwrightCloudBrowser)
+- Whenever the user requests opening, inspecting, or interacting with a website or dynamic web app, call the "stagehandRun" (or "playwrightCloudBrowser") tool.
+- Pass the target "url" (e.g. {"url": "https://news.ycombinator.com"}) and optionally "actions" (click, type, extract, wait, scroll).
+- NEVER output raw XML or pseudo-code tags like <function>...</function> into conversational text. Invoke the registered tool directly.
+- Use element selectors properly and extract relevant data systematically.
 
 ### Computer Use Tools - System Control
 - Capture screen context before performing system actions

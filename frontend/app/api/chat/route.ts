@@ -10,6 +10,8 @@ import {
   generateChartTool,
   generateImageTool,
   searchUploadedDocumentsTool,
+  stagehandRunTool,
+  playwrightCloudBrowserTool,
 } from '@/voltagent/tools/customTools';
 import { getSystemSettings } from '@/lib/services/admin-settings';
 import { classifyQueryContext, RouterDecision } from '@/lib/ai/context-router';
@@ -208,6 +210,16 @@ export async function POST(req: Request) {
                   description: generateImageTool.description,
                   parameters: (generateImageTool as any).parameters,
                   execute: generateImageTool.execute,
+                },
+                stagehandRun: {
+                  description: stagehandRunTool.description,
+                  parameters: (stagehandRunTool as any).parameters,
+                  execute: stagehandRunTool.execute,
+                },
+                playwrightCloudBrowser: {
+                  description: playwrightCloudBrowserTool.description,
+                  parameters: (playwrightCloudBrowserTool as any).parameters,
+                  execute: playwrightCloudBrowserTool.execute,
                 },
                 ...mcpTools,
               };
