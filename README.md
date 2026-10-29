@@ -1,10 +1,10 @@
-#  MCPPro Intelligence System
+# MCPPro Intelligence System
 
 Welcome to the **MCPPro Intelligence System**, a production-grade, state-of-the-art AI agent and Document RAG (Retrieval-Augmented Generation) orchestration platform. MCPPro features a decoupled architecture split across an orchestrator layer, a specialized Model Context Protocol (MCP) tool layer, a FastAPI document processing pipeline, and secure telemetry/vector storage.
 
 ---
 
-## ️ System Architecture
+## System Architecture
 
 The MCPPro architecture consists of five main layers, structured as follows:
 
@@ -20,20 +20,20 @@ The MCPPro architecture consists of five main layers, structured as follows:
 
 ---
 
-##  Quick Start
+## Quick Start
 
-###  Prerequisites
+### Prerequisites
 Make sure you have the following installed on your machine:
 - **Node.js**: `18.x` or later (with `npm` package manager)
 - **Python**: `3.12.x` (recommended)
 - **Docker & Docker Compose**: For containerized setup
 - **Tesseract OCR**: For image-based document parsing (optional)
 
-### 🗄️ Database Setup (one time)
+### Database Setup
 
 Run [`backend/schemas/supabase_full_setup.sql`](backend/schemas/supabase_full_setup.sql) in your Supabase SQL Editor. It creates the chat tables (`conversations`, `messages`), the Document Manager table (`user_documents`), request logging (`mcppro_requests`), the pgvector store, and row-level-security policies — all idempotent.
 
-### ✅ Verification Commands
+### Verification Commands
 
 ```bash
 # Backend tests (31 tests, fully offline)
@@ -62,7 +62,7 @@ The easiest way to run the entire stack (Next.js frontend, FastAPI backend, and 
 
 ```bash
 # Clone the repository and navigate to root
-cd MCPPRO-agent-main
+cd MCPPRO
 
 # Start all services in the background
 docker compose up -d
@@ -136,7 +136,7 @@ If you prefer to run the components manually for development:
 
 ---
 
-## ️ Environment Variables Configuration
+## Environment Variables Configuration
 
 Both frontend and backend rely on configuration files (`.env` and `.env.local` respectively). Key configuration values include:
 
@@ -151,21 +151,21 @@ Both frontend and backend rely on configuration files (`.env` and `.env.local` r
 | `GEMINI_API_KEY` | Gemini authentication | `AIzaSy...` |
 
 > [!NOTE]
-> Detailed database schemas (`database_setup.sql` and `supabase_vector_setup.sql`) are located under [backend/schemas](file:///D:/Antigravity/Major-project/MCPPRO%20agent-main/backend/schemas) to set up request tracking and `pgvector` tables on Supabase.
+> Detailed database schemas (`database_setup.sql` and `supabase_vector_setup.sql`) are located under [backend/schemas](backend/schemas) to set up request tracking and `pgvector` tables on Supabase.
 
 ---
 
-## ️ CI/CD Pipeline
+## CI/CD Pipeline
 
-The project is configured with an automated CI/CD pipeline using GitHub Actions, located in [.github/workflows/ci-cd.yml](file:///D:/Antigravity/Major-project/MCPPRO%20agent-main/.github/workflows/ci-cd.yml). 
+The project is configured with an automated CI/CD pipeline using GitHub Actions, located in [.github/workflows/ci-cd.yml](.github/workflows/ci-cd.yml). 
 
 The pipeline runs validation steps on every push and pull request to `main`, `master`, and `dev` branches:
-- **Backend CI**: Sets up Python 3.12, installs dependencies via `uv`, compiles backend code, and runs a dry-run Docker build using `docker/setup-buildx-action` and `docker/build-push-action`.
-- **Frontend CI**: Sets up Node 18, synchronizes dependencies, validates Next.js builds, and performs a dry-run Docker build.
+- **Backend CI**: Sets up Python 3.12, installs dependencies, compiles backend code, and executes the backend test suite.
+- **Frontend CI**: Sets up Node 20, synchronizes dependencies, validates TypeScript types, and compiles Next.js production builds.
 
 ---
 
-##  RAG Evaluation & Diagnostics
+## RAG Evaluation & Diagnostics
 
 To verify the quality and latency of the RAG (Retrieval-Augmented Generation) search engine, run the automated evaluation runner:
 
@@ -178,8 +178,6 @@ This evaluations suite tests index latency, query-answering latency, and cosine 
 
 ---
 
-##  Production Readiness
-For production deployments, high-availability architecture, failover guidelines, and scaling checklists, please consult the complete [PRODUCTION_READINESS.md](file:///D:/Antigravity/Major-project/MCPPRO%20agent-main/PRODUCTION_READINESS.md).
+## Production Readiness
 
-<!-- Visitor Radar Telemetry -->
-<img src="https://chiranth.vercel.app/api/telemetry/pixel.svg?target=MCPPRO%20Repository" width="1" height="1" alt="" style="display:none;" />
+For production deployments, high-availability architecture, failover guidelines, and scaling checklists, please consult the complete [PRODUCTION_READINESS.md](PRODUCTION_READINESS.md).
