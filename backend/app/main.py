@@ -11,6 +11,14 @@ from app.config.settings import settings
 
 logger = logging.getLogger(__name__)
 
+# FastMCP Streamable-HTTP sub-application integration
+try:
+    from mcp_server.server import mcp
+    mcp_app = mcp.http_app(path="/", transport="streamable-http")
+except Exception as e:
+    logger.warning("Could not initialize FastMCP http_app: %s", e)
+    mcp_app = None
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -18,7 +26,13 @@ async def lifespan(app: FastAPI):
     logger.info("Starting MCPPro API Server...")
     if platform.system() == "Windows":
         asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
-    yield
+
+    if mcp_app is not None:
+        async with mcp_app.lifespan(app):
+            yield
+    else:
+        yield
+
     logger.info("Shutting down MCPPro API Server...")
     try:
         from app.tools.url_request_tool import URLRequestTool
@@ -45,7 +59,7 @@ app.add_middleware(
     allow_origins=settings.cors_origin_list,
     allow_credentials=False,
     allow_methods=["GET", "POST", "OPTIONS"],
-    allow_headers=["Authorization", "Content-Type"],
+    allow_headers=["Authorization", "Content-Type", "Accept", "mcp-session-id"],
 )
 
 from app.api.v1.endpoints.documents import router as documents_router
@@ -55,6 +69,10 @@ app.include_router(mcppro_agent_router, prefix="/mcppro-agent", tags=["MCPPro"])
 app.include_router(documents_router, prefix="/documents", tags=["Documents"])
 app.include_router(api_router, prefix="/api/v1")
 
+if mcp_app is not None:
+    app.mount("/mcp", mcp_app)
+    logger.info("Mounted FastMCP streamable-http app at /mcp")
+
 
 @app.get("/")
 async def root():
@@ -62,14 +80,22 @@ async def root():
         "message": "MCPPro Intelligence System API",
         "version": "1.0.0",
         "docs": "/docs",
+        "mcp": "/mcp",
     }
 
 
 @app.get("/health")
 async def health():
-    # Intentionally minimal: no store/provider internals leaked on an
-    # unauthenticated endpoint.
     return {"status": "healthy"}
+
+
+@app.get("/api/v1/mcp-status")
+async def mcp_status():
+    return {
+        "status": "online" if mcp_app is not None else "unavailable",
+        "transport": "streamable-http",
+        "tools": ["retrieve_context", "rag_search"],
+    }
 
 
 if __name__ == "__main__":
