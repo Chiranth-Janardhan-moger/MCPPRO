@@ -311,15 +311,25 @@ export const stagehandRunTool = createTool({
       let pageContent = '';
       let connectUrl = '';
 
-      // 1. Create a remote browser session via Browserbase API
+      // 1. Create a remote browser session via Browserbase API with Stealth & Residential Proxies
       try {
+        const sessionPayload: Record<string, any> = {
+          proxies: true,
+          browserSettings: {
+            advancedStealth: true,
+            solveCaptchas: true,
+            blockAds: true,
+          },
+        };
+        if (projectId) sessionPayload.projectId = projectId;
+
         const sessionRes = await fetch('https://api.browserbase.com/v1/sessions', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'x-bb-api-key': apiKey,
           },
-          body: JSON.stringify(projectId ? { projectId } : {}),
+          body: JSON.stringify(sessionPayload),
           signal: AbortSignal.timeout(10000),
         });
 
@@ -364,6 +374,17 @@ export const stagehandRunTool = createTool({
             return (document.body?.innerText || '').slice(0, 7000);
           });
 
+          // Detect anti-bot/rate-limit notice and attempt a reload with delay
+          if (pageContent.includes("Sorry, we're not able to serve your requests this quickly")) {
+            await page.waitForTimeout(2000);
+            await page.reload({ waitUntil: 'domcontentloaded', timeout: 15000 }).catch(() => {});
+            pageContent = await page.evaluate(() => {
+              const bad = document.querySelectorAll('script, style, noscript, svg');
+              bad.forEach(el => el.remove());
+              return (document.body?.innerText || '').slice(0, 7000);
+            });
+          }
+
           await page.close().catch(() => {});
           await browser.close().catch(() => {});
           cdpSuccess = true;
@@ -372,8 +393,9 @@ export const stagehandRunTool = createTool({
         }
       }
 
-      // 3. Fallback to Browserbase Fetch API if CDP was skipped or returned empty content
-      if (!cdpSuccess || !pageContent.trim()) {
+      // 3. Fallback to Browserbase Fetch API if CDP was skipped, failed, or rate-limited
+      const isBlocked = pageContent.includes("Sorry, we're not able to serve your requests this quickly");
+      if (!cdpSuccess || !pageContent.trim() || isBlocked) {
         try {
           const fetchRes = await fetch('https://api.browserbase.com/v1/fetch', {
             method: 'POST',
@@ -384,6 +406,7 @@ export const stagehandRunTool = createTool({
             body: JSON.stringify({
               url: targetUrl,
               format: 'markdown',
+              proxies: true,
             }),
             signal: AbortSignal.timeout(15000),
           });
