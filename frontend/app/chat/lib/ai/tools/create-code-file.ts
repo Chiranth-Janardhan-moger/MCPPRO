@@ -22,9 +22,14 @@ async function executeCliCommands(
     let output = '';
     let error = '';
     
-    const cliProcess = spawn('powershell', ['-Command', `cd "${workingDirectory}"; ${fullCommand}`], {
-      stdio: ['pipe', 'pipe', 'pipe'],
-    });
+    const isWindows = process.platform === 'win32';
+    const cliProcess = isWindows
+      ? spawn('powershell', ['-Command', `cd "${workingDirectory}"; ${fullCommand}`], {
+          stdio: ['pipe', 'pipe', 'pipe'],
+        })
+      : spawn('sh', ['-c', `cd "${workingDirectory}" && ${commands.join(' && ')}`], {
+          stdio: ['pipe', 'pipe', 'pipe'],
+        });
 
     const timeoutId = setTimeout(() => {
       if (!cliProcess.killed) {

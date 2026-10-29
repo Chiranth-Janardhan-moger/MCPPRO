@@ -107,19 +107,29 @@ function defaultServerConfigs(): Record<string, MCPServerConfig> {
   };
 
   if (process.env.SMITHERY_API_KEY) {
+    const isWindows = process.platform === 'win32';
     configs.playwright = {
       name: 'playwright',
-      command: 'cmd',
-      args: [
-        '/c',
-        'npx',
-        '-y',
-        '@smithery/cli@latest',
-        'run',
-        '@microsoft/playwright-mcp',
-        '--key',
-        process.env.SMITHERY_API_KEY,
-      ],
+      command: isWindows ? 'cmd' : 'npx',
+      args: isWindows
+        ? [
+            '/c',
+            'npx',
+            '-y',
+            '@smithery/cli@latest',
+            'run',
+            '@microsoft/playwright-mcp',
+            '--key',
+            process.env.SMITHERY_API_KEY,
+          ]
+        : [
+            '-y',
+            '@smithery/cli@latest',
+            'run',
+            '@microsoft/playwright-mcp',
+            '--key',
+            process.env.SMITHERY_API_KEY,
+          ],
       transport: 'stdio',
       enabled: !isBuildPhase && process.env.MCP_ENABLE_PLAYWRIGHT !== 'false',
       timeoutMs: DEFAULT_TIMEOUT_MS,
