@@ -1,3 +1,4 @@
+import re
 from app.services.vector_stores.base_vector_store import BaseVectorStore
 from app.providers.base import BaseLLMProvider
 from app.providers.tool_calling import content_to_text as _content_to_text
@@ -54,7 +55,28 @@ class RetrievalService:
                 llm = self.llm_provider.get_langchain_llm()
                 traditional_rag_prompt = TRADITIONAL_RAG_PROMPT
 
-                context = "\n\n".join([doc.page_content for doc, _ in docs_with_scores])
+                # Hybrid lexical-semantic reranking
+                query_words = set(re.findall(r"\w+", question.lower()))
+                scored_candidates = []
+                for d, sim_score in docs_with_scores:
+                    txt = getattr(d, "page_content", "") or ""
+                    d_words = set(re.findall(r"\w+", txt.lower()))
+                    overlap = len(query_words.intersection(d_words)) / max(len(query_words), 1)
+                    raw_sc = float(sim_score) if sim_score is not None else 0.5
+                    norm_sim = raw_sc if raw_sc <= 1.0 else (1.0 / (1.0 + raw_sc))
+                    hybrid_val = (overlap * 0.4) + (norm_sim * 0.6)
+                    scored_candidates.append((d, hybrid_val))
+                scored_candidates.sort(key=lambda x: x[1], reverse=True)
+                top_chunks = scored_candidates[:min(k, 10)]
+
+                formatted_chunks = []
+                for idx, (doc, sc) in enumerate(top_chunks):
+                    meta = getattr(doc, "metadata", {}) or {}
+                    src = meta.get("source") or meta.get("document_id") or "Document"
+                    pg = meta.get("page", 1)
+                    formatted_chunks.append(f"[Citation {idx + 1}: {src} (Page {pg})]\n{doc.page_content}")
+
+                context = "\n\n".join(formatted_chunks) if formatted_chunks else "\n\n".join([doc.page_content for doc, _ in docs_with_scores])
 
                 prompt = traditional_rag_prompt.format(context=context)
 

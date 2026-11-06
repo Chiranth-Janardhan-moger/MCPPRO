@@ -76,6 +76,52 @@ export async function classifyQueryContext(
     };
   }
 
+  // FAST-PATH HEURISTIC PRE-CLASSIFIER: Zero-latency (0ms) routing for obvious intents
+  const lowerQ = cleanQuery.toLowerCase();
+
+  // A. Common Conversational & Direct Coding Prompts -> DIRECT (<1ms)
+  const isDirectGreeting = /^(hi|hello|hey|greetings|good morning|good afternoon|good evening|howdy|yo|who are you|what can you do|thanks|thank you|ok|okay)\b[!?.]*$/i.test(lowerQ);
+  const isCodePrompt = /^(write|generate|create|debug|fix|explain|refactor)\s+(a|an|the|this)?\s*(python|typescript|javascript|react|next|sql|html|css|bash|function|class|code|script|component|algorithm|query)/i.test(lowerQ);
+  if (isDirectGreeting || isCodePrompt) {
+    return {
+      route: 'DIRECT',
+      confidence: 0.98,
+      reasoning: isDirectGreeting ? 'Standard conversational greeting.' : 'Direct code generation / programming query.',
+      refinedQuery: cleanQuery,
+      latencyMs: Date.now() - startTime,
+      modelUsed: 'heuristic-fast-path',
+      providerUsed: 'fast-path',
+    };
+  }
+
+  // B. Explicit Document / Knowledge Base Queries -> RAG (<1ms)
+  const isExplicitRAG = /\b(in the (pdf|file|document|manual|handbook)|according to (the|my) (file|document|pdf)|summarize (the|my) (document|pdf|file)|from the knowledge base|search (the|my) documents)\b/i.test(lowerQ);
+  if (isExplicitRAG) {
+    return {
+      route: 'RAG',
+      confidence: 0.95,
+      reasoning: 'Explicit reference to document, file, or knowledge base.',
+      refinedQuery: cleanQuery,
+      latencyMs: Date.now() - startTime,
+      modelUsed: 'heuristic-fast-path',
+      providerUsed: 'fast-path',
+    };
+  }
+
+  // C. Explicit Real-Time Web / Weather / News -> ONLINE (<1ms)
+  const isExplicitOnline = /\b(today'?s weather|weather (in|for|at)|current (stock price|temperature|price of)|latest news (about|on|in)|breaking news|today'?s headlines)\b/i.test(lowerQ);
+  if (isExplicitOnline) {
+    return {
+      route: 'ONLINE',
+      confidence: 0.95,
+      reasoning: 'Explicit real-time web, news, or weather inquiry.',
+      refinedQuery: cleanQuery,
+      latencyMs: Date.now() - startTime,
+      modelUsed: 'heuristic-fast-path',
+      providerUsed: 'fast-path',
+    };
+  }
+
   const provider = routing.provider || 'google';
   let modelId = routing.model || 'gemini-2.5-flash';
 

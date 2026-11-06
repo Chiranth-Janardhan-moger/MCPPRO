@@ -39,6 +39,18 @@ class BaseVectorStore(ABC):
     ) -> bool:
         """Delete documents by IDs"""
         pass
+
+    def delete_by_document_id(self, document_id: str, namespace: Optional[str] = None) -> bool:
+        """Delete all chunk entries associated with a parent document ID."""
+        return self.delete_documents(ids=[document_id], namespace=namespace)
+
+    def delete_by_document_id(self, document_id: str, namespace: Optional[str] = None) -> bool:
+        """Delete all chunk entries associated with a parent document ID."""
+        return self.delete_documents(ids=[document_id], namespace=namespace)
+
+    def delete_by_document_id(self, document_id: str, namespace: Optional[str] = None) -> bool:
+        """Delete all chunk entries associated with a parent document ID."""
+        return self.delete_documents(ids=[document_id], namespace=namespace)
     
     @abstractmethod
     def get_document_count(self, namespace: Optional[str] = None) -> int:

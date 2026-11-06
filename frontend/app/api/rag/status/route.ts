@@ -1,4 +1,5 @@
 import { getUser } from '@/app/chat/hooks/get-user';
+import { fetchWithRetry } from '@/lib/utils/fetch-with-retry';
 
 const BACKEND_URL =
   process.env.BACKEND_URL || 'http://127.0.0.1:8000';
@@ -17,10 +18,10 @@ export async function GET() {
     const token = process.env.BACKEND_BEARER_TOKEN || process.env.BEARER_TOKEN;
     if (token) headers.Authorization = `Bearer ${token}`;
 
-    const upstream = await fetch(`${BACKEND_URL}/documents`, {
+    const upstream = await fetchWithRetry(`${BACKEND_URL}/documents`, {
       headers,
       signal: AbortSignal.timeout(15_000),
-    });
+    }, 2, 600);
 
     const text = await upstream.text();
     return new Response(text, {

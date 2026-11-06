@@ -10,11 +10,19 @@ permissions: {}
 jobs:
   ping:
     runs-on: ubuntu-latest
-    timeout-minutes: 3
+    timeout-minutes: 5
     steps:
-      - name: Ping Render service
+      - name: Ping Render FastAPI & MCP services
+        env:
+          BACKEND_URL: ${{ secrets.BACKEND_URL || 'https://mcppro.onrender.com' }}
         run: |
-          curl -fsS -o /dev/null \
-            -w "HTTP %{http_code} in %{time_total}s\n" \
-            --max-time 60 --retry 4 --retry-delay 15 --retry-all-errors \
-            https://mcppro.onrender.com/
+          TARGET="${BACKEND_URL%/}"
+          echo "Pinging FastAPI Health at ${TARGET}/health..."
+          curl -fsS -o /dev/null -w "Health HTTP %{http_code} in %{time_total}s\n" \
+            --max-time 60 --retry 3 --retry-delay 10 --retry-all-errors \
+            "${TARGET}/health" || true
+
+          echo "Pinging FastMCP status at ${TARGET}/api/v1/mcp-status..."
+          curl -fsS -o /dev/null -w "MCP HTTP %{http_code} in %{time_total}s\n" \
+            --max-time 60 --retry 3 --retry-delay 10 --retry-all-errors \
+            "${TARGET}/api/v1/mcp-status" || true

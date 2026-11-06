@@ -164,12 +164,17 @@ CREATE INDEX IF NOT EXISTS idx_mcppro_requests_timestamp ON mcppro_requests(time
 CREATE INDEX IF NOT EXISTS idx_mcppro_requests_success ON mcppro_requests(success);
 CREATE INDEX IF NOT EXISTS idx_mcppro_requests_vector_store ON mcppro_requests(vector_store);
 
+ALTER TABLE mcppro_requests ADD COLUMN IF NOT EXISTS user_id UUID REFERENCES auth.users(id);
+
 ALTER TABLE mcppro_requests ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "authenticated_read_requests" ON mcppro_requests;
 CREATE POLICY "authenticated_read_requests" ON mcppro_requests
     FOR SELECT TO authenticated
-    USING (true);
+    USING (
+        auth.uid() = user_id
+        OR EXISTS (SELECT 1 FROM admin_users WHERE admin_users.user_id = auth.uid())
+    );
 -- Writes happen with SUPABASE_SERVICE_KEY which bypasses RLS.
 
 -- ----------------------------------------------------------------------------

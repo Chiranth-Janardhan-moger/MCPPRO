@@ -12,8 +12,8 @@ def is_safe_url(url: str) -> tuple[bool, str]:
     """Validate a URL against SSRF targets.
 
     Resolves the hostname and rejects private / loopback / link-local /
-    reserved addresses. In development (ENVIRONMENT != production) local
-    addresses are allowed so the agent can talk to localhost services.
+    reserved addresses. Cloud metadata and link-local addresses are unconditionally
+    blocked in all environments.
     """
     try:
         parsed = urlparse(url)
@@ -24,14 +24,17 @@ def is_safe_url(url: str) -> tuple[bool, str]:
             return False, "URL has no hostname"
 
         # Block obvious metadata endpoints by name before resolution.
-        if hostname.endswith(".internal") or hostname == "metadata.google.internal":
-            if settings.ENVIRONMENT.lower() == "production":
-                return False, "Internal host blocked"
+        lower_host = hostname.lower()
+        if lower_host.endswith(".internal") or lower_host in ("metadata.google.internal", "instance-data"):
+            return False, "Cloud metadata endpoint blocked"
 
         infos = socket.getaddrinfo(hostname, None)
         for info in infos:
             ip = ipaddress.ip_address(info[4][0])
-            is_local = ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_reserved
+            # Unconditionally block link-local (cloud metadata 169.254.x.x) and multicast
+            if ip.is_link_local or ip.is_multicast:
+                return False, f"Access to link-local address {ip} is blocked"
+            is_local = ip.is_private or ip.is_loopback or ip.is_reserved
             if is_local and settings.ENVIRONMENT.lower() == "production":
                 return False, f"Access to internal address {ip} is blocked"
         return True, ""
@@ -51,7 +54,13 @@ class URLRequestTool(BaseTool):
     """
     
     _shared_session: ClassVar[Optional[aiohttp.ClientSession]] = None
-    _session_lock: ClassVar[asyncio.Lock] = asyncio.Lock()
+    _session_lock: ClassVar[Optional[asyncio.Lock]] = None
+
+    @classmethod
+    def _get_lock(cls) -> asyncio.Lock:
+        if cls._session_lock is None:
+            cls._session_lock = asyncio.Lock()
+        return cls._session_lock
     
     def __init__(self):
         super().__init__(
@@ -62,7 +71,7 @@ class URLRequestTool(BaseTool):
     @classmethod
     async def _get_session(cls) -> aiohttp.ClientSession:
         """Get or create shared aiohttp session with connection pooling"""
-        async with cls._session_lock:
+        async with cls._get_lock():
             if cls._shared_session is None or cls._shared_session.closed:
                 timeout_obj = aiohttp.ClientTimeout(total=30)
                 connector = aiohttp.TCPConnector(
@@ -88,7 +97,7 @@ class URLRequestTool(BaseTool):
     @classmethod
     async def cleanup_session(cls):
         """Cleanup shared session (call this on app shutdown)"""
-        async with cls._session_lock:
+        async with cls._get_lock():
             if cls._shared_session and not cls._shared_session.closed:
                 await cls._shared_session.close()
                 cls._shared_session = None
@@ -135,16 +144,48 @@ class URLRequestTool(BaseTool):
 
             session = await self._get_session()
             
-            async with session.get(url) as response:
+            max_redirects = 3
+            current_url = url
+            response = None
+            for _ in range(max_redirects + 1):
+                safe, reason = is_safe_url(current_url)
+                if not safe:
+                    return ToolResult(success=False, error=f"Blocked redirect URL: {reason}")
                 
+                resp = await session.get(current_url, allow_redirects=False)
+                if resp.status in (301, 302, 303, 307, 308):
+                    location = resp.headers.get("Location")
+                    await resp.release()
+                    if not location:
+                        break
+                    from urllib.parse import urljoin
+                    current_url = urljoin(current_url, location)
+                    continue
+                response = resp
+                break
+
+            if response is None:
+                return ToolResult(success=False, error="Failed to fetch URL")
+
+            async with response:
                 content_type = response.headers.get("content-type", "").lower()
                 
+                MAX_BYTES = 5 * 1024 * 1024  # 5MB cap
+                chunks = []
+                bytes_read = 0
+                async for chunk in response.content.iter_chunked(65536):
+                    bytes_read += len(chunk)
+                    if bytes_read > MAX_BYTES:
+                        return ToolResult(success=False, error="Response exceeded maximum allowed size (5MB)")
+                    chunks.append(chunk)
+                content_bytes = b"".join(chunks)
+
                 if "application/json" in content_type:
-                    content = await response.json()
+                    import json
+                    content = json.loads(content_bytes.decode('utf-8', errors='replace'))
                 elif "text/" in content_type or "application/xml" in content_type:
-                    content = await response.text()
+                    content = content_bytes.decode('utf-8', errors='replace')
                 else:
-                    content_bytes = await response.read()
                     try:
                         content = content_bytes.decode('utf-8')
                     except UnicodeDecodeError:

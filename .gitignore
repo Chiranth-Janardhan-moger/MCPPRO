@@ -45,6 +45,8 @@ backend/results/
 backend/vector_store_cache/
 backend/mcppro-execution/
 backend/.env
+project_info.zip
+project_info/
 
 # ==========================================
 # Node / Next.js (Frontend) Configuration

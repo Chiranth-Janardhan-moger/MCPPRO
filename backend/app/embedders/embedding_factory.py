@@ -35,10 +35,12 @@ class FastEmbedOfflineEmbeddings:
         return embeddings[0].tolist()
 
     async def aembed_documents(self, texts: List[str]) -> List[List[float]]:
-        return self.embed_documents(texts)
+        import asyncio
+        return await asyncio.to_thread(self.embed_documents, texts)
 
     async def aembed_query(self, text: str) -> List[float]:
-        return self.embed_query(text)
+        import asyncio
+        return await asyncio.to_thread(self.embed_query, text)
 
 
 class DeterministicEmbeddings:
@@ -67,15 +69,28 @@ class DeterministicEmbeddings:
         return self._embed_text(text)
 
     async def aembed_documents(self, texts: List[str]) -> List[List[float]]:
-        return self.embed_documents(texts)
+        import asyncio
+        return await asyncio.to_thread(self.embed_documents, texts)
 
     async def aembed_query(self, text: str) -> List[float]:
-        return self.embed_query(text)
+        import asyncio
+        return await asyncio.to_thread(self.embed_query, text)
 
 
 class EmbeddingFactory:
+    _instance_cache: dict = {}
+
+    @classmethod
+    def create_embedding_model(cls, settings: Settings, model: str | None = None) -> Any:
+        cache_key = f"{model or getattr(settings, 'EMBEDDING_MODEL', '')}_{bool(settings.OPENAI_API_KEY)}_{bool(settings.GEMINI_API_KEY)}"
+        if cache_key in cls._instance_cache:
+            return cls._instance_cache[cache_key]
+        instance = cls._build_embedding_model(settings, model)
+        cls._instance_cache[cache_key] = instance
+        return instance
+
     @staticmethod
-    def create_embedding_model(settings: Settings, model: str | None = None) -> Any:
+    def _build_embedding_model(settings: Settings, model: str | None = None) -> Any:
         # 1. Check if user configured FastEmbed / BGE offline model
         requested_model = (model or getattr(settings, "EMBEDDING_MODEL", "")).lower()
         if "bge" in requested_model or "fastembed" in requested_model:

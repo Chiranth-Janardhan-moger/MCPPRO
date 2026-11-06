@@ -57,6 +57,10 @@ class FileProcessor:
 
     def validate_file_url(self, url: str) -> Dict:
         """Validate file URL and check if file type is supported"""
+        from app.tools.url_request_tool import is_safe_url
+        safe, reason = is_safe_url(url)
+        if not safe:
+            return self._fail(f"Blocked URL: {reason}")
         try:
             with httpx.Client(follow_redirects=True, timeout=10.0) as client:
                 response = client.head(url)
@@ -99,6 +103,10 @@ class FileProcessor:
 
     def download_and_validate_file(self, url: str) -> Dict:
         """Download file and perform validation with in-memory buffer."""
+        from app.tools.url_request_tool import is_safe_url
+        safe, reason = is_safe_url(url)
+        if not safe:
+            return self._fail(f"Blocked URL: {reason}")
         try:
             # Download content to memory first
             with httpx.Client(follow_redirects=True, timeout=30.0) as client:

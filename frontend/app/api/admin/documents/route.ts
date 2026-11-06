@@ -1,3 +1,4 @@
+import { fetchWithRetry } from '@/lib/utils/fetch-with-retry';
 import { requireAdmin } from '@/lib/auth/admin';
 import supabaseAdmin from '@/lib/supabase/admin';
 
@@ -124,10 +125,32 @@ export async function DELETE(req: Request) {
     }
 
     const supabase = supabaseAdmin();
+    const { data: docRecord } = await supabase
+      .from('user_documents')
+      .select('document_ref')
+      .eq('id', id)
+      .single();
+
     const { error } = await supabase.from('user_documents').delete().eq('id', id);
 
     if (error) {
       throw error;
+    }
+
+    try {
+      const backendUrl = (process.env.BACKEND_URL || 'http://127.0.0.1:8000').trim().replace(/\/$/, '');
+      const headers: Record<string, string> = {};
+      const token = process.env.BACKEND_BEARER_TOKEN || process.env.BEARER_TOKEN;
+      if (token) headers.Authorization = `Bearer ${token.trim()}`;
+
+      const docTarget = docRecord?.document_ref || id;
+      await fetch(`${backendUrl}/documents/${encodeURIComponent(docTarget)}`, {
+        method: 'DELETE',
+        headers,
+        signal: AbortSignal.timeout(10_000),
+      });
+    } catch (backendErr) {
+      console.warn('[admin/documents] Backend vector purge notice:', backendErr);
     }
 
     return Response.json({ success: true, message: 'Global document deleted successfully' });

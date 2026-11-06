@@ -1,3 +1,5 @@
+import { getRequestContext } from '@/lib/request-context';
+import { fetchWithRetry } from '@/lib/utils/fetch-with-retry';
 import { z } from "zod";
 import supabaseAdmin from '@/lib/supabase/admin';
 import { getTavilyClient } from '@/lib/tavily/client';
@@ -157,7 +159,7 @@ export const searchUploadedDocumentsTool = createTool({
 
       const backendUrl = (
         process.env.BACKEND_URL ||
-        'https://mcppro.onrender.com'
+        'http://127.0.0.1:8000'
       ).trim().replace(/\/$/, '');
       const headers: Record<string, string> = {
         'Content-Type': 'application/json',
@@ -170,11 +172,14 @@ export const searchUploadedDocumentsTool = createTool({
         process.env.BEARER_TOKEN;
       if (token) headers.Authorization = `Bearer ${token.trim()}`;
 
-      const res = await fetch(`${backendUrl}/documents/query`, {
+      const reqContext = getRequestContext();
+      const currentUserId = reqContext?.userId;
+
+      const res = await fetchWithRetry(`${backendUrl}/documents/query`, {
         method: 'POST',
         headers,
-        body: JSON.stringify({ query, k: 5 }),
-        signal: AbortSignal.timeout(12_000),
+        body: JSON.stringify({ query, k: 5, user_id: currentUserId }),
+        signal: AbortSignal.timeout(15_000),
       });
 
       if (!res.ok) {
@@ -196,7 +201,7 @@ export const searchUploadedDocumentsTool = createTool({
       const formattedContext = data.chunks
         .map(
           (c: any, i: number) =>
-            `--- [Chunk ${i + 1} from ${c.metadata?.source || 'Knowledge Base'}] ---\n${c.content}`
+            `--- [Citation [${i + 1}]: ${c.metadata?.source || c.metadata?.document_name || 'Knowledge Base Document'}, Page ${c.metadata?.page || 1}] ---\n${c.content}`
         )
         .join('\n\n');
 

@@ -62,12 +62,9 @@ app.add_middleware(
     allow_headers=["Authorization", "Content-Type", "Accept", "mcp-session-id"],
 )
 
-from app.api.v1.endpoints.documents import router as documents_router
-from app.api.v1.endpoints.mcppro_agent import router as mcppro_agent_router
-
-app.include_router(mcppro_agent_router, prefix="/mcppro-agent", tags=["MCPPro"])
-app.include_router(documents_router, prefix="/documents", tags=["Documents"])
+# Mount primary API router under /api/v1, and mount root aliases for backward compatibility
 app.include_router(api_router, prefix="/api/v1")
+app.include_router(api_router, include_in_schema=False)
 
 if mcp_app is not None:
     app.mount("/mcp", mcp_app)

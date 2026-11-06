@@ -1,4 +1,4 @@
-import { createServerClient, type CookieOptions } from "@supabase/ssr";
+import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { protectedPaths, authPaths } from "@/lib/constants";
 
@@ -29,42 +29,19 @@ export async function updateSession(request: NextRequest) {
 		supabaseAnonKey,
 		{
 			cookies: {
-				get(name: string) {
-					return request.cookies.get(name)?.value;
+				getAll() {
+					return request.cookies.getAll();
 				},
-				set(name: string, value: string, options: CookieOptions) {
-					request.cookies.set({
-						name,
-						value,
-						...options,
-					});
+				setAll(cookiesToSet) {
+					cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
 					response = NextResponse.next({
 						request: {
 							headers: request.headers,
 						},
 					});
-					response.cookies.set({
-						name,
-						value,
-						...options,
-					});
-				},
-				remove(name: string, options: CookieOptions) {
-					request.cookies.set({
-						name,
-						value: "",
-						...options,
-					});
-					response = NextResponse.next({
-						request: {
-							headers: request.headers,
-						},
-					});
-					response.cookies.set({
-						name,
-						value: "",
-						...options,
-					});
+					cookiesToSet.forEach(({ name, value, options }) =>
+						response.cookies.set(name, value, options)
+					);
 				},
 			},
 		}
@@ -75,14 +52,18 @@ export async function updateSession(request: NextRequest) {
 	const next = url.searchParams.get("next");
 	if (user.data.user?.id) {
 		if (authPaths.includes(url.pathname)) {
-			return NextResponse.redirect(new URL("/", request.url));
+			const redirect = NextResponse.redirect(new URL("/", request.url));
+			response.cookies.getAll().forEach((c) => redirect.cookies.set(c.name, c.value));
+			return redirect;
 		}
 		return response;
 	} else {
 		if (protectedPaths.includes(url.pathname)) {
-			return NextResponse.redirect(
+			const redirect = NextResponse.redirect(
 				new URL("/signin?next=" + (next || url.pathname), request.url)
 			);
+			response.cookies.getAll().forEach((c) => redirect.cookies.set(c.name, c.value));
+			return redirect;
 		}
 		return response;
 	}

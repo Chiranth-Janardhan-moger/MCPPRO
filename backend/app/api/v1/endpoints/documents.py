@@ -1,3 +1,4 @@
+from typing import Optional
 import os
 import tempfile
 import uuid
@@ -20,6 +21,8 @@ MAX_UPLOAD_BYTES = 25 * 1024 * 1024
 @router.post("/upload")
 async def upload_document(
     file: UploadFile = File(...),
+    user_id: Optional[str] = None,
+    is_global: bool = False,
     _: bool = Depends(verify_token),
 ):
     """Upload a local file, chunk + embed it into the vector store."""
@@ -41,6 +44,7 @@ async def upload_document(
 
     suffix = f"_{filename}"
     fd, temp_path = tempfile.mkstemp(suffix=suffix)
+    result = None
     try:
         with os.fdopen(fd, "wb") as tmp:
             tmp.write(content)
@@ -54,6 +58,8 @@ async def upload_document(
             detected_type=detected_type,
             document_id=doc_id,
             source=filename,
+            user_id=user_id,
+            is_global=is_global,
         )
     finally:
         try:
@@ -61,8 +67,8 @@ async def upload_document(
         except OSError:
             pass
 
-    if not result.get("success"):
-        raise HTTPException(status_code=500, detail=result.get("error", "Processing failed"))
+    if not result or not result.get("success"):
+        raise HTTPException(status_code=500, detail=(result or {}).get("error", "Processing failed"))
 
     return {
         "success": True,
@@ -86,6 +92,7 @@ from pydantic import BaseModel
 class DocumentSearchRequest(BaseModel):
     query: str
     k: int = 5
+    user_id: Optional[str] = None
 
 
 @router.post("/query")
@@ -112,6 +119,14 @@ async def query_documents(
         for doc, score in results:
             content = getattr(doc, "page_content", "") or (doc.get("text") if isinstance(doc, dict) else str(doc))
             meta = getattr(doc, "metadata", {}) or (doc.get("metadata") if isinstance(doc, dict) else {})
+            
+            # Multi-tenant isolation: allow access if chunk belongs to user, is global, or payload has no user_id restriction
+            if payload.user_id:
+                doc_user = meta.get("user_id")
+                is_glob = meta.get("is_global", False)
+                if doc_user and doc_user != payload.user_id and not is_glob:
+                    continue
+
             chunks.append({
                 "content": content,
                 "metadata": meta,
@@ -137,7 +152,9 @@ async def delete_document(
     """Delete a document by ID from the vector store."""
     services = _get_services()
     vector_store = services["vector_store"]
-    success = vector_store.delete_documents(ids=[document_id])
+    success = False
+    if hasattr(vector_store, "delete_by_document_id"):
+        success = vector_store.delete_by_document_id(document_id)
     if not success:
-        raise HTTPException(status_code=500, detail="Failed to delete document from vector store")
+        success = vector_store.delete_documents(ids=[document_id])
     return {"success": True, "document_id": document_id}

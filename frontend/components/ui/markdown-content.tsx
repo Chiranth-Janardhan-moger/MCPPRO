@@ -1,401 +1,806 @@
 "use client";
+
 import { cn } from "@/lib/utils";
+
 import type * as React from "react";
+
 import { Suspense, isValidElement, memo, useMemo, useEffect, useState } from "react";
+
 import ReactMarkdown, { type Components } from "react-markdown";
+
 import remarkGfm from "remark-gfm";
+
 import { Copy, Check } from "lucide-react";
 
+
+
 const DEFAULT_PRE_BLOCK_CLASS =
+
   "my-4 overflow-x-auto w-fit rounded-xl bg-zinc-950 text-zinc-50 dark:bg-zinc-900 border border-border p-4";
 
+
+
 const extractTextContent = (node: React.ReactNode): string => {
+
   if (typeof node === "string") {
+
     return node;
+
   }
+
   if (Array.isArray(node)) {
+
     return node.map(extractTextContent).join("");
+
   }
+
   if (isValidElement(node)) {
+
     return extractTextContent(
+
       (
+
         node.props as {
+
           children?: React.ReactNode;
+
         }
+
       ).children,
+
     );
+
   }
+
   return "";
+
 };
 
+
+
 interface HighlightedPreProps extends React.HTMLAttributes<HTMLPreElement> {
+
   language: string;
+
 }
 
+
+
 const HighlightedPre = memo(
+
   ({ children, className, language, ...props }: HighlightedPreProps) => {
+
     const [highlightedCode, setHighlightedCode] = useState<React.JSX.Element | null>(null);
+
     const [isLoading, setIsLoading] = useState(true);
 
+
+
     useEffect(() => {
+
       let isMounted = true;
 
-      const highlightCode = async () => {
+
+
+      // Debounce highlighting during active token streaming to avoid
+
+      // re-running full Oniguruma WASM tokenization on every single token
+
+      const timer = setTimeout(async () => {
+
         try {
+
           const { codeToTokens, bundledLanguages } = await import("shiki");
+
           const code = extractTextContent(children);
+
           
+
           if (!(language in bundledLanguages)) {
+
             if (isMounted) {
+
               setHighlightedCode(
+
                 <pre {...props} className={cn(DEFAULT_PRE_BLOCK_CLASS, className)}>
+
                   <code className="whitespace-pre-wrap">{children}</code>
+
                 </pre>
+
               );
+
               setIsLoading(false);
+
             }
+
             return;
+
           }
+
+
 
           const { tokens } = await codeToTokens(code, {
+
             lang: language as keyof typeof bundledLanguages,
+
             themes: {
+
               light: "github-dark",
+
               dark: "github-dark",
+
             },
+
           });
 
-          if (isMounted) {
-            setHighlightedCode(
-              <pre {...props} className={cn(DEFAULT_PRE_BLOCK_CLASS, className)}>
-                <code className="whitespace-pre-wrap">
-                  {tokens.map((line, lineIndex) => (
-                    <span key={`line-${lineIndex}`}>
-                      {line.map((token, tokenIndex) => {
-                        const style =
-                          typeof token.htmlStyle === "string"
-                            ? undefined
-                            : token.htmlStyle;
-                        return (
-                          <span key={`token-${tokenIndex}`} style={style}>
-                            {token.content}
-                          </span>
-                        );
-                      })}
-                      {lineIndex !== tokens.length - 1 && "\n"}
-                    </span>
-                  ))}
-                </code>
-              </pre>
-            );
-            setIsLoading(false);
-          }
-        } catch (error) {
-          console.error('Error highlighting code:', error);
-          if (isMounted) {
-            setHighlightedCode(
-              <pre {...props} className={cn(DEFAULT_PRE_BLOCK_CLASS, className)}>
-                <code className="whitespace-pre-wrap">{children}</code>
-              </pre>
-            );
-            setIsLoading(false);
-          }
-        }
-      };
 
-      highlightCode();
+
+          if (isMounted) {
+
+            setHighlightedCode(
+
+              <pre {...props} className={cn(DEFAULT_PRE_BLOCK_CLASS, className)}>
+
+                <code className="whitespace-pre-wrap">
+
+                  {tokens.map((line, lineIndex) => (
+
+                    <span key={`line-${lineIndex}`}>
+
+                      {line.map((token, tokenIndex) => {
+
+                        const style =
+
+                          typeof token.htmlStyle === "string"
+
+                            ? undefined
+
+                            : token.htmlStyle;
+
+                        return (
+
+                          <span key={`token-${tokenIndex}`} style={style}>
+
+                            {token.content}
+
+                          </span>
+
+                        );
+
+                      })}
+
+                      {lineIndex !== tokens.length - 1 && "\n"}
+
+                    </span>
+
+                  ))}
+
+                </code>
+
+              </pre>
+
+            );
+
+            setIsLoading(false);
+
+          }
+
+        } catch (error) {
+
+          console.error('Error highlighting code:', error);
+
+          if (isMounted) {
+
+            setHighlightedCode(
+
+              <pre {...props} className={cn(DEFAULT_PRE_BLOCK_CLASS, className)}>
+
+                <code className="whitespace-pre-wrap">{children}</code>
+
+              </pre>
+
+            );
+
+            setIsLoading(false);
+
+          }
+
+        }
+
+      }, 200);
+
+
 
       return () => {
+
         isMounted = false;
+
+        clearTimeout(timer);
+
       };
+
     }, [children, language, className, props]);
 
+
+
     if (isLoading) {
+
       return (
+
         <pre {...props} className={cn(DEFAULT_PRE_BLOCK_CLASS, className)}>
+
           <code className="whitespace-pre-wrap">{children}</code>
+
         </pre>
+
       );
+
     }
 
+
+
     return highlightedCode;
+
   },
+
 );
+
+
 
 HighlightedPre.displayName = "HighlightedPre";
 
+
+
 interface CodeBlockProps extends React.HTMLAttributes<HTMLPreElement> {
+
   language: string;
+
 }
 
+
+
 const CodeBlock = ({
+
   children,
+
   language,
+
   className,
+
   ...props
+
 }: CodeBlockProps) => {
+
   const [copied, setCopied] = useState(false);
 
+
+
   const handleCopy = async () => {
+
     const code = extractTextContent(children);
+
     if (!code) return;
+
     try {
+
       await navigator.clipboard.writeText(code);
+
       setCopied(true);
+
       setTimeout(() => setCopied(false), 2000);
+
     } catch (err) {
+
       console.warn('Failed to copy code:', err);
+
     }
+
   };
 
+
+
   return (
+
     <div className="relative my-3 rounded-xl overflow-hidden border border-zinc-200/80 dark:border-zinc-800 bg-zinc-950 text-zinc-50 shadow-2xs group/code w-full max-w-full">
+
       <div className="flex items-center justify-between px-3.5 py-1.5 bg-zinc-900/90 border-b border-zinc-800/80 text-[11px] font-mono text-zinc-400">
+
         <span>{language || 'code'}</span>
+
         <button
+
           type="button"
+
           onClick={handleCopy}
+
           className="flex items-center gap-1 px-2 py-0.5 rounded hover:bg-zinc-800 hover:text-zinc-200 transition-colors"
+
           title="Copy code snippet"
+
         >
+
           {copied ? (
+
             <>
+
               <Check className="w-3 h-3 text-emerald-400" />
+
               <span className="text-emerald-400 font-sans">Copied</span>
+
             </>
+
           ) : (
+
             <>
+
               <Copy className="w-3 h-3" />
+
               <span className="font-sans">Copy</span>
+
             </>
+
           )}
+
         </button>
+
       </div>
+
       <div className="overflow-x-auto p-3 text-xs font-mono">
+
         <Suspense
+
           fallback={
+
             <pre {...props} className="whitespace-pre-wrap">
+
               <code>{children}</code>
+
             </pre>
+
           }
+
         >
+
           <HighlightedPre language={language} {...props} className="!m-0 !p-0 !border-0 !bg-transparent">
+
             {children}
+
           </HighlightedPre>
+
         </Suspense>
+
       </div>
+
     </div>
+
   );
+
 };
+
+
 
 CodeBlock.displayName = "CodeBlock";
 
+
+
 const components: Partial<Components> = {
+
   h1: ({ children, ...props }: React.HTMLAttributes<HTMLHeadingElement>) => (
+
     <h1 className="mt-2 scroll-m-20 text-4xl font-bold" {...props}>
+
       {children}
+
     </h1>
+
   ),
+
   h2: ({ children, ...props }: React.HTMLAttributes<HTMLHeadingElement>) => (
+
     <h2
+
       className="mt-8 scroll-m-20 border-b pb-2 text-2xl font-semibold tracking-tight first:mt-0"
+
       {...props}
+
     >
+
       {children}
+
     </h2>
+
   ),
+
   h3: ({ children, ...props }: React.HTMLAttributes<HTMLHeadingElement>) => (
+
     <h3
+
       className="mt-4 scroll-m-20 text-xl font-semibold tracking-tight"
+
       {...props}
+
     >
+
       {children}
+
     </h3>
+
   ),
+
   h4: ({ children, ...props }: React.HTMLAttributes<HTMLHeadingElement>) => (
+
     <h4
+
       className="mt-4 scroll-m-20 text-lg font-semibold tracking-tight"
+
       {...props}
+
     >
+
       {children}
+
     </h4>
+
   ),
+
   h5: ({ children, ...props }: React.HTMLAttributes<HTMLHeadingElement>) => (
+
     <h5
+
       className="mt-4 scroll-m-20 text-lg font-semibold tracking-tight"
+
       {...props}
+
     >
+
       {children}
+
     </h5>
+
   ),
+
   h6: ({ children, ...props }: React.HTMLAttributes<HTMLHeadingElement>) => (
+
     <h6
+
       className="mt-4 scroll-m-20 text-base font-semibold tracking-tight"
+
       {...props}
+
     >
+
       {children}
+
     </h6>
+
   ),
+
   p: ({ children, ...props }: React.HTMLAttributes<HTMLParagraphElement>) => (
+
     <p className="leading-6 [&:not(:first-child)]:mt-4" {...props}>
+
       {children}
+
     </p>
+
   ),
+
   strong: ({ children, ...props }: React.HTMLAttributes<HTMLElement>) => (
+
     <span className="font-semibold" {...props}>
+
       {children}
+
     </span>
+
   ),
+
   a: ({
     children,
+    href,
     ...props
-  }: React.AnchorHTMLAttributes<HTMLAnchorElement>) => (
-    <a
-      className="font-medium underline underline-offset-4"
-      target="_blank"
-      rel="noreferrer"
-      {...props}
-    >
-      {children}
-    </a>
-  ),
-  ol: ({ children, ...props }: React.HTMLAttributes<HTMLOListElement>) => (
-    <ol className="my-4 ml-6 list-decimal" {...props}>
-      {children}
-    </ol>
-  ),
-  ul: ({ children, ...props }: React.HTMLAttributes<HTMLUListElement>) => (
-    <ul className="my-4 ml-6 list-disc" {...props}>
-      {children}
-    </ul>
-  ),
-  li: ({ children, ...props }: React.LiHTMLAttributes<HTMLLIElement>) => (
-    <li className="mt-2" {...props}>
-      {children}
-    </li>
-  ),
-  blockquote: ({
-    children,
-    ...props
-  }: React.HTMLAttributes<HTMLQuoteElement>) => (
-    <blockquote className="mt-4 border-l-2 pl-6 italic" {...props}>
-      {children}
-    </blockquote>
-  ),
-  hr: (props: React.HTMLAttributes<HTMLHRElement>) => (
-    <hr className="my-4 md:my-8" {...props} />
-  ),
-  table: ({ children, ...props }: React.HTMLAttributes<HTMLTableElement>) => (
-    <div className="my-6 w-full overflow-y-auto">
-      <table
-        className="relative w-full overflow-hidden border-none text-sm"
-        {...props}
-      >
-        {children}
-      </table>
-    </div>
-  ),
-  tr: ({ children, ...props }: React.HTMLAttributes<HTMLTableRowElement>) => (
-    <tr className="last:border-b-none m-0 border-b" {...props}>
-      {children}
-    </tr>
-  ),
-  th: ({ children, ...props }: React.HTMLAttributes<HTMLTableCellElement>) => (
-    <th
-      className="px-4 py-2 text-left font-bold [&[align=center]]:text-center [&[align=right]]:text-right"
-      {...props}
-    >
-      {children}
-    </th>
-  ),
-  td: ({ children, ...props }: React.HTMLAttributes<HTMLTableCellElement>) => (
-    <td
-      className="px-4 py-2 text-left [&[align=center]]:text-center [&[align=right]]:text-right"
-      {...props}
-    >
-      {children}
-    </td>
-  ),
-  img: ({ alt, ...props }: React.ImgHTMLAttributes<HTMLImageElement>) => (
-    // biome-ignore lint/a11y/useAltText: alt is not required
-    <img className="rounded-md" alt={alt} {...props} />
-  ),
-  code: ({ children, node, className, ...props }) => {
-    const match = /language-(\w+)/.exec(className || "");
-    if (match) {
+  }: React.AnchorHTMLAttributes<HTMLAnchorElement>) => {
+    const text = String(children || "");
+    const isCitation = /^\[?\^?\d+\]?$/.test(text) || text.startsWith("Source:") || text.startsWith("[Source:");
+    if (isCitation) {
       return (
-        <CodeBlock language={match[1]} className={className} {...props}>
+        <span
+          className="inline-flex items-center justify-center px-1.5 py-0.5 mx-0.5 text-xs font-semibold rounded-md bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 border border-blue-200/70 dark:border-blue-800/60 align-baseline cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-900 transition-colors"
+          title={href || text}
+        >
           {children}
-        </CodeBlock>
+        </span>
       );
     }
     return (
-      <code
-        className={cn(
-          "rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-sm",
-          className,
-        )}
+      <a
+        className="font-medium underline underline-offset-4 text-blue-600 dark:text-blue-400 hover:text-blue-700"
+        target="_blank"
+        rel="noreferrer"
+        href={href}
         {...props}
       >
         {children}
-      </code>
+      </a>
     );
   },
+  ol: ({ children, ...props }: React.HTMLAttributes<HTMLOListElement>) => (
+
+    <ol className="my-4 ml-6 list-decimal" {...props}>
+
+      {children}
+
+    </ol>
+
+  ),
+
+  ul: ({ children, ...props }: React.HTMLAttributes<HTMLUListElement>) => (
+
+    <ul className="my-4 ml-6 list-disc" {...props}>
+
+      {children}
+
+    </ul>
+
+  ),
+
+  li: ({ children, ...props }: React.LiHTMLAttributes<HTMLLIElement>) => (
+
+    <li className="mt-2" {...props}>
+
+      {children}
+
+    </li>
+
+  ),
+
+  blockquote: ({
+
+    children,
+
+    ...props
+
+  }: React.HTMLAttributes<HTMLQuoteElement>) => (
+
+    <blockquote className="mt-4 border-l-2 pl-6 italic" {...props}>
+
+      {children}
+
+    </blockquote>
+
+  ),
+
+  hr: (props: React.HTMLAttributes<HTMLHRElement>) => (
+
+    <hr className="my-4 md:my-8" {...props} />
+
+  ),
+
+  table: ({ children, ...props }: React.HTMLAttributes<HTMLTableElement>) => (
+
+    <div className="my-6 w-full overflow-y-auto">
+
+      <table
+
+        className="relative w-full overflow-hidden border-none text-sm"
+
+        {...props}
+
+      >
+
+        {children}
+
+      </table>
+
+    </div>
+
+  ),
+
+  tr: ({ children, ...props }: React.HTMLAttributes<HTMLTableRowElement>) => (
+
+    <tr className="last:border-b-none m-0 border-b" {...props}>
+
+      {children}
+
+    </tr>
+
+  ),
+
+  th: ({ children, ...props }: React.HTMLAttributes<HTMLTableCellElement>) => (
+
+    <th
+
+      className="px-4 py-2 text-left font-bold [&[align=center]]:text-center [&[align=right]]:text-right"
+
+      {...props}
+
+    >
+
+      {children}
+
+    </th>
+
+  ),
+
+  td: ({ children, ...props }: React.HTMLAttributes<HTMLTableCellElement>) => (
+
+    <td
+
+      className="px-4 py-2 text-left [&[align=center]]:text-center [&[align=right]]:text-right"
+
+      {...props}
+
+    >
+
+      {children}
+
+    </td>
+
+  ),
+
+  img: ({ alt, ...props }: React.ImgHTMLAttributes<HTMLImageElement>) => (
+
+    // biome-ignore lint/a11y/useAltText: alt is not required
+
+    <img className="rounded-md" alt={alt} {...props} />
+
+  ),
+
+  code: ({ children, node, className, ...props }) => {
+
+    const match = /language-(\w+)/.exec(className || "");
+
+    if (match) {
+
+      return (
+
+        <CodeBlock language={match[1]} className={className} {...props}>
+
+          {children}
+
+        </CodeBlock>
+
+      );
+
+    }
+
+    return (
+
+      <code
+
+        className={cn(
+
+          "rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-sm",
+
+          className,
+
+        )}
+
+        {...props}
+
+      >
+
+        {children}
+
+      </code>
+
+    );
+
+  },
+
   pre: ({ children }) => <>{children}</>,
+
 };
 
+
+
 function parseMarkdownIntoBlocks(markdown: string): string[] {
+
   if (!markdown) return [];
+
   const blocks = markdown.split(/\n\n+/);
+
   return blocks.length > 0 ? blocks : [markdown];
+
 }
+
+
 
 interface MarkdownBlockProps {
+
   content: string;
+
   className?: string;
+
 }
 
+
+
 const MemoizedMarkdownBlock = memo(
+
   ({ content, className }: MarkdownBlockProps) => {
+
     return (
+
       <ReactMarkdown
+
         remarkPlugins={[remarkGfm]}
+
         components={components}
+
       >
+
         {content}
+
       </ReactMarkdown>
+
     );
+
   },
+
   (prevProps, nextProps) => {
+
     if (prevProps.content !== nextProps.content) {
+
       return false;
+
     }
+
     return true;
+
   },
+
 );
+
+
 
 MemoizedMarkdownBlock.displayName = "MemoizedMarkdownBlock";
 
+
+
 interface MarkdownContentProps {
+
   content: string;
+
   id: string;
+
   className?: string;
+
 }
 
+
+
 export const MarkdownContent = memo(
+
   ({ content, id, className }: MarkdownContentProps) => {
+
     const blocks = useMemo(() => parseMarkdownIntoBlocks(content), [content]);
+
     return blocks.map((block, index) => (
+
       <MemoizedMarkdownBlock
+
         content={block}
+
         className={className}
+
         key={`${id}-block_${
+
           // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
+
           index
+
         }`}
+
       />
+
     ));
+
   },
+
 );
+
+
 
 MarkdownContent.displayName = "MarkdownContent";

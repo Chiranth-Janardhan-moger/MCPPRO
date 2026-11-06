@@ -222,6 +222,17 @@ class PineconeVectorStoreService(BaseVectorStore):
             return True
         except Exception:
             return False
+
+    def delete_by_document_id(self, document_id: str, namespace: Optional[str] = None) -> bool:
+        """Delete all chunks by document_id metadata filter."""
+        try:
+            kwargs = {"filter": {"document_id": {"$eq": document_id}}}
+            if namespace:
+                kwargs["namespace"] = namespace
+            self.index.delete(**kwargs)
+            return True
+        except Exception:
+            return False
     
     def get_document_count(self, namespace: Optional[str] = None) -> int:
         """Get document count from Pinecone"""

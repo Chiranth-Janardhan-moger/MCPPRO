@@ -96,13 +96,13 @@ export function DocumentManagerDialog({ isOpen, onOpenChange }: DocumentManagerD
   const handleDelete = async (docId: string, fileName: string) => {
     setDeletingId(docId);
     try {
-      const supabase = createSupabaseBrowser();
-      const { error: deleteErr } = await supabase
-        .from('user_documents')
-        .delete()
-        .eq('id', docId);
-
-      if (deleteErr) throw deleteErr;
+      const res = await fetch(`/api/rag/upload?id=${encodeURIComponent(docId)}`, {
+        method: 'DELETE',
+      });
+      if (!res.ok) {
+        const errJson = await res.json().catch(() => ({}));
+        throw new Error(errJson.error || 'Failed to delete document');
+      }
 
       setDocuments((prev) => prev.filter((d) => d.id !== docId));
       toast.success('Document deleted successfully', {

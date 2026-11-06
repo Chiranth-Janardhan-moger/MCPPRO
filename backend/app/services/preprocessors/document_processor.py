@@ -66,13 +66,16 @@ class DocumentProcessor:
         self, 
         document_url: str, 
         document_id: Optional[str] = None,
-        namespace: Optional[str] = None
+        namespace: Optional[str] = None,
+        user_id: Optional[str] = None,
+        is_global: bool = False
     ) -> Dict:
         """Process document from URL and store in vector DB"""
         
         if not document_id:
             document_id = str(uuid.uuid4())
         
+        temp_file_path = None
         try:
             validation_result = self.file_processor.validate_file_url(document_url)
             if not validation_result["valid"]:
@@ -89,16 +92,17 @@ class DocumentProcessor:
                     "error": download_result["error"],
                     "document_id": document_id
                 }
+            temp_file_path = download_result["file_path"]
             
             result = await self._index_local_file(
-                file_path=download_result["file_path"],
+                file_path=temp_file_path,
                 detected_type=download_result["detected_type"],
                 document_id=document_id,
                 source=document_url,
                 namespace=namespace,
+                user_id=user_id,
+                is_global=is_global,
             )
-            # download_and_validate_file materialises a temp copy; clean it up.
-            self.file_processor.cleanup_file(download_result["file_path"])
             return result
             
         except Exception as e:
@@ -107,6 +111,9 @@ class DocumentProcessor:
                 "error": str(e),
                 "document_id": document_id
             }
+        finally:
+            if temp_file_path:
+                self.file_processor.cleanup_file(temp_file_path)
 
     async def process_document_file(
         self,
@@ -115,6 +122,8 @@ class DocumentProcessor:
         document_id: Optional[str] = None,
         source: str = "upload",
         namespace: Optional[str] = None,
+        user_id: Optional[str] = None,
+        is_global: bool = False,
     ) -> Dict:
         """Index an already-downloaded local file (used by /documents/upload)."""
         if not document_id:
@@ -126,6 +135,8 @@ class DocumentProcessor:
                 document_id=document_id,
                 source=source,
                 namespace=namespace,
+                user_id=user_id,
+                is_global=is_global,
             )
         except Exception as e:
             return {
@@ -141,6 +152,8 @@ class DocumentProcessor:
         document_id: str,
         source: str,
         namespace: Optional[str] = None,
+        user_id: Optional[str] = None,
+        is_global: bool = False,
     ) -> Dict:
         """Shared pipeline: load -> chunk -> embed -> store."""
         load_result = self.file_processor.load_document(file_path, detected_type)
@@ -169,6 +182,8 @@ class DocumentProcessor:
         for i, chunk in enumerate(chunks):
             metadata = {
                 "document_id": document_id,
+                "user_id": user_id or "anonymous",
+                "is_global": bool(is_global),
                 "page": chunk.metadata.get("page", 0),
                 "source": source,
                 "chunk_index": i,

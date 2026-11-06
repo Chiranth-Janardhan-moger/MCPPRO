@@ -89,7 +89,9 @@ class MasterMCPPro:
         # --------------------------------------------------------------
         # Decide execution path (traditional vs agentic) using a lightweight LLM call
         # --------------------------------------------------------------
-        llm_provider = LLMProviderFactory.create_provider(settings.DEFAULT_LLM_PROVIDER, settings)
+        llm_provider = getattr(self.worker_agent, "llm_provider", None)
+        if not llm_provider:
+            llm_provider = LLMProviderFactory.create_provider(settings.DEFAULT_LLM_PROVIDER, settings)
         llm = llm_provider.get_langchain_llm()
         info_blob = (
             f"supported_file: {is_supported_file}, ext: {ext or 'n/a'}, "
@@ -139,9 +141,12 @@ class MasterMCPPro:
             services_vector_store = VectorStoreFactory.create_vector_store(settings)
             if first_pass_vector_ids:
                 try:
-                    await services_vector_store.adelete_documents(first_pass_vector_ids)
-                except Exception:
-                    pass
+                    if hasattr(services_vector_store, "adelete_documents"):
+                        await services_vector_store.adelete_documents(first_pass_vector_ids)
+                    elif hasattr(services_vector_store, "delete_documents"):
+                        services_vector_store.delete_documents(first_pass_vector_ids)
+                except Exception as del_err:
+                    logger.warning("Could not purge first-pass vector ids: %s", del_err)
             await tool_registry.execute_tool(
                 "process_document", document_url=document_url, use_cache=True, llm_friendly=True
             )

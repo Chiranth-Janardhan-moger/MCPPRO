@@ -15,9 +15,13 @@ jobs:
     steps:
       - name: Ping Supabase Database and Services
         env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL || 'https://nvjtypcbeoclrizscgik.supabase.co' }}
-          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52anR5cGNiZW9jbHJpenNjZ2lrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcyOTk5ODksImV4cCI6MjEwMjg3NTk4OX0.0MUNhfhNBkX49IcX-lp05NYD1_rHiEKGzbv_woheRnM' }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
         run: |
+          if [ -z "${SUPABASE_URL}" ] || [ -z "${SUPABASE_ANON_KEY}" ]; then
+            echo "Error: SUPABASE_URL and SUPABASE_ANON_KEY repository secrets must be configured in GitHub Actions."
+            exit 1
+          fi
           echo "Pinging Supabase services to prevent 7-day inactivity pause..."
 
           # 1. Execute SQL query on PostgreSQL via PostgREST

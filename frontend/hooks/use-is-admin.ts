@@ -20,7 +20,7 @@ export function useIsAdmin() {
     const supabase = createSupabaseBrowser();
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((event) => {
+    } = supabase.auth.onAuthStateChange((event: any) => {
       if (
         event === 'SIGNED_IN' ||
         event === 'SIGNED_OUT' ||

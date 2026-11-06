@@ -50,34 +50,41 @@ const isBuildPhase =
  * Override/extend the whole set with MCP_SERVERS_CONFIG (JSON array).
  */
 function defaultServerConfigs(): Record<string, MCPServerConfig> {
+  const isWindows = process.platform === 'win32';
+  const backendBase = (process.env.BACKEND_URL || 'http://127.0.0.1:8000').replace(/\/$/, '');
+
   const configs: Record<string, MCPServerConfig> = {
     github: {
       name: 'github',
-      command: 'npx',
-      args: ['-y', '@modelcontextprotocol/server-github'],
+      command: isWindows ? 'cmd' : 'npx',
+      args: isWindows
+        ? ['/c', 'npx', '-y', '@modelcontextprotocol/server-github']
+        : ['-y', '@modelcontextprotocol/server-github'],
       transport: 'stdio',
       enabled: Boolean(process.env.GITHUB_PERSONAL_ACCESS_TOKEN || process.env.GITHUB_TOKEN),
       env: {
         GITHUB_PERSONAL_ACCESS_TOKEN: process.env.GITHUB_PERSONAL_ACCESS_TOKEN || process.env.GITHUB_TOKEN || '',
       },
-      timeoutMs: DEFAULT_TIMEOUT_MS,
+      timeoutMs: 5_000,
       reconnect: true,
     },
     research: {
       name: 'research',
-      url: process.env.MCP_RESEARCH_URL || (process.env.BACKEND_URL ? `${process.env.BACKEND_URL}/mcp` : 'https://mcppro.onrender.com/mcp'),
+      url: process.env.MCP_RESEARCH_URL || `${backendBase}/mcp`,
       transport: 'http',
-      enabled: true,
-      timeoutMs: 15_000,
+      enabled: Boolean(process.env.MCP_RESEARCH_URL),
+      timeoutMs: 3_000,
       reconnect: true,
     },
     database: {
       name: 'database',
-      command: 'npx',
-      args: ['-y', '@modelcontextprotocol/server-postgres', process.env.DATABASE_URL || 'postgresql://postgres:postgres@127.0.0.1:54322/postgres'],
+      command: isWindows ? 'cmd' : 'npx',
+      args: isWindows
+        ? ['/c', 'npx', '-y', '@modelcontextprotocol/server-postgres', process.env.DATABASE_URL || 'postgresql://postgres:postgres@127.0.0.1:54322/postgres']
+        : ['-y', '@modelcontextprotocol/server-postgres', process.env.DATABASE_URL || 'postgresql://postgres:postgres@127.0.0.1:54322/postgres'],
       transport: 'stdio',
       enabled: Boolean(process.env.DATABASE_URL || process.env.POSTGRES_URL),
-      timeoutMs: DEFAULT_TIMEOUT_MS,
+      timeoutMs: 5_000,
       reconnect: true,
     },
     browser: {
@@ -85,7 +92,7 @@ function defaultServerConfigs(): Record<string, MCPServerConfig> {
       url: process.env.MCP_BROWSER_URL || 'http://127.0.0.1:8002/mcp',
       transport: 'http',
       enabled: Boolean(process.env.MCP_BROWSER_URL),
-      timeoutMs: DEFAULT_TIMEOUT_MS,
+      timeoutMs: 5_000,
       reconnect: true,
     },
     computer: {
@@ -93,21 +100,20 @@ function defaultServerConfigs(): Record<string, MCPServerConfig> {
       url: process.env.MCP_COMPUTER_URL || 'http://127.0.0.1:8002/mcp',
       transport: 'http',
       enabled: Boolean(!isBuildPhase && process.env.MCP_COMPUTER_URL && process.env.MCP_ENABLE_COMPUTER === 'true'),
-      timeoutMs: DEFAULT_TIMEOUT_MS,
+      timeoutMs: 5_000,
       reconnect: true,
     },
     rag: {
       name: 'rag',
-      url: process.env.MCP_RAG_URL || (process.env.BACKEND_URL ? `${process.env.BACKEND_URL}/mcp` : 'https://mcppro.onrender.com/mcp'),
+      url: process.env.MCP_RAG_URL || `${backendBase}/mcp`,
       transport: 'http',
       enabled: true,
-      timeoutMs: 15_000,
+      timeoutMs: 3_000,
       reconnect: true,
     },
   };
 
   if (process.env.SMITHERY_API_KEY) {
-    const isWindows = process.platform === 'win32';
     configs.playwright = {
       name: 'playwright',
       command: isWindows ? 'cmd' : 'npx',
@@ -132,7 +138,7 @@ function defaultServerConfigs(): Record<string, MCPServerConfig> {
           ],
       transport: 'stdio',
       enabled: !isBuildPhase && process.env.MCP_ENABLE_PLAYWRIGHT !== 'false',
-      timeoutMs: DEFAULT_TIMEOUT_MS,
+      timeoutMs: 5_000,
       reconnect: true,
     };
   }
@@ -140,17 +146,27 @@ function defaultServerConfigs(): Record<string, MCPServerConfig> {
   if (process.env.V0_BEARER_TOKEN) {
     configs.v0 = {
       name: 'v0',
-      command: 'npx',
-      args: [
-        '-y',
-        'mcp-remote',
-        'https://mcp.v0.dev',
-        '--header',
-        `Authorization: Bearer ${process.env.V0_BEARER_TOKEN}`,
-      ],
+      command: isWindows ? 'cmd' : 'npx',
+      args: isWindows
+        ? [
+            '/c',
+            'npx',
+            '-y',
+            'mcp-remote',
+            'https://mcp.v0.dev',
+            '--header',
+            `Authorization: Bearer ${process.env.V0_BEARER_TOKEN}`,
+          ]
+        : [
+            '-y',
+            'mcp-remote',
+            'https://mcp.v0.dev',
+            '--header',
+            `Authorization: Bearer ${process.env.V0_BEARER_TOKEN}`,
+          ],
       transport: 'stdio',
       enabled: !isBuildPhase && process.env.MCP_ENABLE_V0 !== 'false',
-      timeoutMs: DEFAULT_TIMEOUT_MS,
+      timeoutMs: 5_000,
       reconnect: true,
     };
   }
@@ -233,7 +249,12 @@ function createMCPClientManager(): MCPClientManager {
         if (!config.url) {
           throw new Error(`HTTP MCP server '${serverName}' requires a URL`);
         }
-        transport = new StreamableHTTPClientTransport(new URL(config.url));
+        const headers: Record<string, string> = {};
+        const authToken = process.env.MCP_SERVER_AUTH_TOKEN || process.env.BACKEND_BEARER_TOKEN || process.env.BEARER_TOKEN;
+        if (authToken) {
+          headers['Authorization'] = `Bearer ${authToken.trim()}`;
+        }
+        transport = new StreamableHTTPClientTransport(new URL(config.url), { requestInit: { headers } });
       } else {
         if (!config.command || !config.args) {
           throw new Error(`Stdio MCP server '${serverName}' requires command and args`);
@@ -339,21 +360,35 @@ function createMCPClientManager(): MCPClientManager {
     },
 
     async getAllTools(): Promise<Record<string, any>> {
+      const now = Date.now();
+      // Cache aggregated tool schemas for 60s to avoid redundant network negotiation on every token stream
+      if ((this as any)._cachedAllTools && now - ((this as any)._lastToolsFetch || 0) < 60_000) {
+        return (this as any)._cachedAllTools;
+      }
+
       const allTools: Record<string, any> = {};
       const enabledServers = Object.keys(serverConfigs).filter(
         (name) => serverConfigs[name].enabled
       );
 
-      for (const serverName of enabledServers) {
-        try {
+      const toolResults = await Promise.allSettled(
+        enabledServers.map(async (serverName) => {
           const tools = await this.getTools(serverName);
-          for (const [toolName, toolDef] of Object.entries(tools)) {
-            allTools[`${serverName}_${toolName}`] = toolDef;
+          return { serverName, tools };
+        })
+      );
+
+      for (const res of toolResults) {
+        if (res.status === 'fulfilled') {
+          for (const [toolName, toolDef] of Object.entries(res.value.tools)) {
+            allTools[`${res.value.serverName}_${toolName}`] = toolDef;
           }
-        } catch (error) {
-          console.warn(`[MCP] Tools unavailable from ${serverName}:`, (error as Error).message);
+        } else {
+          console.warn('[MCP] Server tools unavailable:', res.reason?.message || res.reason);
         }
       }
+      (this as any)._cachedAllTools = allTools;
+      (this as any)._lastToolsFetch = now;
       return allTools;
     },
 

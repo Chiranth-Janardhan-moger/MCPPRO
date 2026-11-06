@@ -67,18 +67,48 @@ class InMemoryVectorStoreService(BaseVectorStore):
         filter: Optional[Dict] = None,
         namespace: Optional[str] = None
     ) -> List[tuple]:
-        """Search with relevance scores (sync)"""
+        """Search with relevance scores and hybrid lexical overlap re-ranking (sync)"""
         try:
             filter_fn = None
             if filter:
-                filter_fn = lambda doc: all(doc.metadata.get(key) == val for key, val in filter.items())
+                user_id = filter.get("user_id")
+                if user_id:
+                    base_filter = {key: val for key, val in filter.items() if key != "user_id"}
+                    def filter_fn(doc):
+                        meta = getattr(doc, "metadata", {}) or {}
+                        is_global = bool(meta.get("is_global", False))
+                        doc_user = meta.get("user_id")
+                        user_matches = is_global or (doc_user == user_id) or (not doc_user or doc_user == "anonymous")
+                        if not user_matches:
+                            return False
+                        return all(meta.get(key) == val for key, val in base_filter.items())
+                else:
+                    filter_fn = lambda doc: all(getattr(doc, "metadata", {}).get(key) == val for key, val in filter.items())
                 
+            candidate_k = min(len(self.vector_store.store), max(k * 2, 10)) if hasattr(self.vector_store, "store") and self.vector_store.store else k
             results = self.vector_store.similarity_search_with_score(
                 query=query, 
-                k=k,
+                k=candidate_k,
                 filter=filter_fn
             )
-            return results
+            if not results:
+                return []
+
+            # Hybrid lexical overlap boost: exact keywords boost relevant chunks to eliminate hallucinations
+            query_words = set(re.findall(r"\w+", query.lower()))
+            if query_words:
+                reranked = []
+                for doc, score in results:
+                    content = getattr(doc, "page_content", "") or ""
+                    words_in_doc = set(re.findall(r"\w+", content.lower()))
+                    overlap_ratio = len(query_words & words_in_doc) / max(len(query_words), 1)
+                    # Combined hybrid score (70% semantic similarity + 30% lexical overlap)
+                    hybrid_score = (float(score) * 0.7) + (overlap_ratio * 0.3)
+                    reranked.append((doc, hybrid_score))
+                reranked.sort(key=lambda x: x[1], reverse=True)
+                return reranked[:k]
+
+            return results[:k]
             
         except Exception as e:
             print(f"Error during similarity search with score: {e}")
@@ -97,6 +127,23 @@ class InMemoryVectorStoreService(BaseVectorStore):
             
         except Exception as e:
             print(f"Error deleting documents: {e}")
+            return False
+
+    def delete_by_document_id(self, document_id: str, namespace: Optional[str] = None) -> bool:
+        """Delete all chunks whose metadata contains document_id."""
+        try:
+            matching_ids = []
+            for chunk_id, value in list(self.vector_store.store.items()):
+                meta = value.get("metadata") if isinstance(value, dict) else getattr(value, "metadata", {})
+                if meta and str(meta.get("document_id")) == str(document_id):
+                    matching_ids.append(chunk_id)
+            if matching_ids:
+                self.vector_store.delete(ids=matching_ids)
+                print(f"Deleted {len(matching_ids)} chunks for document_id={document_id}")
+                return True
+            return False
+        except Exception as e:
+            print(f"Error deleting by document_id {document_id}: {e}")
             return False
     
     def get_document_count(self, namespace: Optional[str] = None) -> int:
@@ -235,18 +282,46 @@ class InMemoryVectorStoreService(BaseVectorStore):
         filter: Optional[Dict] = None,
         namespace: Optional[str] = None
     ) -> List[tuple]:
-        """Search with relevance scores (async)"""
+        """Search with relevance scores and hybrid lexical overlap re-ranking (async)"""
         try:
             filter_fn = None
             if filter:
-                filter_fn = lambda doc: all(doc.metadata.get(key) == val for key, val in filter.items())
+                user_id = filter.get("user_id")
+                if user_id:
+                    base_filter = {key: val for key, val in filter.items() if key != "user_id"}
+                    def filter_fn(doc):
+                        meta = getattr(doc, "metadata", {}) or {}
+                        is_global = bool(meta.get("is_global", False))
+                        doc_user = meta.get("user_id")
+                        user_matches = is_global or (doc_user == user_id) or (not doc_user or doc_user == "anonymous")
+                        if not user_matches:
+                            return False
+                        return all(meta.get(key) == val for key, val in base_filter.items())
+                else:
+                    filter_fn = lambda doc: all(getattr(doc, "metadata", {}).get(key) == val for key, val in filter.items())
                 
+            candidate_k = min(len(self.vector_store.store), max(k * 2, 10)) if hasattr(self.vector_store, "store") and self.vector_store.store else k
             results = await self.vector_store.asimilarity_search_with_score(
                 query=query, 
-                k=k,
+                k=candidate_k,
                 filter=filter_fn
             )
-            return results
+            if not results:
+                return []
+
+            query_words = set(re.findall(r"\w+", query.lower()))
+            if query_words:
+                reranked = []
+                for doc, score in results:
+                    content = getattr(doc, "page_content", "") or ""
+                    words_in_doc = set(re.findall(r"\w+", content.lower()))
+                    overlap_ratio = len(query_words & words_in_doc) / max(len(query_words), 1)
+                    hybrid_score = (float(score) * 0.7) + (overlap_ratio * 0.3)
+                    reranked.append((doc, hybrid_score))
+                reranked.sort(key=lambda x: x[1], reverse=True)
+                return reranked[:k]
+
+            return results[:k]
             
         except Exception as e:
             print(f"Error during similarity search with score: {e}")

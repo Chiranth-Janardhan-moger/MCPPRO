@@ -1,338 +1,338 @@
-import { streamText, createDataStreamResponse } from "ai";
-import { getUser } from '@/app/chat/hooks/get-user';
-import { runWithRequestContext } from '@/lib/request-context';
-import { getModelInfo, isProviderConfigured, resolveModel } from '@/lib/ai/models';
-import { getLanguageModel } from '@/app/chat/lib/ai/providers/providers';
-import { getGeneralAgentPrompt } from '@/app/chat/lib/ai/prompts/general-agent';
-import { getMCPTools } from '@/voltagent/tools/mcpTools';
-import {
-  tavilySearchTool,
-  generateChartTool,
-  generateImageTool,
-  searchUploadedDocumentsTool,
-  stagehandRunTool,
-  playwrightCloudBrowserTool,
-} from '@/voltagent/tools/customTools';
-import { getSystemSettings } from '@/lib/services/admin-settings';
-import { classifyQueryContext, RouterDecision } from '@/lib/ai/context-router';
-import supabaseAdmin from '@/lib/supabase/admin';
-
-export const maxDuration = 60;
-
-export async function POST(req: Request) {
-  const requestStartTime = Date.now();
-  try {
-    const user = await getUser(req);
-
-    if (!user) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-        status: 401,
-        headers: { 'Content-Type': 'application/json' },
-      });
-    }
-
-    const body = await req.json();
-    const rawMessages = Array.isArray(body?.messages) ? body.messages : null;
-    if (!rawMessages || rawMessages.length === 0) {
-      return new Response(JSON.stringify({ error: 'messages array is required' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' },
-      });
-    }
-
-    // Sanitize conversation history: resolve any dangling tool invocations across both toolInvocations and message parts
-    const messages = rawMessages.map((m: any) => {
-      const sanitized = { ...m };
-
-      const sanitizeToolInv = (inv: any) => {
-        if (!inv || typeof inv !== 'object') return inv;
-        if (inv.state !== 'result' || !('result' in inv) || inv.result === undefined) {
-          return {
-            ...inv,
-            state: 'result',
-            result: inv.result ?? { note: 'Tool execution resolved' },
-          };
-        }
-        return inv;
-      };
-
-      if (Array.isArray(sanitized.toolInvocations)) {
-        sanitized.toolInvocations = sanitized.toolInvocations.map(sanitizeToolInv);
-      }
-
-      if (Array.isArray(sanitized.parts)) {
-        sanitized.parts = sanitized.parts.map((part: any) => {
-          if (part && part.type === 'tool-invocation' && part.toolInvocation) {
-            return {
-              ...part,
-              toolInvocation: sanitizeToolInv(part.toolInvocation),
-            };
-          }
-          return part;
-        });
-      }
-
-      return sanitized;
-    });
-
-    const settings = await getSystemSettings();
-    let selectedModel: string =
-      typeof body?.selectedModel === 'string' && body.selectedModel.trim()
-        ? body.selectedModel.trim()
-        : settings.default_model || 'meta-llama/llama-3.3-70b-instruct';
-
-    const customApiKeys: Record<string, string> =
-      typeof body?.customApiKeys === 'object' && body.customApiKeys !== null
-        ? body.customApiKeys
-        : {};
-
-    let modelInfo = getModelInfo(selectedModel) || resolveModel(selectedModel);
-    let provider = modelInfo?.provider;
-
-    const hasGoogleKey = Boolean(
-      customApiKeys.google?.trim() ||
-      settings.api_keys.google?.trim() ||
-      settings.api_keys.gemini?.trim() ||
-      isProviderConfigured('google')
-    );
-    const hasOpenRouterKey = Boolean(
-      customApiKeys.openrouter?.trim() ||
-      settings.api_keys.openrouter?.trim() ||
-      isProviderConfigured('openrouter')
-    );
-
-    // If Google model selected but no Google key exists while OpenRouter IS configured, fallback to OpenRouter
-    if (provider === 'google' && !hasGoogleKey && hasOpenRouterKey) {
-      selectedModel = 'meta-llama/llama-3.3-70b-instruct';
-      modelInfo = getModelInfo(selectedModel) || resolveModel(selectedModel);
-      provider = modelInfo?.provider;
-    }
-
-    // Check if provider has a key in customKeys, system settings, or env
-    const hasKey =
-      !provider ||
-      Boolean(customApiKeys[provider]?.trim()) ||
-      Boolean(settings.api_keys[provider]?.trim()) ||
-      (provider === 'google' && hasGoogleKey) ||
-      (provider === 'openrouter' && hasOpenRouterKey) ||
-      isProviderConfigured(provider);
-
-    if (modelInfo && !hasKey) {
-      return new Response(
-        JSON.stringify({
-          error: `Provider '${modelInfo.provider}' is not configured. Please add your API key in Settings or contact the Administrator.`,
-        }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Latest user message (safely extract text whether string or multipart array)
-    const lastUserMessage = [...messages].reverse().find((m) => m.role === 'user');
-    let userQuery = '';
-    if (typeof lastUserMessage?.content === 'string') {
-      userQuery = lastUserMessage.content.trim();
-    } else if (Array.isArray(lastUserMessage?.content)) {
-      userQuery = (lastUserMessage.content as any[])
-        .map((p) => (typeof p === 'string' ? p : p?.text || ''))
-        .join(' ')
-        .trim();
-    }
-
-    const reqContext = {
-      userId: user.id,
-      userEmail: user.email,
-      selectedModel,
-      customApiKeys,
-      systemApiKeys: settings.api_keys as Record<string, string>,
-    };
-
-    return createDataStreamResponse({
-      async execute(dataStream) {
-        return runWithRequestContext(reqContext, async () => {
-          let routerDecision: RouterDecision | null = null;
-          let finalGeneratedText = '';
-
-          try {
-            // 1. Run Context-Aware Routing using configured cheaper model
-            if (settings.routing.enabled && userQuery) {
-              try {
-                routerDecision = await classifyQueryContext(
-                  userQuery,
-                  messages.slice(-3),
-                  customApiKeys[settings.routing.provider]
-                );
-
-                // Send Router Annotation to UI
-                dataStream.writeMessageAnnotation({
-                  type: 'router_decision',
-                  route: routerDecision.route,
-                  confidence: routerDecision.confidence,
-                  reasoning: routerDecision.reasoning,
-                  refinedQuery: routerDecision.refinedQuery,
-                  latencyMs: routerDecision.latencyMs,
-                  model: routerDecision.modelUsed,
-                });
-              } catch (routerErr) {
-                console.warn('[chat/route] Router evaluation warning:', routerErr);
-              }
-            }
-
-            const model = getLanguageModel(
-              selectedModel,
-              customApiKeys,
-              settings.api_keys as Record<string, string>
-            );
-
-            let mcpTools: Record<string, any> = {};
-            try {
-              mcpTools = await getMCPTools();
-            } catch (err) {
-              console.warn('[chat/route] MCP tools lookup skipped:', err);
-            }
-
-              const tools: Record<string, any> = {
-                searchUploadedDocuments: {
-                  description: searchUploadedDocumentsTool.description,
-                  parameters: (searchUploadedDocumentsTool as any).parameters,
-                  execute: searchUploadedDocumentsTool.execute,
-                },
-                tavilySearch: {
-                  description: tavilySearchTool.description,
-                  parameters: (tavilySearchTool as any).parameters,
-                  execute: tavilySearchTool.execute,
-                },
-                generateChart: {
-                  description: generateChartTool.description,
-                  parameters: (generateChartTool as any).parameters,
-                  execute: generateChartTool.execute,
-                },
-                generateImage: {
-                  description: generateImageTool.description,
-                  parameters: (generateImageTool as any).parameters,
-                  execute: generateImageTool.execute,
-                },
-                stagehandRun: {
-                  description: stagehandRunTool.description,
-                  parameters: (stagehandRunTool as any).parameters,
-                  execute: stagehandRunTool.execute,
-                },
-                playwrightCloudBrowser: {
-                  description: playwrightCloudBrowserTool.description,
-                  parameters: (playwrightCloudBrowserTool as any).parameters,
-                  execute: playwrightCloudBrowserTool.execute,
-                },
-                ...mcpTools,
-              };
-
-              // Inject context router instructions based on classification (guard against empty refined queries)
-              let systemPrompt = getGeneralAgentPrompt();
-              if (routerDecision) {
-                const targetQuery = (routerDecision.refinedQuery || userQuery || '').trim();
-                if (routerDecision.route === 'RAG' && targetQuery) {
-                  systemPrompt += `\n\n[CONTEXT ROUTER GUIDANCE: The query intent was classified as RAG (${Math.round(routerDecision.confidence * 100)}% confidence). You MUST call searchUploadedDocuments with query "${targetQuery}" to retrieve the relevant document context before answering.]`;
-                } else if (routerDecision.route === 'ONLINE' && targetQuery) {
-                  systemPrompt += `\n\n[CONTEXT ROUTER GUIDANCE: The query intent was classified as ONLINE web search (${Math.round(routerDecision.confidence * 100)}% confidence). You MUST call tavilySearch with query "${targetQuery}" to fetch current internet data before answering.]`;
-                }
-              }
-
-              const result = streamText({
-                model,
-                system: systemPrompt,
-                messages,
-                tools,
-                maxSteps: 10,
-                onFinish: async (event) => {
-                  finalGeneratedText = event.text;
-                  const processingTime = (Date.now() - requestStartTime) / 1000;
-
-                  // Log request to database for Analytics Dashboard
-                  try {
-                    const supabase = supabaseAdmin();
-                    await supabase.from('mcppro_requests').insert({
-                      document_url: routerDecision?.route || 'general-chat',
-                      questions: [userQuery || 'Chat query'],
-                      answers: [finalGeneratedText.slice(0, 500) || 'Assistant response'],
-                      processing_time: processingTime,
-                      document_metadata: {
-                        model: selectedModel,
-                        provider: provider || 'unknown',
-                        route: routerDecision?.route || 'DIRECT',
-                        routerConfidence: routerDecision?.confidence ?? 1.0,
-                        routerReasoning: routerDecision?.reasoning || '',
-                        toolCallsCount: event.toolCalls?.length || 0,
-                      },
-                      raw_response: {
-                        finishReason: event.finishReason,
-                        usage: event.usage,
-                      },
-                      success: true,
-                      questions_count: 1,
-                      chunks_processed: 0,
-                      vector_store: routerDecision?.route === 'RAG' ? 'mcppro-documents' : 'none',
-                      user_id: user.id,
-                      user_email: user.email,
-                      model: selectedModel,
-                      route: routerDecision?.route || 'DIRECT',
-                      router_confidence: routerDecision?.confidence ?? 1.0,
-                      router_reasoning: routerDecision?.reasoning || 'Default direct evaluation',
-                      tokens_used: (event.usage?.promptTokens || 0) + (event.usage?.completionTokens || 0),
-                    });
-                  } catch (logErr) {
-                    console.warn('[chat/route] Analytics logging warning:', logErr);
-                  }
-                },
-              });
-
-              result.mergeIntoDataStream(dataStream);
-            } catch (error) {
-              console.error("[chat/route] Stream processing error:", error);
-              const processingTime = (Date.now() - requestStartTime) / 1000;
-
-              // Log failure
-              try {
-                const supabase = supabaseAdmin();
-                await supabase.from('mcppro_requests').insert({
-                  document_url: 'error',
-                  questions: [userQuery || 'Error query'],
-                  answers: [],
-                  processing_time: processingTime,
-                  document_metadata: { model: selectedModel },
-                  raw_response: {},
-                  success: false,
-                  error_message: error instanceof Error ? error.message : String(error),
-                  user_id: user.id,
-                  user_email: user.email,
-                  model: selectedModel,
-                  route: 'DIRECT',
-                });
-              } catch {}
-
-              dataStream.writeMessageAnnotation({
-                type: "error",
-                value: {
-                  error: error instanceof Error ? error.message : "Unknown error",
-                },
-              });
-
-              const errStr = error instanceof Error ? error.message : String(error);
-              const isAuthError = /api[ -]?key|unauthorized|401|auth/i.test(errStr);
-              const hint = isAuthError
-                ? "\n\nPlease check your API keys in Settings or Admin Console -> API Keys & Providers."
-                : "";
-              dataStream.write(
-                `0:${JSON.stringify(`\n\n**Notice:** ${errStr}${hint}`)}\n`
-              );
-            }
-          });
-        },
-        onError: (error) =>
-          `AI Stream error: ${error instanceof Error ? error.message : String(error)}`,
-      });
-  } catch (error) {
-    console.error("[chat/route] API route error:", error);
-    return new Response(JSON.stringify({ error: "Internal server error" }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" },
-    });
-  }
-}
+import { streamText, createDataStreamResponse } from "ai";
+import { getUser } from '@/app/chat/hooks/get-user';
+import { runWithRequestContext } from '@/lib/request-context';
+import { getModelInfo, isProviderConfigured, resolveModel } from '@/lib/ai/models';
+import { getLanguageModel } from '@/app/chat/lib/ai/providers/providers';
+import { getGeneralAgentPrompt } from '@/app/chat/lib/ai/prompts/general-agent';
+import { getMCPTools } from '@/voltagent/tools/mcpTools';
+import {
+  tavilySearchTool,
+  generateChartTool,
+  generateImageTool,
+  searchUploadedDocumentsTool,
+  stagehandRunTool,
+  playwrightCloudBrowserTool,
+} from '@/voltagent/tools/customTools';
+import { getSystemSettings } from '@/lib/services/admin-settings';
+import { classifyQueryContext, RouterDecision } from '@/lib/ai/context-router';
+import supabaseAdmin from '@/lib/supabase/admin';
+
+export const maxDuration = 60;
+
+export async function POST(req: Request) {
+  const requestStartTime = Date.now();
+  try {
+    const user = await getUser(req);
+
+    if (!user) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    const body = await req.json();
+    const rawMessages = Array.isArray(body?.messages) ? body.messages : null;
+    if (!rawMessages || rawMessages.length === 0) {
+      return new Response(JSON.stringify({ error: 'messages array is required' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Sanitize conversation history: resolve any dangling tool invocations across both toolInvocations and message parts
+    const messages = rawMessages.map((m: any) => {
+      const sanitized = { ...m };
+
+      const sanitizeToolInv = (inv: any) => {
+        if (!inv || typeof inv !== 'object') return inv;
+        if (inv.state !== 'result' || !('result' in inv) || inv.result === undefined) {
+          return {
+            ...inv,
+            state: 'result',
+            result: inv.result ?? { note: 'Tool execution resolved' },
+          };
+        }
+        return inv;
+      };
+
+      if (Array.isArray(sanitized.toolInvocations)) {
+        sanitized.toolInvocations = sanitized.toolInvocations.map(sanitizeToolInv);
+      }
+
+      if (Array.isArray(sanitized.parts)) {
+        sanitized.parts = sanitized.parts.map((part: any) => {
+          if (part && part.type === 'tool-invocation' && part.toolInvocation) {
+            return {
+              ...part,
+              toolInvocation: sanitizeToolInv(part.toolInvocation),
+            };
+          }
+          return part;
+        });
+      }
+
+      return sanitized;
+    });
+
+    const settings = await getSystemSettings();
+    let selectedModel: string =
+      typeof body?.selectedModel === 'string' && body.selectedModel.trim()
+        ? body.selectedModel.trim()
+        : settings.default_model || 'meta-llama/llama-3.3-70b-instruct';
+
+    const customApiKeys: Record<string, string> =
+      typeof body?.customApiKeys === 'object' && body.customApiKeys !== null
+        ? body.customApiKeys
+        : {};
+
+    let modelInfo = getModelInfo(selectedModel) || resolveModel(selectedModel);
+    let provider = modelInfo?.provider;
+
+    const hasGoogleKey = Boolean(
+      customApiKeys.google?.trim() ||
+      settings.api_keys.google?.trim() ||
+      settings.api_keys.gemini?.trim() ||
+      isProviderConfigured('google')
+    );
+    const hasOpenRouterKey = Boolean(
+      customApiKeys.openrouter?.trim() ||
+      settings.api_keys.openrouter?.trim() ||
+      isProviderConfigured('openrouter')
+    );
+
+    // If Google model selected but no Google key exists while OpenRouter IS configured, fallback to OpenRouter
+    if (provider === 'google' && !hasGoogleKey && hasOpenRouterKey) {
+      selectedModel = 'meta-llama/llama-3.3-70b-instruct';
+      modelInfo = getModelInfo(selectedModel) || resolveModel(selectedModel);
+      provider = modelInfo?.provider;
+    }
+
+    // Check if provider has a key in customKeys, system settings, or env
+    const hasKey =
+      !provider ||
+      Boolean(customApiKeys[provider]?.trim()) ||
+      Boolean(settings.api_keys[provider]?.trim()) ||
+      (provider === 'google' && hasGoogleKey) ||
+      (provider === 'openrouter' && hasOpenRouterKey) ||
+      isProviderConfigured(provider);
+
+    if (modelInfo && !hasKey) {
+      return new Response(
+        JSON.stringify({
+          error: `Provider '${modelInfo.provider}' is not configured. Please add your API key in Settings or contact the Administrator.`,
+        }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Latest user message (safely extract text whether string or multipart array)
+    const lastUserMessage = [...messages].reverse().find((m) => m.role === 'user');
+    let userQuery = '';
+    if (typeof lastUserMessage?.content === 'string') {
+      userQuery = lastUserMessage.content.trim();
+    } else if (Array.isArray(lastUserMessage?.content)) {
+      userQuery = (lastUserMessage.content as any[])
+        .map((p) => (typeof p === 'string' ? p : p?.text || ''))
+        .join(' ')
+        .trim();
+    }
+
+    const reqContext = {
+      userId: user.id,
+      userEmail: user.email,
+      selectedModel,
+      customApiKeys,
+      systemApiKeys: settings.api_keys as Record<string, string>,
+    };
+
+    return createDataStreamResponse({
+      async execute(dataStream) {
+        return runWithRequestContext(reqContext, async () => {
+          let routerDecision: RouterDecision | null = null;
+          let finalGeneratedText = '';
+
+          try {
+            // 1. Run Context-Aware Routing using configured cheaper model
+            if (settings.routing.enabled && userQuery) {
+              try {
+                routerDecision = await classifyQueryContext(
+                  userQuery,
+                  messages.slice(-3),
+                  customApiKeys[settings.routing.provider]
+                );
+
+                // Send Router Annotation to UI
+                dataStream.writeMessageAnnotation({
+                  type: 'router_decision',
+                  route: routerDecision.route,
+                  confidence: routerDecision.confidence,
+                  reasoning: routerDecision.reasoning,
+                  refinedQuery: routerDecision.refinedQuery,
+                  latencyMs: routerDecision.latencyMs,
+                  model: routerDecision.modelUsed,
+                });
+              } catch (routerErr) {
+                console.warn('[chat/route] Router evaluation warning:', routerErr);
+              }
+            }
+
+            const model = getLanguageModel(
+              selectedModel,
+              customApiKeys,
+              settings.api_keys as Record<string, string>
+            );
+
+            let mcpTools: Record<string, any> = {};
+            try {
+              mcpTools = await getMCPTools();
+            } catch (err) {
+              console.warn('[chat/route] MCP tools lookup skipped:', err);
+            }
+
+              const tools: Record<string, any> = {
+                searchUploadedDocuments: {
+                  description: searchUploadedDocumentsTool.description,
+                  parameters: (searchUploadedDocumentsTool as any).parameters,
+                  execute: searchUploadedDocumentsTool.execute,
+                },
+                tavilySearch: {
+                  description: tavilySearchTool.description,
+                  parameters: (tavilySearchTool as any).parameters,
+                  execute: tavilySearchTool.execute,
+                },
+                generateChart: {
+                  description: generateChartTool.description,
+                  parameters: (generateChartTool as any).parameters,
+                  execute: generateChartTool.execute,
+                },
+                generateImage: {
+                  description: generateImageTool.description,
+                  parameters: (generateImageTool as any).parameters,
+                  execute: generateImageTool.execute,
+                },
+                stagehandRun: {
+                  description: stagehandRunTool.description,
+                  parameters: (stagehandRunTool as any).parameters,
+                  execute: stagehandRunTool.execute,
+                },
+                playwrightCloudBrowser: {
+                  description: playwrightCloudBrowserTool.description,
+                  parameters: (playwrightCloudBrowserTool as any).parameters,
+                  execute: playwrightCloudBrowserTool.execute,
+                },
+                ...mcpTools,
+              };
+
+              // Inject context router instructions based on classification (guard against empty refined queries)
+              let systemPrompt = getGeneralAgentPrompt();
+              if (routerDecision) {
+                const targetQuery = (routerDecision.refinedQuery || userQuery || '').replace(/[\r\n"']/g, ' ').trim();
+                if (routerDecision.route === 'RAG' && targetQuery) {
+                  systemPrompt += `\n\n[CONTEXT ROUTER GUIDANCE: The query intent was classified as RAG (${Math.round(routerDecision.confidence * 100)}% confidence). You MUST call searchUploadedDocuments with query "${targetQuery}" to retrieve the relevant document context before answering.]`;
+                } else if (routerDecision.route === 'ONLINE' && targetQuery) {
+                  systemPrompt += `\n\n[CONTEXT ROUTER GUIDANCE: The query intent was classified as ONLINE web search (${Math.round(routerDecision.confidence * 100)}% confidence). You MUST call tavilySearch with query "${targetQuery}" to fetch current internet data before answering.]`;
+                }
+              }
+
+              const result = streamText({
+                model,
+                system: systemPrompt,
+                messages,
+                tools,
+                maxSteps: 10,
+                onFinish: async (event) => {
+                  finalGeneratedText = event.text;
+                  const processingTime = (Date.now() - requestStartTime) / 1000;
+
+                  // Log request to database for Analytics Dashboard
+                  try {
+                    const supabase = supabaseAdmin();
+                    await supabase.from('mcppro_requests').insert({
+                      document_url: routerDecision?.route || 'general-chat',
+                      questions: [userQuery || 'Chat query'],
+                      answers: [finalGeneratedText.slice(0, 500) || 'Assistant response'],
+                      processing_time: processingTime,
+                      document_metadata: {
+                        model: selectedModel,
+                        provider: provider || 'unknown',
+                        route: routerDecision?.route || 'DIRECT',
+                        routerConfidence: routerDecision?.confidence ?? 1.0,
+                        routerReasoning: routerDecision?.reasoning || '',
+                        toolCallsCount: event.toolCalls?.length || 0,
+                      },
+                      raw_response: {
+                        finishReason: event.finishReason,
+                        usage: event.usage,
+                      },
+                      success: true,
+                      questions_count: 1,
+                      chunks_processed: 0,
+                      vector_store: routerDecision?.route === 'RAG' ? 'mcppro-documents' : 'none',
+                      user_id: user.id,
+                      user_email: user.email,
+                      model: selectedModel,
+                      route: routerDecision?.route || 'DIRECT',
+                      router_confidence: routerDecision?.confidence ?? 1.0,
+                      router_reasoning: routerDecision?.reasoning || 'Default direct evaluation',
+                      tokens_used: (event.usage?.promptTokens || 0) + (event.usage?.completionTokens || 0),
+                    });
+                  } catch (logErr) {
+                    console.warn('[chat/route] Analytics logging warning:', logErr);
+                  }
+                },
+              });
+
+              result.mergeIntoDataStream(dataStream);
+            } catch (error) {
+              console.error("[chat/route] Stream processing error:", error);
+              const processingTime = (Date.now() - requestStartTime) / 1000;
+
+              // Log failure
+              try {
+                const supabase = supabaseAdmin();
+                await supabase.from('mcppro_requests').insert({
+                  document_url: 'error',
+                  questions: [userQuery || 'Error query'],
+                  answers: [],
+                  processing_time: processingTime,
+                  document_metadata: { model: selectedModel },
+                  raw_response: {},
+                  success: false,
+                  error_message: error instanceof Error ? error.message : String(error),
+                  user_id: user.id,
+                  user_email: user.email,
+                  model: selectedModel,
+                  route: 'DIRECT',
+                });
+              } catch {}
+
+              dataStream.writeMessageAnnotation({
+                type: "error",
+                value: {
+                  error: error instanceof Error ? error.message : "Unknown error",
+                },
+              });
+
+              const errStr = error instanceof Error ? error.message : String(error);
+              const isAuthError = /api[ -]?key|unauthorized|401|auth/i.test(errStr);
+              const hint = isAuthError
+                ? "\n\nPlease check your API keys in Settings or Admin Console -> API Keys & Providers."
+                : "";
+              dataStream.write(
+                `0:${JSON.stringify(`\n\n**Notice:** ${errStr}${hint}`)}\n`
+              );
+            }
+          });
+        },
+        onError: (error) =>
+          `AI Stream error: ${error instanceof Error ? error.message : String(error)}`,
+      });
+  } catch (error) {
+    console.error("[chat/route] API route error:", error);
+    return new Response(JSON.stringify({ error: "Internal server error" }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+}

@@ -254,3 +254,64 @@ async def health_check(_: bool = Depends(verify_token)):
             vector_store=getattr(vector_store, "store_type", "unknown"),
             llm_provider=getattr(llm_provider, "provider_name", "unknown"),
         )
+
+
+@router.post("/run/stream")
+async def run_mcppro_agent_stream(
+    request: MCPProRequest,
+    _: bool = Depends(verify_token),
+):
+    """Server-Sent Events streaming endpoint for real-time progress and answers."""
+    from fastapi.responses import StreamingResponse
+    import json
+
+    services = _get_services()
+    start_time = time.time()
+    document_id = str(uuid.uuid5(uuid.NAMESPACE_URL, request.documents))
+
+    async def event_generator():
+        try:
+            yield f"data: {json.dumps({'type': 'status', 'message': 'Initializing MCPPro request...'})}\n\n"
+            use_agent = (
+                request.use_agent if request.use_agent is not None else settings.AGENT_ENABLED
+            )
+            if use_agent and services.get("mcppro_agent"):
+                yield f"data: {json.dumps({'type': 'status', 'message': 'Running agentic multi-tool execution...'})}\n\n"
+                agent_result = await services["mcppro_agent"].process_request(
+                    document_url=request.documents,
+                    questions=request.questions,
+                    k=request.k,
+                )
+                answers = agent_result.get("answers", [])
+                for idx, ans in enumerate(answers):
+                    yield f"data: {json.dumps({'type': 'answer_chunk', 'question_index': idx, 'answer': ans})}\n\n"
+                elapsed = time.time() - start_time
+                yield f"data: {json.dumps({'type': 'done', 'success': True, 'answers': answers, 'processing_time': elapsed})}\n\n"
+            else:
+                yield f"data: {json.dumps({'type': 'status', 'message': 'Processing knowledge base embeddings...'})}\n\n"
+                answers, _, _ = await traditional_rag(
+                    document_id=document_id,
+                    document_url=request.documents,
+                    questions=request.questions,
+                    k=request.k,
+                    vector_store=services["vector_store"],
+                    document_processor=services["document_processor"],
+                    retrieval_service=services["retrieval_service"],
+                    settings=settings,
+                )
+                for idx, ans in enumerate(answers):
+                    yield f"data: {json.dumps({'type': 'answer_chunk', 'question_index': idx, 'answer': ans})}\n\n"
+                elapsed = time.time() - start_time
+                yield f"data: {json.dumps({'type': 'done', 'success': True, 'answers': answers, 'processing_time': elapsed})}\n\n"
+        except Exception as err:
+            yield f"data: {json.dumps({'type': 'error', 'error': str(err)})}\n\n"
+
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        },
+    )
